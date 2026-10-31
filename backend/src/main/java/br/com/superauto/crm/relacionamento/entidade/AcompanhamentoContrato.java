@@ -15,6 +15,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.domain.Persistable;
 
@@ -27,6 +31,7 @@ import org.springframework.data.domain.Persistable;
  */
 @Entity
 @Table(name = "acompanhamento_contrato")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AcompanhamentoContrato implements Persistable<Long> {
 
     @Id
@@ -50,15 +55,13 @@ public class AcompanhamentoContrato implements Persistable<Long> {
     @Column(name = "atualizado_em", nullable = false)
     private OffsetDateTime atualizadoEm;
 
+    @Getter
     @Version
     @Column(nullable = false)
     private int versao;
 
     @Transient
     private boolean novo;
-
-    protected AcompanhamentoContrato() {
-    }
 
     /**
      * CAR-02 · O contrato novo entra na régua na etapa inicial (D+7) pendente, com o próximo contato em
@@ -107,9 +110,5 @@ public class AcompanhamentoContrato implements Persistable<Long> {
 
     public Optional<OffsetDateTime> getEncerradoEm() {
         return Optional.ofNullable(encerradoEm);
-    }
-
-    public int getVersao() {
-        return versao;
     }
 }

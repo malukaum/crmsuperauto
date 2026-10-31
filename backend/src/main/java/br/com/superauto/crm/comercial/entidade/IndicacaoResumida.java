@@ -7,6 +7,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.Immutable;
 
 /**
@@ -16,6 +20,8 @@ import org.hibernate.annotations.Immutable;
 @Entity
 @Immutable
 @Table(name = "indicacao")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IndicacaoResumida {
 
     @Id
@@ -31,27 +37,4 @@ public class IndicacaoResumida {
 
     @Column(name = "registrada_em")
     private OffsetDateTime registradaEm;
-
-    protected IndicacaoResumida() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Long getIndicadorId() {
-        return indicadorId;
-    }
-
-    public String getIndicadoNome() {
-        return indicadoNome;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public OffsetDateTime getRegistradaEm() {
-        return registradaEm;
-    }
 }

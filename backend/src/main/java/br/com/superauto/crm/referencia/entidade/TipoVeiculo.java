@@ -5,6 +5,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.Immutable;
 
 /**
@@ -14,6 +18,8 @@ import org.hibernate.annotations.Immutable;
 @Entity
 @Immutable
 @Table(name = "tipo_veiculo")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TipoVeiculo {
 
     @Id
@@ -27,23 +33,4 @@ public class TipoVeiculo {
 
     @Column(nullable = false)
     private boolean ativo;
-
-    protected TipoVeiculo() {
-    }
-
-    public Short getId() {
-        return id;
-    }
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public String getDescricao() {
-        return descricao;
-    }
-
-    public boolean isAtivo() {
-        return ativo;
-    }
 }

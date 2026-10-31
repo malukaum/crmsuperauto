@@ -10,6 +10,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.CreationTimestamp;
 
 /**
@@ -18,6 +22,8 @@ import org.hibernate.annotations.CreationTimestamp;
  */
 @Entity
 @Table(name = "contato_associado")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ContatoAssociado {
 
     @Id
@@ -36,9 +42,6 @@ public class ContatoAssociado {
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)
     private OffsetDateTime criadoEm;
-
-    protected ContatoAssociado() {
-    }
 
     ContatoAssociado(DadosContato dados) {
         aplicar(dados);
@@ -68,25 +71,5 @@ public class ContatoAssociado {
 
     ContatoResumo resumo() {
         return new ContatoResumo(meio.tipo(), meio.valor(), principal, aceitaContato);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public MeioContato getMeio() {
-        return meio;
-    }
-
-    public boolean isPrincipal() {
-        return principal;
-    }
-
-    public boolean isAceitaContato() {
-        return aceitaContato;
-    }
-
-    public OffsetDateTime getCriadoEm() {
-        return criadoEm;
     }
 }

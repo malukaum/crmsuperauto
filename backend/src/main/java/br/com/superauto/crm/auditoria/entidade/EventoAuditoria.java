@@ -14,6 +14,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -26,6 +30,8 @@ import org.hibernate.type.SqlTypes;
 @Entity
 @Immutable
 @Table(name = "auditoria_evento")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EventoAuditoria {
 
     @Id
@@ -56,9 +62,6 @@ public class EventoAuditoria {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dados_novos", columnDefinition = "jsonb")
     private Map<String, Object> dadosNovos;
-
-    protected EventoAuditoria() {
-    }
 
     private EventoAuditoria(ItemAuditado item, OperacaoAuditoria operacao, UUID autor, Alteracao alteracao) {
         this.entidade = item.entidade();
@@ -96,37 +99,5 @@ public class EventoAuditoria {
 
     private static Map<String, Object> copia(Map<String, ?> dados) {
         return dados == null ? null : new LinkedHashMap<>(dados);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getEntidade() {
-        return entidade;
-    }
-
-    public String getEntidadeId() {
-        return entidadeId;
-    }
-
-    public OperacaoAuditoria getOperacao() {
-        return operacao;
-    }
-
-    public UUID getUsuarioId() {
-        return usuarioId;
-    }
-
-    public OffsetDateTime getOcorridoEm() {
-        return ocorridoEm;
-    }
-
-    public Map<String, Object> getDadosAnteriores() {
-        return dadosAnteriores;
-    }
-
-    public Map<String, Object> getDadosNovos() {
-        return dadosNovos;
     }
 }

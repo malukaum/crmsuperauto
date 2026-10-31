@@ -9,6 +9,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.Immutable;
 
 /**
@@ -18,6 +22,8 @@ import org.hibernate.annotations.Immutable;
 @Entity
 @Immutable
 @Table(name = "vw_historico_atendimento")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LinhaHistoricoAtendimento {
 
     @Id
@@ -53,17 +59,6 @@ public class LinhaHistoricoAtendimento {
 
     private boolean corrigido;
 
-    protected LinhaHistoricoAtendimento() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Long getAssociadoId() {
-        return associadoId;
-    }
-
     public Optional<Long> getContratoId() {
         return Optional.ofNullable(contratoId);
     }
@@ -72,16 +67,8 @@ public class LinhaHistoricoAtendimento {
         return Optional.ofNullable(placa);
     }
 
-    public String getTipo() {
-        return tipo;
-    }
-
     public Optional<String> getEtapa() {
         return Optional.ofNullable(etapa);
-    }
-
-    public String getResultado() {
-        return resultado;
     }
 
     public Optional<String> getDescricao() {
@@ -92,19 +79,7 @@ public class LinhaHistoricoAtendimento {
         return Optional.ofNullable(retornoAgendadoPara);
     }
 
-    public OffsetDateTime getRealizadoEm() {
-        return realizadoEm;
-    }
-
-    public String getRegistradoPor() {
-        return registradoPor;
-    }
-
     public Optional<Long> getCorrigeAtendimentoId() {
         return Optional.ofNullable(corrigeAtendimentoId);
-    }
-
-    public boolean isCorrigido() {
-        return corrigido;
     }
 }

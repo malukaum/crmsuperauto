@@ -30,6 +30,10 @@ import br.com.superauto.crm.compartilhado.entidade.Documento;
 import br.com.superauto.crm.compartilhado.entidade.DocumentoConverter;
 import br.com.superauto.crm.erro.NegocioException;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.domain.AbstractAggregateRoot;
@@ -42,14 +46,17 @@ import org.springframework.data.domain.AbstractAggregateRoot;
  */
 @Entity
 @Table(name = "associado")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Associado extends AbstractAggregateRoot<Associado> {
 
     static final String PREFIXO_ANONIMIZADO = "Cliente anonimizado nº ";
 
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Getter
     @Column(nullable = false, length = DadosPessoais.TAMANHO_MAXIMO_NOME)
     private String nome;
 
@@ -60,6 +67,7 @@ public class Associado extends AbstractAggregateRoot<Associado> {
     @Column(name = "data_nascimento")
     private LocalDate dataNascimento;
 
+    @Getter
     @Column(name = "municipio_id")
     private Integer municipioId;
 
@@ -92,6 +100,7 @@ public class Associado extends AbstractAggregateRoot<Associado> {
     @Column(name = "atualizado_em", nullable = false)
     private OffsetDateTime atualizadoEm;
 
+    @Getter
     @Version
     @Column(nullable = false)
     private int versao;
@@ -99,9 +108,6 @@ public class Associado extends AbstractAggregateRoot<Associado> {
     /** Quem cadastrou; só existe até o INSERT, para o evento de criação. */
     @Transient
     private UUID cadastradoPor;
-
-    protected Associado() {
-    }
 
     /** CAR-02: a pessoa nasce com classificação padrão e o WhatsApp (e o e-mail, se houver) como principais. */
     public static Associado cadastrar(NovoAssociado novo, UUID autor) {
@@ -235,14 +241,6 @@ public class Associado extends AbstractAggregateRoot<Associado> {
         return List.copyOf(domainEvents());
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
     /** Vazio só em cadastro anonimizado. */
     public Optional<Documento> getDocumento() {
         return Optional.ofNullable(documento);
@@ -250,10 +248,6 @@ public class Associado extends AbstractAggregateRoot<Associado> {
 
     public Optional<LocalDate> getDataNascimento() {
         return Optional.ofNullable(dataNascimento);
-    }
-
-    public Integer getMunicipioId() {
-        return municipioId;
     }
 
     public Optional<UUID> getUsuarioId() {
@@ -266,9 +260,5 @@ public class Associado extends AbstractAggregateRoot<Associado> {
 
     public List<ContatoAssociado> getContatos() {
         return List.copyOf(contatos);
-    }
-
-    public int getVersao() {
-        return versao;
     }
 }

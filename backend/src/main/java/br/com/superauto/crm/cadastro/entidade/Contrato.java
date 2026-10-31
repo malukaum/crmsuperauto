@@ -22,6 +22,10 @@ import jakarta.persistence.Version;
 
 import br.com.superauto.crm.erro.NegocioException;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.domain.AbstractAggregateRoot;
@@ -37,59 +41,75 @@ import org.springframework.data.domain.AbstractAggregateRoot;
  */
 @Entity
 @Table(name = "contrato")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Contrato extends AbstractAggregateRoot<Contrato> {
 
     static final int TAMANHO_MAXIMO_CODIGO_SGA = 30;
 
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Getter
     @Column(name = "associado_id", nullable = false)
     private Long associadoId;
 
+    @Getter
     @Column(name = "veiculo_id", nullable = false)
     private Long veiculoId;
 
+    @Getter
     @Column(name = "vendedor_id")
     private UUID vendedorId;
 
+    @Getter
     @Column(name = "codigo_sga", length = TAMANHO_MAXIMO_CODIGO_SGA, unique = true)
     private String codigoSga;
 
+    @Getter
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 12)
     private SituacaoContrato situacao;
 
+    @Getter
     @Convert(converter = MensalidadeConverter.class)
     @Column(name = "valor_mensalidade", nullable = false, precision = 12, scale = 2)
     private Mensalidade mensalidade;
 
+    @Getter
     @Column(name = "vendido_em")
     private OffsetDateTime vendidoEm;
 
+    @Getter
     @Column(name = "aderido_em", nullable = false)
     private OffsetDateTime aderidoEm;
 
+    @Getter
     @Column(name = "encerrado_em")
     private OffsetDateTime encerradoEm;
 
+    @Getter
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 12)
     private OrigemContrato origem;
 
+    @Getter
     @Column(name = "importacao_registro_id")
     private Long importacaoRegistroId;
 
+    @Getter
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)
     private OffsetDateTime criadoEm;
 
+    @Getter
     @UpdateTimestamp
     @Column(name = "atualizado_em", nullable = false)
     private OffsetDateTime atualizadoEm;
 
     /** Trava otimista (RG-06): o Hibernate incrementa a cada UPDATE e recusa gravar sobre uma versão desatualizada. */
+    @Getter
     @Version
     @Column(nullable = false)
     private int versao;
@@ -97,9 +117,6 @@ public class Contrato extends AbstractAggregateRoot<Contrato> {
     /** Quem cadastrou; só existe até o INSERT, para o evento de cadastro. */
     @Transient
     private UUID cadastradoPor;
-
-    protected Contrato() {
-    }
 
     /**
      * CAR-02 · Contrato cadastrado na tela: nasce "a conferir" (RG-12), com o vendedor e os dados opcionais do SGA.
@@ -230,65 +247,5 @@ public class Contrato extends AbstractAggregateRoot<Contrato> {
     /** Eventos ainda não publicados; usado nos testes de domínio. */
     List<Object> eventosPendentes() {
         return List.copyOf(domainEvents());
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Long getAssociadoId() {
-        return associadoId;
-    }
-
-    public Long getVeiculoId() {
-        return veiculoId;
-    }
-
-    public UUID getVendedorId() {
-        return vendedorId;
-    }
-
-    public String getCodigoSga() {
-        return codigoSga;
-    }
-
-    public SituacaoContrato getSituacao() {
-        return situacao;
-    }
-
-    public Mensalidade getMensalidade() {
-        return mensalidade;
-    }
-
-    public OffsetDateTime getVendidoEm() {
-        return vendidoEm;
-    }
-
-    public OffsetDateTime getAderidoEm() {
-        return aderidoEm;
-    }
-
-    public OffsetDateTime getEncerradoEm() {
-        return encerradoEm;
-    }
-
-    public OrigemContrato getOrigem() {
-        return origem;
-    }
-
-    public Long getImportacaoRegistroId() {
-        return importacaoRegistroId;
-    }
-
-    public OffsetDateTime getCriadoEm() {
-        return criadoEm;
-    }
-
-    public OffsetDateTime getAtualizadoEm() {
-        return atualizadoEm;
-    }
-
-    public int getVersao() {
-        return versao;
     }
 }

@@ -12,6 +12,10 @@ import jakarta.persistence.Table;
 
 import br.com.superauto.crm.compartilhado.entidade.Fila;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.Immutable;
 
 /**
@@ -21,6 +25,8 @@ import org.hibernate.annotations.Immutable;
 @Entity
 @Immutable
 @Table(name = "vw_fila_contato")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PosicaoFila {
 
     @Id
@@ -45,35 +51,4 @@ public class PosicaoFila {
 
     @Column(name = "dias_atraso")
     private Integer diasAtraso;
-
-    protected PosicaoFila() {
-    }
-
-    public Long getContratoId() {
-        return contratoId;
-    }
-
-    public Long getAssociadoId() {
-        return associadoId;
-    }
-
-    public UUID getVendedorId() {
-        return vendedorId;
-    }
-
-    public Short getEtapaPendenteId() {
-        return etapaPendenteId;
-    }
-
-    public LocalDate getProximoContatoEm() {
-        return proximoContatoEm;
-    }
-
-    public Fila getFila() {
-        return fila;
-    }
-
-    public Integer getDiasAtraso() {
-        return diasAtraso;
-    }
 }

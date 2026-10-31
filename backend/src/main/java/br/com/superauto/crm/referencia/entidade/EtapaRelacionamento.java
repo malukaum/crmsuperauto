@@ -5,6 +5,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.Immutable;
 
 /**
@@ -15,6 +19,8 @@ import org.hibernate.annotations.Immutable;
 @Entity
 @Immutable
 @Table(name = "etapa_relacionamento")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EtapaRelacionamento {
 
     @Id
@@ -37,35 +43,4 @@ public class EtapaRelacionamento {
 
     @Column(nullable = false)
     private boolean inicial;
-
-    protected EtapaRelacionamento() {
-    }
-
-    public Short getId() {
-        return id;
-    }
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public short getOrdem() {
-        return ordem;
-    }
-
-    public short getDiasAposAnterior() {
-        return diasAposAnterior;
-    }
-
-    public Short getProximaEtapaId() {
-        return proximaEtapaId;
-    }
-
-    public boolean isInicial() {
-        return inicial;
-    }
 }

@@ -14,6 +14,10 @@ import jakarta.persistence.Version;
 
 import br.com.superauto.crm.erro.NegocioException;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -23,22 +27,27 @@ import org.hibernate.annotations.UpdateTimestamp;
  */
 @Entity
 @Table(name = "veiculo")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Veiculo {
 
     static final int TAMANHO_MAXIMO_MODELO = 150;
 
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Getter
     @Convert(converter = PlacaConverter.class)
     @Column(nullable = false, length = 7, unique = true)
     private Placa placa;
 
+    @Getter
     @Column(nullable = false, length = TAMANHO_MAXIMO_MODELO)
     private String modelo;
 
     /** Tipo de veículo (referência): só o id. */
+    @Getter
     @Column(name = "tipo_veiculo_id", nullable = false)
     private Short tipoVeiculoId;
 
@@ -50,12 +59,10 @@ public class Veiculo {
     @Column(name = "atualizado_em", nullable = false)
     private OffsetDateTime atualizadoEm;
 
+    @Getter
     @Version
     @Column(nullable = false)
     private int versao;
-
-    protected Veiculo() {
-    }
 
     public static Veiculo cadastrar(Placa placa, String modelo, Short tipoVeiculoId) {
         var veiculo = new Veiculo();
@@ -72,25 +79,5 @@ public class Veiculo {
         }
         this.modelo = normalizado;
         this.tipoVeiculoId = Objects.requireNonNull(novoTipoVeiculoId, "tipoVeiculoId");
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Placa getPlaca() {
-        return placa;
-    }
-
-    public String getModelo() {
-        return modelo;
-    }
-
-    public Short getTipoVeiculoId() {
-        return tipoVeiculoId;
-    }
-
-    public int getVersao() {
-        return versao;
     }
 }

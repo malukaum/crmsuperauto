@@ -17,6 +17,10 @@ import jakarta.persistence.Transient;
 import br.com.superauto.crm.compartilhado.entidade.Email;
 import br.com.superauto.crm.compartilhado.entidade.EmailConverter;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.domain.Persistable;
@@ -31,6 +35,7 @@ import org.springframework.data.domain.Persistable;
  */
 @Entity
 @Table(name = "usuario")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Usuario implements Persistable<UUID> {
 
     /** O usuário técnico que assina o que veio da planilha. Não existe no Keycloak. */
@@ -39,9 +44,11 @@ public class Usuario implements Persistable<UUID> {
     @Id
     private UUID id;
 
+    @Getter
     @Column(nullable = false, length = 100)
     private String username;
 
+    @Getter
     @Column(nullable = false, length = 200)
     private String nome;
 
@@ -49,22 +56,22 @@ public class Usuario implements Persistable<UUID> {
     @Column(length = Email.TAMANHO_MAXIMO)
     private Email email;
 
+    @Getter
     @Column(nullable = false)
     private boolean ativo;
 
+    @Getter
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)
     private OffsetDateTime criadoEm;
 
+    @Getter
     @UpdateTimestamp
     @Column(name = "atualizado_em", nullable = false)
     private OffsetDateTime atualizadoEm;
 
     @Transient
     private boolean novo;
-
-    protected Usuario() {
-    }
 
     public Usuario(UUID id, String username, String nome, Email email) {
         this.id = Objects.requireNonNull(id);
@@ -112,27 +119,7 @@ public class Usuario implements Persistable<UUID> {
         return id;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
     public Optional<Email> getEmail() {
         return Optional.ofNullable(email);
-    }
-
-    public boolean isAtivo() {
-        return ativo;
-    }
-
-    public OffsetDateTime getCriadoEm() {
-        return criadoEm;
-    }
-
-    public OffsetDateTime getAtualizadoEm() {
-        return atualizadoEm;
     }
 }

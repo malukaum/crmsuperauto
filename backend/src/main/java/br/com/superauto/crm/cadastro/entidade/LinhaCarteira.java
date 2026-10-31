@@ -18,6 +18,10 @@ import br.com.superauto.crm.compartilhado.entidade.DocumentoConverter;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
 import br.com.superauto.crm.compartilhado.entidade.Telefone;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.Immutable;
 
 /**
@@ -27,60 +31,77 @@ import org.hibernate.annotations.Immutable;
 @Entity
 @Immutable
 @Table(name = "vw_carteira")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LinhaCarteira {
 
+    @Getter
     @Id
     @Column(name = "contrato_id")
     private Long contratoId;
 
+    @Getter
     @Column(name = "contrato_versao")
     private int contratoVersao;
 
+    @Getter
     @Column(name = "associado_id")
     private Long associadoId;
 
+    @Getter
     @Column(name = "associado_nome")
     private String associadoNome;
 
     @Convert(converter = DocumentoConverter.class)
     private Documento documento;
 
+    @Getter
     @Enumerated(EnumType.STRING)
     private Perfil perfil;
 
+    @Getter
     @Enumerated(EnumType.STRING)
     @Column(name = "potencial_indicacao")
     private PotencialIndicacao potencialIndicacao;
 
+    @Getter
     @Column(name = "municipio_id")
     private Integer municipioId;
 
+    @Getter
     private String cidade;
 
+    @Getter
     @Column(columnDefinition = "bpchar(2)")
     private String uf;
 
+    @Getter
     @Convert(converter = PlacaConverter.class)
     private Placa placa;
 
+    @Getter
     private String modelo;
 
+    @Getter
     @Column(name = "tipo_veiculo_id")
     private Short tipoVeiculoId;
 
+    @Getter
     @Column(name = "tipo_veiculo")
     private String tipoVeiculo;
 
+    @Getter
     @Convert(converter = MensalidadeConverter.class)
     @Column(name = "valor_mensalidade")
     private Mensalidade mensalidade;
 
+    @Getter
     @Enumerated(EnumType.STRING)
     private SituacaoContrato situacao;
 
     @Column(name = "codigo_sga")
     private String codigoSga;
 
+    @Getter
     @Column(name = "aderido_em")
     private OffsetDateTime aderidoEm;
 
@@ -108,9 +129,11 @@ public class LinhaCarteira {
     @Column(name = "proximo_contato_em")
     private LocalDate proximoContatoEm;
 
+    @Getter
     @Enumerated(EnumType.STRING)
     private Fila fila;
 
+    @Getter
     @Column(name = "dias_atraso")
     private int diasAtraso;
 
@@ -122,80 +145,13 @@ public class LinhaCarteira {
     /** Todos os números do associado, só para a busca por telefone (RG-05). */
     private String telefones;
 
-    protected LinhaCarteira() {
-    }
-
-    public Long getContratoId() {
-        return contratoId;
-    }
-
-    public int getContratoVersao() {
-        return contratoVersao;
-    }
-
-    public Long getAssociadoId() {
-        return associadoId;
-    }
-
-    public String getAssociadoNome() {
-        return associadoNome;
-    }
-
     /** Vazio só em cadastro anonimizado. */
     public Optional<Documento> getDocumento() {
         return Optional.ofNullable(documento);
     }
 
-    public Perfil getPerfil() {
-        return perfil;
-    }
-
-    public PotencialIndicacao getPotencialIndicacao() {
-        return potencialIndicacao;
-    }
-
-    public Integer getMunicipioId() {
-        return municipioId;
-    }
-
-    public String getCidade() {
-        return cidade;
-    }
-
-    public String getUf() {
-        return uf;
-    }
-
-    public Placa getPlaca() {
-        return placa;
-    }
-
-    public String getModelo() {
-        return modelo;
-    }
-
-    public Short getTipoVeiculoId() {
-        return tipoVeiculoId;
-    }
-
-    public String getTipoVeiculo() {
-        return tipoVeiculo;
-    }
-
-    public Mensalidade getMensalidade() {
-        return mensalidade;
-    }
-
-    public SituacaoContrato getSituacao() {
-        return situacao;
-    }
-
     public Optional<String> getCodigoSga() {
         return Optional.ofNullable(codigoSga);
-    }
-
-    public OffsetDateTime getAderidoEm() {
-        return aderidoEm;
     }
 
     public Optional<OffsetDateTime> getVendidoEm() {
@@ -224,14 +180,6 @@ public class LinhaCarteira {
 
     public Optional<LocalDate> getProximoContatoEm() {
         return Optional.ofNullable(proximoContatoEm);
-    }
-
-    public Fila getFila() {
-        return fila;
-    }
-
-    public int getDiasAtraso() {
-        return diasAtraso;
     }
 
     public Optional<Telefone> getWhatsapp() {
