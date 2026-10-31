@@ -1,10 +1,9 @@
 package br.com.superauto.crm.cadastro.servico;
 
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
-
-import br.com.superauto.crm.cadastro.entidade.Mensalidade;
 
 /**
  * As condições do novo contrato (CAR-02).

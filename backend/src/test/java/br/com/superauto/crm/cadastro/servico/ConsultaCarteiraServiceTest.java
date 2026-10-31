@@ -6,17 +6,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import br.com.superauto.crm.cadastro.entidade.Mensalidade;
 import br.com.superauto.crm.cadastro.repositorio.ConsultaCarteira;
 import br.com.superauto.crm.cadastro.repositorio.FiltroCarteira;
 import br.com.superauto.crm.cadastro.repositorio.ResultadoCarteira;
 import br.com.superauto.crm.cadastro.repositorio.TermoBusca;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
-
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -54,7 +53,7 @@ class ConsultaCarteiraServiceTest {
     @Test
     @DisplayName("CAR-01: páginas só de 10, 25 ou 50 linhas")
     void tamanhoDePagina() {
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> new PaginaSolicitada(0, 30, Ordenacao.PADRAO))
+        Assertions.assertThatThrownBy(() -> new PaginaSolicitada(0, 30, Ordenacao.PADRAO))
                 .hasMessageContaining("10, 25 ou 50");
     }
 

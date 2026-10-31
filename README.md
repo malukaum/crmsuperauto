@@ -2,7 +2,7 @@
 
 CRM de pós-venda para associados de proteção veicular, em migração de uma planilha Excel com VBA para uma aplicação web.
 
-**Parte 1: base do projeto.** Spring Boot + Angular + Keycloak + Postgres funcionando juntos, com login e controle de acesso por papel. Ainda não há entidades de negócio.
+Spring Boot + Angular + Keycloak + Postgres, com acesso por papel, carteira de associados e operação de pós-venda pelas filas e pela régua.
 
 ## Stack e versões
 
@@ -65,6 +65,25 @@ cd frontend && npx ng build              # build de produção
 cd frontend && npx ng test --watch=false # testes unitários (Vitest)
 ```
 
+## Painel, filas e régua (FIL-01 a FIL-06)
+
+- `/contatos-hoje` e `/atrasados`: busca por nome sem acento, placa, documento ou telefone; filtros por cidade, etapa e tipo de veículo. O formulário na fila mostra a prévia da próxima etapa e data antes da gravação. Histórico e régua são gravados na mesma transação, com controle de versão e atualização do menu.
+- `/aniversariantes`: Hoje, Próximos 7 dias e Próximos 30 dias, com uma linha por pessoa e todas as suas placas elegíveis. Registro da mensagem preserva a régua, sinaliza “Mensagem enviada” e pede confirmação para repetir no mesmo ano. Nascidos em 29/02 aparecem em 28/02 nos anos comuns.
+- WhatsApp: conversa em nova aba, com texto sugerido editável no formulário. O opt-out desativa o botão; abrir a conversa não registra atendimento.
+- `/configuracoes/regua`: somente gerencial, prazos de 1 a 365 dias, prévia da quantidade de contratos afetados e confirmação. Retornos manuais são preservados; mudanças geram auditoria. Uma prévia desatualizada precisa ser gerada novamente.
+- `/atendimentos`: lista dos registros do mês corrente, de todos os tipos, acessível pelo indicador do painel.
+
+As migrações `016-filas.xml` e `017-relacionamento-historico-completo.xml` adicionam a versão das etapas e a projeção de leitura das filas, preservando os indicadores históricos de cadastros anonimizados. O Liquibase as aplica na inicialização.
+
+Para executar também os cenários de aceitação com o PostgreSQL local em execução:
+
+```bash
+cd backend
+FIL_TESTAR_BANCO=true mvn verify
+```
+
+Esses testes usam as referências carregadas pelo Liquibase, fixam o relógio em 31/10/2026 e desfazem os dados dos cenários ao terminar. Sem a variável, a suíte comum não exige banco.
+
 ## Usuários de teste
 
 A senha de todos é `123456`, sem troca obrigatória.
@@ -79,7 +98,7 @@ A senha de todos é `123456`, sem troca obrigatória.
 
 Novos usuários da equipe são criados pelo gerencial em **Configurações → Usuários**. A pessoa recebe no e-mail (Mailpit, em dev) o link para definir a senha.
 
-O Painel (e o Início do cliente) chama `/api/me` e os três endpoints `ping` com o token do usuário logado e mostra o status de cada um. Por exemplo, `vendedor1` vê 403 em `/api/gestao/ping` e `cliente1` vê 403 em `/api/interno/ping`.
+O Painel mostra indicadores da carteira, contatos de hoje, atrasados, aniversariantes, mensalidades ativas e atendimentos do mês. Cada indicador abre sua fila ou filtro. O vendedor vê apenas os próprios contratos. A verificação de integração continua disponível no Início do cliente.
 
 Administração do Keycloak: http://localhost:8180, usuário `admin`, senha `admin`.
 

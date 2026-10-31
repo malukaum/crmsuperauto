@@ -36,6 +36,7 @@ export function estadoDaUrl(params: ParamMap): EstadoCarteira {
       fila: texto('fila') as Fila | undefined,
       cidade: numero('cidade'),
       situacao: texto('situacao') as SituacaoContrato | undefined,
+      excluirCancelados: params.get('excluirCancelados') === 'true' || undefined,
       etapa: numero('etapa'),
       tipoVeiculo: numero('tipoVeiculo'),
       perfil: texto('perfil') as Perfil | undefined,
@@ -67,7 +68,11 @@ export function urlDoEstado(estado: EstadoCarteira): Params {
 }
 
 /** Mudar qualquer filtro volta para a primeira página. */
-export function comFiltro(estado: EstadoCarteira, mudanca: Partial<FiltroCarteira>, cidadeNome?: string): EstadoCarteira {
+export function comFiltro(
+  estado: EstadoCarteira,
+  mudanca: Partial<FiltroCarteira>,
+  cidadeNome?: string,
+): EstadoCarteira {
   return {
     filtro: { ...estado.filtro, ...mudanca, pagina: 0 },
     cidadeNome: 'cidade' in mudanca ? cidadeNome : estado.cidadeNome,
@@ -79,6 +84,11 @@ export function comOrdem(estado: EstadoCarteira, coluna: OrdemCarteira): EstadoC
   const mesma = (estado.filtro.ordem ?? 'NOME') === coluna;
   return {
     ...estado,
-    filtro: { ...estado.filtro, ordem: coluna, decrescente: mesma ? !estado.filtro.decrescente : undefined, pagina: 0 },
+    filtro: {
+      ...estado.filtro,
+      ordem: coluna,
+      decrescente: mesma ? !estado.filtro.decrescente : undefined,
+      pagina: 0,
+    },
   };
 }

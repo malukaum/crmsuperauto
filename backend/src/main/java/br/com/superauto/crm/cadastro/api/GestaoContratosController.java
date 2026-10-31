@@ -1,25 +1,22 @@
 package br.com.superauto.crm.cadastro.api;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
+import br.com.superauto.crm.cadastro.servico.AlteracaoContrato;
+import br.com.superauto.crm.cadastro.servico.GestaoContratosService;
+import br.com.superauto.crm.cadastro.servico.ResultadoAtivacao;
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
+import br.com.superauto.crm.seguranca.Papeis;
+import br.com.superauto.crm.seguranca.UsuarioAtual;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
-import br.com.superauto.crm.cadastro.entidade.Mensalidade;
-import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
-import br.com.superauto.crm.cadastro.servico.AlteracaoContrato;
-import br.com.superauto.crm.cadastro.servico.GestaoContratosService;
-import br.com.superauto.crm.cadastro.servico.ResultadoAtivacao;
-import br.com.superauto.crm.seguranca.Papeis;
-import br.com.superauto.crm.seguranca.UsuarioAtual;
-
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;

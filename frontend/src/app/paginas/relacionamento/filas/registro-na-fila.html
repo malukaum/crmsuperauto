@@ -1,0 +1,85 @@
+@if (linha(); as linha) {
+  @if (erro()) {
+    <p class="crm-erro" role="alert">{{ erro() }}</p>
+  }
+  <section class="crm-card registro" aria-label="Registrar contato">
+    <h2>
+      {{ aniversario() ? 'Mensagem de aniversário' : 'Registrar atendimento' }} · {{ linha.nome }} ·
+      {{ linha.placa }}
+    </h2>
+    <mat-form-field
+      ><mat-label>Texto sugerido para o WhatsApp</mat-label
+      ><textarea
+        matInput
+        [disabled]="gravando()"
+        [ngModel]="textoMensagem()"
+        (ngModelChange)="textoMensagem.set($event)"
+      ></textarea>
+    </mat-form-field>
+    @if (linha.whatsapp && linha.aceitaWhatsapp) {
+      <a mat-stroked-button [href]="whatsapp()" target="_blank" rel="noopener noreferrer"
+        >Abrir conversa com este texto</a
+      >
+    }
+    @if (!aniversario()) {
+      <mat-form-field
+        ><mat-label>Resultado</mat-label
+        ><mat-select
+          [disabled]="gravando()"
+          [ngModel]="resultado()"
+          (ngModelChange)="resultado.set($event); invalidarPrevia()"
+          ><mat-option value="CONCLUIDO">Concluído</mat-option
+          ><mat-option value="SEM_RESPOSTA">Sem resposta</mat-option
+          ><mat-option value="REAGENDADO">Reagendado</mat-option
+          ><mat-option value="PENDENTE">Pendente</mat-option></mat-select
+        ></mat-form-field
+      >
+      <mat-form-field
+        ><mat-label>Retorno manual (opcional)</mat-label
+        ><input
+          matInput
+          [disabled]="gravando()"
+          type="date"
+          [ngModel]="retorno()"
+          (ngModelChange)="retorno.set($event); invalidarPrevia()"
+      /></mat-form-field>
+      <mat-form-field
+        ><mat-label>Resumo (opcional)</mat-label
+        ><textarea
+          matInput
+          [disabled]="gravando()"
+          maxlength="2000"
+          [ngModel]="descricao()"
+          (ngModelChange)="descricao.set($event)"
+        ></textarea>
+      </mat-form-field>
+      <button mat-stroked-button (click)="prever()" [disabled]="gravando()">
+        Visualizar próximo contato
+      </button>
+      @if (previsao(); as p) {
+        <p role="status">
+          {{
+            p.etapaConcluida
+              ? 'Etapa ' + p.etapaConcluida + ' concluída. '
+              : 'Etapa atual mantida. '
+          }}Próxima etapa: {{ p.proximaEtapa }}. Próximo contato:
+          {{ formatarData(p.proximoContato) }}.
+        </p>
+      }
+    } @else {
+      <p>
+        A mensagem será registrada no histórico da pessoa. A agenda de pós-venda será preservada.
+      </p>
+    }
+    <div class="crm-acoes">
+      <button
+        mat-flat-button
+        class="crm-acao-destaque"
+        [disabled]="gravando() || (!aniversario() && !previsao())"
+        (click)="registrar()"
+      >
+        {{ repeticao() ? 'Confirmar outro registro' : 'Confirmar registro' }}</button
+      ><button mat-button [disabled]="gravando()" (click)="cancelado.emit()">Cancelar</button>
+    </div>
+  </section>
+}

@@ -1,0 +1,95 @@
+<div class="crm-pagina">
+  <h1 class="crm-titulo-pagina">Painel</h1>
+  <p class="crm-subtitulo">Organize o relacionamento com seus associados.</p>
+  @if (erro()) {
+    <p class="crm-erro" role="alert">
+      {{ erro() }} <button mat-button (click)="carregar()">Tentar novamente</button>
+    </p>
+  }
+  @if (dados(); as p) {
+    @if (p.aConferir) {
+      <p class="crm-card aviso">
+        <a routerLink="/carteira" [queryParams]="{ situacao: 'A_CONFERIR' }"
+          >{{ p.aConferir }} contrato(s) A conferir. Revisar na carteira.</a
+        >
+      </p>
+    }
+    <div class="indicadores">
+      <a
+        class="crm-card indicador"
+        routerLink="/carteira"
+        [queryParams]="{ excluirCancelados: true }"
+        ><span>Contratos na carteira</span><strong>{{ p.carteira }}</strong>
+        @for (tipo of p.porTipo | keyvalue; track tipo.key) {
+          <span class="crm-secundario">{{ tipo.key }}: {{ tipo.value }}</span>
+        }
+      </a>
+      <a class="crm-card indicador" routerLink="/contatos-hoje"
+        ><span>Contatos de hoje</span><strong>{{ p.contatosHoje }}</strong></a
+      >
+      <a class="crm-card indicador" routerLink="/atrasados"
+        ><span>Atrasados</span><strong>{{ p.atrasados }}</strong></a
+      >
+      <a class="crm-card indicador" routerLink="/aniversariantes"
+        ><span>Aniversariantes de hoje</span><strong>{{ p.aniversariantesHoje }}</strong></a
+      >
+      <a class="crm-card indicador" routerLink="/aniversariantes" [queryParams]="{ dias: 7 }"
+        ><span>Aniversariantes em 7 dias</span><strong>{{ p.aniversariantes7Dias }}</strong></a
+      >
+      <a class="crm-card indicador" routerLink="/carteira" [queryParams]="{ situacao: 'ATIVO' }"
+        ><span>Mensalidades ativas</span
+        ><strong>{{ p.mensalidadesAtivas | currency: 'BRL' }}</strong></a
+      >
+      <a class="crm-card indicador" routerLink="/atendimentos"
+        ><span>Atendimentos no mês</span><strong>{{ p.atendimentosMes }}</strong></a
+      >
+    </div>
+    <app-aviso-mensalidade />
+    <div class="resumos">
+      <section class="crm-card resumo">
+        <h2>Próximos contatos de hoje</h2>
+        <ul class="crm-lista">
+          @for (c of p.proximosContatos; track c.contratoId) {
+            <li>
+              <a [routerLink]="['/carteira/associados', c.associadoId]">{{ c.nome }}</a
+              ><span class="crm-secundario">{{ c.placa }} · {{ c.etapa }}</span>
+            </li>
+          } @empty {
+            <li>Nenhum contato para hoje.</li>
+          }
+        </ul>
+        <a mat-button routerLink="/contatos-hoje">Abrir fila</a>
+      </section>
+      <section class="crm-card resumo">
+        <h2>Situação dos contratos</h2>
+        <ul class="crm-lista">
+          @for (s of p.situacoes | keyvalue; track s.key) {
+            <li>
+              <a routerLink="/carteira" [queryParams]="{ situacao: s.key }"
+                >{{ situacoes[s.key] }}: {{ s.value }}</a
+              >
+            </li>
+          }
+        </ul>
+      </section>
+      <section class="crm-card resumo">
+        <h2>Próximos aniversariantes</h2>
+        <ul class="crm-lista">
+          @for (c of p.proximosAniversariantes; track c.associadoId) {
+            <li>
+              <a [routerLink]="['/carteira/associados', c.associadoId]">{{ c.nome }}</a
+              ><span class="crm-secundario">{{ formatarData(c.data) }}</span>
+            </li>
+          } @empty {
+            <li>Nenhum aniversário nos próximos 7 dias.</li>
+          }
+        </ul>
+        <a mat-button routerLink="/aniversariantes" [queryParams]="{ dias: 7 }"
+          >Abrir aniversariantes</a
+        >
+      </section>
+    </div>
+  } @else if (!erro()) {
+    <p role="status">Carregando indicadores…</p>
+  }
+</div>

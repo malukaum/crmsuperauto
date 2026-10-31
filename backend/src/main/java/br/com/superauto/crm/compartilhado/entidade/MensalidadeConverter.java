@@ -1,9 +1,9 @@
-package br.com.superauto.crm.cadastro.entidade;
-
-import java.math.BigDecimal;
+package br.com.superauto.crm.compartilhado.entidade;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+
+import java.math.BigDecimal;
 
 /** Grava a {@link Mensalidade} em {@code numeric(12,2)}. */
 @Converter

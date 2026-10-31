@@ -69,6 +69,7 @@ export interface FiltroCarteira {
   fila?: Fila;
   cidade?: number;
   situacao?: SituacaoContrato;
+  excluirCancelados?: boolean;
   etapa?: number;
   tipoVeiculo?: number;
   perfil?: Perfil;

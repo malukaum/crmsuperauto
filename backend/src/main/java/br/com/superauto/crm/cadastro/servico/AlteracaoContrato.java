@@ -1,11 +1,10 @@
 package br.com.superauto.crm.cadastro.servico;
 
+import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-
-import br.com.superauto.crm.cadastro.entidade.Mensalidade;
-import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
 
 /**
  * CAR-05 · O contrato como o gerencial quer deixá-lo, conforme o SGA.

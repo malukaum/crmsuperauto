@@ -1,10 +1,13 @@
 package br.com.superauto.crm.cadastro.entidade;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.Optional;
-import java.util.UUID;
-
+import br.com.superauto.crm.compartilhado.entidade.Documento;
+import br.com.superauto.crm.compartilhado.entidade.DocumentoConverter;
+import br.com.superauto.crm.compartilhado.entidade.Fila;
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
+import br.com.superauto.crm.compartilhado.entidade.MensalidadeConverter;
+import br.com.superauto.crm.compartilhado.entidade.Placa;
+import br.com.superauto.crm.compartilhado.entidade.PlacaConverter;
+import br.com.superauto.crm.compartilhado.entidade.Telefone;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -12,16 +15,13 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
-import br.com.superauto.crm.compartilhado.entidade.Documento;
-import br.com.superauto.crm.compartilhado.entidade.DocumentoConverter;
-import br.com.superauto.crm.compartilhado.entidade.Fila;
-import br.com.superauto.crm.compartilhado.entidade.Telefone;
-
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import org.hibernate.annotations.Immutable;
 
 /**

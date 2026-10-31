@@ -1,0 +1,49 @@
+<div class="crm-pagina">
+  <h1 class="crm-titulo-pagina">Atendimentos do mês</h1>
+  <p class="crm-subtitulo">Todos os tipos de contato registrados no mês corrente.</p>
+  @if (erro()) {
+    <p role="alert" class="crm-erro">
+      {{ erro() }} <button mat-button (click)="carregar()">Tentar novamente</button>
+    </p>
+  }
+  @if (carregando()) {
+    <p role="status">Carregando histórico…</p>
+  } @else {
+    <div class="crm-card crm-card--lista crm-tabela-rolagem">
+      <table class="crm-tabela">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Placa</th>
+            <th>Tipo / etapa</th>
+            <th>Resultado</th>
+            <th>Resumo</th>
+            <th>Autor</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (linha of linhas(); track linha.id) {
+            <tr>
+              <td>{{ formatarData(linha.realizadoEm) }}</td>
+              <td>
+                <a [routerLink]="['/carteira/associados', linha.associadoId]">{{ linha.nome }}</a>
+              </td>
+              <td>{{ linha.placa || '—' }}</td>
+              <td>
+                {{ linha.tipo }}<span class="crm-secundario">{{ linha.etapa }}</span>
+              </td>
+              <td>{{ resultados[linha.resultado] }}</td>
+              <td>{{ linha.descricao || '—' }}</td>
+              <td>{{ linha.registradoPor }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7">Nenhum atendimento neste mês.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

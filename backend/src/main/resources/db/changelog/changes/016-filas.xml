@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+ <changeSet id="016-regua-versao" author="crm-superauto">
+  <addColumn tableName="etapa_relacionamento"><column name="versao" type="integer" defaultValueNumeric="0"><constraints nullable="false"/></column></addColumn>
+  <rollback><dropColumn tableName="etapa_relacionamento" columnName="versao"/></rollback>
+ </changeSet>
+ <changeSet id="016-trabalho-relacionamento" author="crm-superauto">
+  <createView viewName="vw_trabalho_relacionamento"><![CDATA[
+SELECT c.*, a.data_nascimento,
+       COALESCE((u.ultimo_contato_em AT TIME ZONE 'America/Sao_Paulo')::date,
+                (c.aderido_em AT TIME ZONE 'America/Sao_Paulo')::date) AS base_regua,
+       COALESCE(ac.versao, 0) AS acompanhamento_versao
+FROM vw_carteira c
+JOIN associado a ON a.id = c.associado_id
+LEFT JOIN acompanhamento_contrato ac ON ac.contrato_id = c.contrato_id
+LEFT JOIN vw_ultimo_contato_regua u ON u.contrato_id = c.contrato_id
+WHERE a.anonimizado_em IS NULL
+  ]]></createView>
+  <rollback><dropView viewName="vw_trabalho_relacionamento"/></rollback>
+ </changeSet>
+</databaseChangeLog>

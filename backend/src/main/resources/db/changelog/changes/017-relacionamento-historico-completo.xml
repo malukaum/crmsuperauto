@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- A anonimização preserva contratos e atendimentos, inclusive os indicadores históricos (RG-07). -->
+    <changeSet id="017-relacionamento-historico-completo" author="crm-superauto">
+        <createView viewName="vw_trabalho_relacionamento" replaceIfExists="true"><![CDATA[
+SELECT c.*, a.data_nascimento,
+       COALESCE((u.ultimo_contato_em AT TIME ZONE 'America/Sao_Paulo')::date,
+                (c.aderido_em AT TIME ZONE 'America/Sao_Paulo')::date) AS base_regua,
+       COALESCE(ac.versao, 0) AS acompanhamento_versao
+  FROM vw_carteira c
+  JOIN associado a ON a.id = c.associado_id
+  LEFT JOIN acompanhamento_contrato ac ON ac.contrato_id = c.contrato_id
+  LEFT JOIN vw_ultimo_contato_regua u ON u.contrato_id = c.contrato_id
+        ]]></createView>
+        <rollback>
+            <createView viewName="vw_trabalho_relacionamento" replaceIfExists="true"><![CDATA[
+SELECT c.*, a.data_nascimento,
+       COALESCE((u.ultimo_contato_em AT TIME ZONE 'America/Sao_Paulo')::date,
+                (c.aderido_em AT TIME ZONE 'America/Sao_Paulo')::date) AS base_regua,
+       COALESCE(ac.versao, 0) AS acompanhamento_versao
+  FROM vw_carteira c
+  JOIN associado a ON a.id = c.associado_id
+  LEFT JOIN acompanhamento_contrato ac ON ac.contrato_id = c.contrato_id
+  LEFT JOIN vw_ultimo_contato_regua u ON u.contrato_id = c.contrato_id
+ WHERE a.anonimizado_em IS NULL
+            ]]></createView>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

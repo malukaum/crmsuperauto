@@ -9,6 +9,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import br.com.superauto.crm.cadastro.entidade.Contrato;
+import br.com.superauto.crm.cadastro.entidade.ContratoDeTeste;
+import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
+import br.com.superauto.crm.cadastro.repositorio.ContratoRepository;
+import br.com.superauto.crm.cadastro.repositorio.VendedoresDaEquipe;
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
+import br.com.superauto.crm.erro.NegocioException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -16,15 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
-import br.com.superauto.crm.cadastro.entidade.Contrato;
-import br.com.superauto.crm.cadastro.entidade.ContratoDeTeste;
-import br.com.superauto.crm.cadastro.entidade.Mensalidade;
-import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
-import br.com.superauto.crm.cadastro.repositorio.ContratoRepository;
-import br.com.superauto.crm.cadastro.repositorio.VendedoresDaEquipe;
-import br.com.superauto.crm.erro.NegocioException;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

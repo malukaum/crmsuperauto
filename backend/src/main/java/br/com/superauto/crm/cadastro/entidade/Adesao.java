@@ -1,5 +1,6 @@
 package br.com.superauto.crm.cadastro.entidade;
 
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 

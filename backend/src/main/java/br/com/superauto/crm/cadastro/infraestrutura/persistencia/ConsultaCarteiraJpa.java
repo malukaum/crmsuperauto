@@ -1,9 +1,14 @@
 package br.com.superauto.crm.cadastro.infraestrutura.persistencia;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-
+import br.com.superauto.crm.cadastro.entidade.LinhaCarteira;
+import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
+import br.com.superauto.crm.cadastro.repositorio.ConsultaCarteira;
+import br.com.superauto.crm.cadastro.repositorio.FiltroCarteira;
+import br.com.superauto.crm.cadastro.repositorio.OrdemCarteira;
+import br.com.superauto.crm.cadastro.repositorio.ResultadoCarteira;
+import br.com.superauto.crm.cadastro.repositorio.TermoBusca;
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
+import br.com.superauto.crm.config.FuncoesDeBusca;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -11,16 +16,9 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-
-import br.com.superauto.crm.cadastro.entidade.LinhaCarteira;
-import br.com.superauto.crm.cadastro.entidade.Mensalidade;
-import br.com.superauto.crm.cadastro.repositorio.ConsultaCarteira;
-import br.com.superauto.crm.cadastro.repositorio.FiltroCarteira;
-import br.com.superauto.crm.cadastro.repositorio.OrdemCarteira;
-import br.com.superauto.crm.cadastro.repositorio.ResultadoCarteira;
-import br.com.superauto.crm.cadastro.repositorio.TermoBusca;
-import br.com.superauto.crm.config.FuncoesDeBusca;
-
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -89,6 +87,9 @@ public class ConsultaCarteiraJpa implements ConsultaCarteira {
 
     private static Predicate[] condicoes(CriteriaBuilder cb, Root<LinhaCarteira> linha, FiltroCarteira filtro) {
         List<Predicate> condicoes = new ArrayList<>();
+        if (filtro.excluirCancelados()) {
+            condicoes.add(cb.notEqual(linha.get("situacao"), SituacaoContrato.CANCELADO));
+        }
         filtro.busca().ifPresent(termo -> condicoes.add(busca(cb, linha, termo)));
         filtro.fila().ifPresent(f -> condicoes.add(cb.equal(linha.get("fila"), f)));
         filtro.municipioId().ifPresent(m -> condicoes.add(cb.equal(linha.get("municipioId"), m)));

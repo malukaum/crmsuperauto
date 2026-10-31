@@ -70,6 +70,7 @@ Visão geral, decisões e regras: [Modelo de dados](README.md).
 | `dias_apos_anterior` | `smallint` | não |  | Dias após o contato anterior concluído (ou após a adesão, na etapa inicial) até este contato. |
 | `proxima_etapa_id` | `smallint` | sim |  | FK → `etapa_relacionamento`; Etapa que fica pendente quando esta é concluída. Trimestral aponta para si mesma. |
 | `inicial` | `boolean` | não | false | Etapa em que todo contrato novo entra (só uma). |
+| `versao` | `integer` | não | 0 | Versão para edição simultânea dos prazos da régua (FIL-06 / RG-06). |
 
 **Regras de integridade**
 
@@ -396,6 +397,7 @@ Visão geral, decisões e regras: [Modelo de dados](README.md).
 | `vw_aniversariante` | Próximo aniversário e dias até ele, para associados com contrato vigente; 29/02 vira 28/02 em ano não bissexto. |
 | `vw_carteira` | CAR-01 · Uma linha por contrato com associado, documento, cidade/UF, veículo, mensalidade, situação, etapa pendente, próximo contato, fila (de `vw_fila_contato`; sem régua ativa = `SEM_DATA`), vendedor, WhatsApp principal com opt-out e todos os telefones do associado (só para a busca). |
 | `vw_historico_atendimento` | CAR-03 · Atendimentos com nome do tipo, da etapa e do autor, placa do contrato e a marca `corrigido` (já existe um registro que o corrige, ATD-04). |
+| `vw_trabalho_relacionamento` | FIL-01 a FIL-06 · Projeção por contrato da carteira, com nascimento, data-base da régua (último pós-venda concluído ou adesão, em São Paulo) e versão do acompanhamento. Preserva contratos anonimizados para os totais históricos; as consultas das filas excluem suspensos/cancelados e aplicam o vendedor. |
 | `vw_ultimo_contato_regua` | Último contato de régua concluído por contrato (ÚLTIMO CONTATO e ETAPA CONCLUÍDA da planilha). |
 | `texto_busca(text)` | Remove acentos e põe em minúsculas. Busca: `texto_busca(nome) LIKE '%' \|\| texto_busca(:termo) \|\| '%'`. |
 

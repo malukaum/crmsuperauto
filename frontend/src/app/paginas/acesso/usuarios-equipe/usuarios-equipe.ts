@@ -6,6 +6,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { EMPTY, Observable, catchError, defer, filter, finalize, switchMap } from 'rxjs';
 
 import {
@@ -26,7 +27,15 @@ import { NovoUsuarioDialog } from './novo-usuario-dialog';
 @Component({
   selector: 'app-usuarios-equipe',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, MatMenuModule, MatProgressBarModule, MatTooltipModule, StatusChip],
+  imports: [
+    RouterLink,
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
+    MatProgressBarModule,
+    MatTooltipModule,
+    StatusChip,
+  ],
   templateUrl: './usuarios-equipe.html',
   styleUrl: './usuarios-equipe.scss',
 })
@@ -80,7 +89,9 @@ export class UsuariosEquipe {
 
   protected novo(): void {
     this.dialog
-      .open<NovoUsuarioDialog, void, UsuarioCriado>(NovoUsuarioDialog, { autoFocus: 'first-tabbable' })
+      .open<NovoUsuarioDialog, void, UsuarioCriado>(NovoUsuarioDialog, {
+        autoFocus: 'first-tabbable',
+      })
       .afterClosed()
       .pipe(filter((r): r is UsuarioCriado => !!r))
       .subscribe((criado) => {
@@ -109,7 +120,9 @@ export class UsuariosEquipe {
   }
 
   protected desativar(u: UsuarioEquipe): void {
-    const vendedores = this.usuarios().filter((v) => v.ativo && v.papel === 'vendedor' && v.id !== u.id);
+    const vendedores = this.usuarios().filter(
+      (v) => v.ativo && v.papel === 'vendedor' && v.id !== u.id,
+    );
     this.dialog
       .open<DesativarUsuarioDialog, DadosDesativar, UsuarioEquipe>(DesativarUsuarioDialog, {
         data: { usuario: u, vendedores },

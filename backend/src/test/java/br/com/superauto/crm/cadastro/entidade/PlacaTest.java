@@ -3,8 +3,8 @@ package br.com.superauto.crm.cadastro.entidade;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import br.com.superauto.crm.compartilhado.entidade.Placa;
 import br.com.superauto.crm.erro.NegocioException;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

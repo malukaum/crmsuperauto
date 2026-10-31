@@ -1,0 +1,11 @@
+.filtros {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-block: 20px;
+}
+.filtros mat-form-field,
+app-campo-cidade {
+  flex: 1 1 200px;
+}

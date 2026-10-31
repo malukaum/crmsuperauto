@@ -17,12 +17,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Stream;
-
 import br.com.superauto.crm.acesso.api.EquipeController;
 import br.com.superauto.crm.acesso.api.MeController;
 import br.com.superauto.crm.acesso.api.PingController;
@@ -47,19 +41,30 @@ import br.com.superauto.crm.config.ClockConfig;
 import br.com.superauto.crm.config.CrmProperties;
 import br.com.superauto.crm.config.SecurityConfig;
 import br.com.superauto.crm.erro.NegocioException;
-import br.com.superauto.crm.relacionamento.api.ContadoresFilasController;
-import br.com.superauto.crm.relacionamento.servico.ContadoresFilasService;
-import br.com.superauto.crm.relacionamento.servico.ContadoresFilasService.Contadores;
 import br.com.superauto.crm.referencia.api.ReferenciasController;
 import br.com.superauto.crm.referencia.servico.ConsultaReferenciasService;
+import br.com.superauto.crm.relacionamento.api.ConfiguracaoReguaController;
+import br.com.superauto.crm.relacionamento.api.ContadoresFilasController;
+import br.com.superauto.crm.relacionamento.api.TrabalhoRelacionamentoController;
+import br.com.superauto.crm.relacionamento.servico.ConfiguracaoReguaService;
+import br.com.superauto.crm.relacionamento.servico.ConsultaTrabalhoService;
+import br.com.superauto.crm.relacionamento.servico.ContadoresFilasService;
+import br.com.superauto.crm.relacionamento.servico.ContadoresFilasService.Contadores;
+import br.com.superauto.crm.relacionamento.servico.RegistroNaFilaService;
 import br.com.superauto.crm.seguranca.KeycloakRealmRoleConverter;
-
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Stream;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -80,10 +85,14 @@ import org.springframework.web.context.WebApplicationContext;
 @WebMvcTest(controllers = {MeController.class, PingController.class, ContadoresFilasController.class,
         UsuariosEquipeController.class, EquipeController.class, ReferenciasController.class, CarteiraController.class,
         AssociadosController.class, ContratosController.class, GestaoContratosController.class,
-        GestaoAssociadosController.class})
+        GestaoAssociadosController.class, TrabalhoRelacionamentoController.class, ConfiguracaoReguaController.class})
 @Import({SecurityConfig.class, ClockConfig.class})
 @EnableConfigurationProperties(CrmProperties.class)
 class SegurancaEndpointsTest {
+
+    @MockitoBean private ConsultaTrabalhoService consultaTrabalho;
+    @MockitoBean private RegistroNaFilaService registroNaFila;
+    @MockitoBean private ConfiguracaoReguaService configuracaoRegua;
 
     private static final String ANONIMO = "anonimo";
     private static final MediaType PROBLEM_JSON = MediaType.APPLICATION_PROBLEM_JSON;
@@ -258,6 +267,95 @@ class SegurancaEndpointsTest {
                 Arguments.of("POST", "/api/gestao/associados/7/anonimizacao", anonimizacao, "atendente", 403));
     }
 
+    static Stream<Arguments> endpointsFilas() {
+        var equipe = List.of("gerencial", "vendedor", "atendente");
+        var endpoints =
+                List.of(
+                        new String[] {"GET", "/api/interno/painel", ""},
+                        new String[] {"GET", "/api/interno/filas/hoje", ""},
+                        new String[] {"GET", "/api/interno/filas/atrasados", ""},
+                        new String[] {"GET", "/api/interno/aniversariantes", ""},
+                        new String[] {"GET", "/api/interno/atendimentos", ""},
+                        new String[] {
+                            "POST",
+                            "/api/interno/filas/contratos/1/previa",
+                            "{\"versao\":0,\"resultado\":\"CONCLUIDO\"}"
+                        },
+                        new String[] {
+                            "POST",
+                            "/api/interno/filas/contratos/1/registro",
+                            "{\"versao\":0,\"resultado\":\"CONCLUIDO\"}"
+                        },
+                        new String[] {
+                            "POST",
+                            "/api/interno/aniversariantes/contratos/1/registro",
+                            "{\"confirmarRepeticao\":false}"
+                        },
+                        new String[] {"GET", "/api/gestao/regua", ""},
+                        new String[] {"POST", "/api/gestao/regua/previa", "{\"prazos\":{\"1\":7}}"},
+                        new String[] {
+                            "PUT",
+                            "/api/gestao/regua",
+                            "{\"prazos\":{\"1\":7},\"confirmacao\":\"previa\"}"
+                        });
+        return endpoints.stream()
+                .flatMap(
+                        e ->
+                                Stream.of(
+                                                ANONIMO,
+                                                "gerencial",
+                                                "vendedor",
+                                                "atendente",
+                                                "cliente",
+                                                "semperfil")
+                                        .map(
+                                                papel ->
+                                                        Arguments.of(
+                                                                e[0],
+                                                                e[1],
+                                                                e[2],
+                                                                papel,
+                                                                ANONIMO.equals(papel)
+                                                                        ? 401
+                                                                        : (e[1].startsWith(
+                                                                                                "/api/gestao")
+                                                                                        ? "gerencial"
+                                                                                                .equals(
+                                                                                                        papel)
+                                                                                        : equipe
+                                                                                                .contains(
+                                                                                                        papel))
+                                                                                ? 200
+                                                                                : 403)));
+    }
+
+    @ParameterizedTest(name = "FIL: {3} em {0} {1} -> {4}")
+    @MethodSource("endpointsFilas")
+    void matrizDasFilas(String metodo, String endpoint, String corpo, String papel, int esperado)
+            throws Exception {
+        var req =
+                request(HttpMethod.valueOf(metodo), endpoint)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo);
+        if (!ANONIMO.equals(papel)) req.with(tokenCom(papel, UUID.randomUUID()));
+        mvc.perform(req).andExpect(status().is(esperado));
+    }
+
+    @Test
+    @DisplayName("FIL / RG-03: painel, filas e aniversários recebem o escopo do vendedor")
+    void filasNoEscopoDoVendedor() throws Exception {
+        UUID vendedor = UUID.randomUUID();
+        mvc.perform(get("/api/interno/painel").with(tokenCom("vendedor", vendedor)))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/interno/filas/hoje").with(tokenCom("vendedor", vendedor)))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/interno/aniversariantes").with(tokenCom("vendedor", vendedor)))
+                .andExpect(status().isOk());
+        verify(consultaTrabalho).painel(Optional.of(vendedor));
+        verify(consultaTrabalho).contatos(eq(false), any(), eq(Optional.of(vendedor)));
+        verify(consultaTrabalho).aniversarios(0, Optional.of(vendedor));
+    }
+
     private static final String NOVO_CONTRATO = """
             {"documento":"529.982.247-25",
              "pessoa":{"nome":"José","whatsapp":"(37) 99869-2950","municipioId":1},
@@ -296,7 +394,7 @@ class SegurancaEndpointsTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString(".xlsx")));
+                .andExpect(header().string("Content-Disposition", Matchers.containsString(".xlsx")));
     }
 
     @Test
@@ -305,7 +403,7 @@ class SegurancaEndpointsTest {
         mvc.perform(get("/api/interno/carteira/exportacao?formato=CSV").with(tokenCom("vendedor", UUID.randomUUID())))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("text/csv"))
-                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString(".csv")));
+                .andExpect(header().string("Content-Disposition", Matchers.containsString(".csv")));
     }
 
     @Test
@@ -341,7 +439,7 @@ class SegurancaEndpointsTest {
     @Test
     @DisplayName("RG-06: gravação recusada pela trava otimista sai como 409 com a mensagem da regra")
     void edicaoSimultanea() throws Exception {
-        org.mockito.Mockito.doThrow(new ObjectOptimisticLockingFailureException("Associado", 7L))
+        Mockito.doThrow(new ObjectOptimisticLockingFailureException("Associado", 7L))
                 .when(gestaoAssociado).classificar(any(), any(), any());
 
         mvc.perform(put("/api/interno/associados/7/classificacao").with(tokenCom("atendente", UUID.randomUUID()))

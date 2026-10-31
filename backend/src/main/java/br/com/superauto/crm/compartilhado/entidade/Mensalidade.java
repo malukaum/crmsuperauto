@@ -1,13 +1,14 @@
-package br.com.superauto.crm.cadastro.entidade;
+package br.com.superauto.crm.compartilhado.entidade;
+
+import br.com.superauto.crm.erro.NegocioException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
 
-import br.com.superauto.crm.erro.NegocioException;
-
 /**
- * Valor mensal contratado de um contrato, em reais, com duas casas. É valor contratado, não recebido (RG-09).
+ * Valor mensal contratado de um contrato, em reais, com duas casas. É valor contratado, não
+ * recebido (RG-09).
  */
 public record Mensalidade(BigDecimal valor) {
 
@@ -16,10 +17,12 @@ public record Mensalidade(BigDecimal valor) {
     public Mensalidade {
         Objects.requireNonNull(valor, "valor");
         if (valor.signum() < 0) {
-            throw NegocioException.invalido("mensalidade-negativa", "A mensalidade não pode ser negativa.");
+            throw NegocioException.invalido(
+                    "mensalidade-negativa", "A mensalidade não pode ser negativa.");
         }
         if (valor.stripTrailingZeros().scale() > CASAS_DECIMAIS) {
-            throw NegocioException.invalido("mensalidade-centavos", "A mensalidade aceita no máximo dois decimais.");
+            throw NegocioException.invalido(
+                    "mensalidade-centavos", "A mensalidade aceita no máximo dois decimais.");
         }
         valor = valor.setScale(CASAS_DECIMAIS, RoundingMode.UNNECESSARY);
     }

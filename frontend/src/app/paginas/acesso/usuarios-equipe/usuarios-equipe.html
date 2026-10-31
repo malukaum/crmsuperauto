@@ -2,10 +2,12 @@
   <header class="crm-cabecalho">
     <div>
       <p class="crm-trilha">Configurações</p>
+      <a mat-button routerLink="/configuracoes/regua">Prazos da régua</a>
       <h1 class="crm-titulo-pagina">Usuários da equipe</h1>
       <p class="crm-subtitulo">
-        Quem acessa a carteira e com qual papel. Usuários não são excluídos, só desativados, para o histórico
-        manter o autor de cada atendimento. Contas de cliente nascem pelo primeiro acesso na área do associado.
+        Quem acessa a carteira e com qual papel. Usuários não são excluídos, só desativados, para o
+        histórico manter o autor de cada atendimento. Contas de cliente nascem pelo primeiro acesso
+        na área do associado.
       </p>
     </div>
     <button mat-flat-button type="button" class="crm-acao-destaque" (click)="novo()">
@@ -114,7 +116,12 @@
                     </mat-menu>
                     <mat-menu #menuPapel="matMenu">
                       @for (p of papeis; track p) {
-                        <button mat-menu-item type="button" [disabled]="p === u.papel" (click)="trocarPapel(u, p)">
+                        <button
+                          mat-menu-item
+                          type="button"
+                          [disabled]="p === u.papel"
+                          (click)="trocarPapel(u, p)"
+                        >
                           <span>{{ nomePapel[p] }}</span>
                         </button>
                       }

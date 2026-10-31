@@ -1,0 +1,50 @@
+<div class="crm-pagina">
+  <h1 class="crm-titulo-pagina">Prazos da régua</h1>
+  <p class="crm-subtitulo">
+    A sequência das etapas é fixa. Retornos manuais mantêm a data combinada.
+  </p>
+  <a mat-button routerLink="/configuracoes/usuarios">Usuários da equipe</a>
+  @if (erro()) {
+    <p class="crm-erro" role="alert">{{ erro() }}</p>
+  }
+  @if (sucesso()) {
+    <p role="status">{{ sucesso() }}</p>
+  }
+  <form class="crm-card prazos" #formulario="ngForm" (ngSubmit)="prever()">
+    @for (etapa of etapas(); track etapa.id) {
+      <mat-form-field
+        ><mat-label
+          >{{ etapa.nome }} · dias
+          {{ etapa.inicial ? 'após adesão' : 'após contato anterior' }}</mat-label
+        ><input
+          matInput
+          type="number"
+          min="1"
+          max="365"
+          required
+          [name]="etapa.codigo"
+          [ngModel]="prazos()[etapa.id]"
+          (ngModelChange)="alterarPrazo(etapa.id, $event)"
+          [disabled]="ocupado()"
+      /></mat-form-field>
+    }
+    <button
+      mat-flat-button
+      class="crm-acao-destaque"
+      type="submit"
+      [disabled]="formulario.invalid || ocupado() || !etapas().length"
+    >
+      Visualizar impacto
+    </button>
+  </form>
+  @if (previa(); as p) {
+    <section class="crm-card prazos">
+      <h2>Confirmar alteração</h2>
+      <p>{{ p.contratosAfetados }} contrato(s) terão a data do próximo contato alterada.</p>
+      <p>Contratos com retorno manual mantêm a data.</p>
+      <button mat-flat-button class="crm-acao-destaque" [disabled]="ocupado()" (click)="salvar()">
+        Confirmar e recalcular
+      </button>
+    </section>
+  }
+</div>

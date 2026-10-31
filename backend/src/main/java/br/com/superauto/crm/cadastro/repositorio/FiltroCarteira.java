@@ -1,15 +1,14 @@
 package br.com.superauto.crm.cadastro.repositorio;
 
+import br.com.superauto.crm.cadastro.entidade.Perfil;
+import br.com.superauto.crm.cadastro.entidade.PotencialIndicacao;
+import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
+import br.com.superauto.crm.compartilhado.entidade.Fila;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-
-import br.com.superauto.crm.cadastro.entidade.Perfil;
-import br.com.superauto.crm.cadastro.entidade.PotencialIndicacao;
-import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
-import br.com.superauto.crm.compartilhado.entidade.Fila;
 
 /**
  * Filtros da carteira (CAR-01). Tudo opcional; {@code vendedorId} preenchido restringe aos contratos desse
@@ -18,7 +17,13 @@ import br.com.superauto.crm.compartilhado.entidade.Fila;
 public record FiltroCarteira(Optional<TermoBusca> busca, Optional<Fila> fila, Optional<Integer> municipioId,
                              Optional<SituacaoContrato> situacao, Optional<Short> etapaId,
                              Optional<Short> tipoVeiculoId, Optional<Perfil> perfil,
-                             Optional<PotencialIndicacao> potencial, Optional<UUID> vendedorId) {
+                             Optional<PotencialIndicacao> potencial, Optional<UUID> vendedorId, boolean excluirCancelados) {
+
+    public FiltroCarteira(Optional<TermoBusca> busca, Optional<Fila> fila, Optional<Integer> municipioId,
+                          Optional<SituacaoContrato> situacao, Optional<Short> etapaId, Optional<Short> tipoVeiculoId,
+                          Optional<Perfil> perfil, Optional<PotencialIndicacao> potencial, Optional<UUID> vendedorId) {
+        this(busca, fila, municipioId, situacao, etapaId, tipoVeiculoId, perfil, potencial, vendedorId, false);
+    }
 
     public FiltroCarteira {
         Objects.requireNonNull(busca);
@@ -34,7 +39,7 @@ public record FiltroCarteira(Optional<TermoBusca> busca, Optional<Fila> fila, Op
 
     public FiltroCarteira doVendedor(UUID vendedor) {
         return new FiltroCarteira(busca, fila, municipioId, situacao, etapaId, tipoVeiculoId, perfil, potencial,
-                Optional.of(vendedor));
+                Optional.of(vendedor), excluirCancelados);
     }
 
     /** Os filtros usados, só os informados, para registrar na auditoria da exportação (CAR-07). */
@@ -49,6 +54,7 @@ public record FiltroCarteira(Optional<TermoBusca> busca, Optional<Fila> fila, Op
         perfil.ifPresent(p -> usados.put("perfil", p.name()));
         potencial.ifPresent(p -> usados.put("potencial", p.name()));
         vendedorId.ifPresent(v -> usados.put("vendedorId", v.toString()));
+        if (excluirCancelados) usados.put("excluirCancelados", true);
         return usados;
     }
 }

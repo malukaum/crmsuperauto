@@ -40,4 +40,6 @@
     <include file="changes/014-carteira-visoes.xml" relativeToChangelogFile="true"/>
     <include file="changes/015-contato-unicidade-adiavel.xml" relativeToChangelogFile="true"/>
 
+    <include file="changes/016-filas.xml" relativeToChangelogFile="true"/>
+    <include file="changes/017-relacionamento-historico-completo.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

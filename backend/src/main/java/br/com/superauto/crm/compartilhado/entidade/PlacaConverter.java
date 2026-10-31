@@ -1,4 +1,4 @@
-package br.com.superauto.crm.cadastro.entidade;
+package br.com.superauto.crm.compartilhado.entidade;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

@@ -1,23 +1,27 @@
-package br.com.superauto.crm.cadastro.entidade;
+package br.com.superauto.crm.compartilhado.entidade;
+
+import br.com.superauto.crm.erro.NegocioException;
 
 import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import br.com.superauto.crm.erro.NegocioException;
-
 /**
- * Placa do veículo no padrão antigo (ABC1234) ou Mercosul (ABC1D23), sempre em maiúsculas e sem hífen (RG-02).
- * Aceita a placa digitada com hífen, espaços ou minúsculas.
+ * Placa do veículo no padrão antigo (ABC1234) ou Mercosul (ABC1D23), sempre em maiúsculas e sem
+ * hífen (RG-02). Aceita a placa digitada com hífen, espaços ou minúsculas.
  */
 public record Placa(String valor) {
 
     private static final Pattern FORMATO = Pattern.compile("^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$");
 
     public Placa {
-        valor = Objects.requireNonNullElse(valor, "").replaceAll("[\\s-]", "").toUpperCase(Locale.ROOT);
+        valor =
+                Objects.requireNonNullElse(valor, "")
+                        .replaceAll("[\\s-]", "")
+                        .toUpperCase(Locale.ROOT);
         if (!FORMATO.matcher(valor).matches()) {
-            throw NegocioException.invalido("placa-invalida",
+            throw NegocioException.invalido(
+                    "placa-invalida",
                     "Informe a placa no padrão antigo (ABC1234) ou Mercosul (ABC1D23).");
         }
     }

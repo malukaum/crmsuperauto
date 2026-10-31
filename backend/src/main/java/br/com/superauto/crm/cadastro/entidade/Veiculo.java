@@ -1,8 +1,8 @@
 package br.com.superauto.crm.cadastro.entidade;
 
-import java.time.OffsetDateTime;
-import java.util.Objects;
-
+import br.com.superauto.crm.compartilhado.entidade.Placa;
+import br.com.superauto.crm.compartilhado.entidade.PlacaConverter;
+import br.com.superauto.crm.erro.NegocioException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -11,13 +11,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-
-import br.com.superauto.crm.erro.NegocioException;
-
+import java.time.OffsetDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 

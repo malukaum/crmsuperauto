@@ -1,22 +1,7 @@
 package br.com.superauto.crm.cadastro.api;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Optional;
-import java.util.UUID;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-
 import br.com.superauto.crm.cadastro.entidade.Cadastrante;
 import br.com.superauto.crm.cadastro.entidade.DadosPessoais;
-import br.com.superauto.crm.cadastro.entidade.Mensalidade;
-import br.com.superauto.crm.cadastro.entidade.Placa;
 import br.com.superauto.crm.cadastro.servico.CadastroContratoService;
 import br.com.superauto.crm.cadastro.servico.CondicoesContrato;
 import br.com.superauto.crm.cadastro.servico.ContratoRegistrado;
@@ -24,10 +9,22 @@ import br.com.superauto.crm.cadastro.servico.NovaPessoa;
 import br.com.superauto.crm.cadastro.servico.NovoCadastro;
 import br.com.superauto.crm.cadastro.servico.NovoVeiculo;
 import br.com.superauto.crm.compartilhado.entidade.Documento;
+import br.com.superauto.crm.compartilhado.entidade.Email;
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
+import br.com.superauto.crm.compartilhado.entidade.Placa;
 import br.com.superauto.crm.compartilhado.entidade.Telefone;
 import br.com.superauto.crm.seguranca.Papeis;
 import br.com.superauto.crm.seguranca.UsuarioAtual;
-
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -66,14 +63,14 @@ public class ContratosController {
             @NotBlank(message = "Informe o nome.") @Size(max = 200, message = "O nome pode ter até 200 caracteres.")
             String nome,
             @NotBlank(message = "Informe o WhatsApp.") String whatsapp,
-            @Email(message = "Informe um e-mail válido.") @Size(max = 254, message = "O e-mail pode ter até 254 caracteres.")
+            @jakarta.validation.constraints.Email(message = "Informe um e-mail válido.") @Size(max = 254, message = "O e-mail pode ter até 254 caracteres.")
             String email,
             LocalDate dataNascimento,
             @NotNull(message = "Informe a cidade e a UF.") Integer municipioId) {
 
         NovaPessoa novaPessoa() {
             return new NovaPessoa(new DadosPessoais(nome, dataNascimento, municipioId), Telefone.de(whatsapp),
-                    br.com.superauto.crm.compartilhado.entidade.Email.seValido(email));
+                    Email.seValido(email));
         }
     }
 

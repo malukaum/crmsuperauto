@@ -1,0 +1,158 @@
+<div class="crm-pagina">
+  <h1 class="crm-titulo-pagina">{{ titulo }}</h1>
+  <p class="crm-subtitulo">
+    {{
+      aniversario
+        ? 'Registre a mensagem após conversar com o associado.'
+        : 'Registre o resultado de cada contato para atualizar a régua.'
+    }}
+  </p>
+  @if (aniversario) {
+    <nav class="crm-acoes" aria-label="Período de aniversários">
+      @for (periodo of [0, 7, 30]; track periodo) {
+        <button
+          mat-stroked-button
+          [attr.aria-pressed]="dias() === periodo"
+          [disabled]="gravando()"
+          (click)="dias.set(periodo); carregar()"
+        >
+          {{ periodo === 0 ? 'Hoje' : 'Próximos ' + periodo + ' dias' }}
+        </button>
+      }
+    </nav>
+  } @else {
+    <form class="filtros" (ngSubmit)="carregar()">
+      <mat-form-field
+        ><mat-label>Buscar nome, placa, documento ou telefone</mat-label
+        ><input matInput name="busca" [ngModel]="busca()" (ngModelChange)="busca.set($event)"
+      /></mat-form-field>
+      <app-campo-cidade [cidade]="cidade()" (escolhida)="cidade.set($event)" />
+      <mat-form-field
+        ><mat-label>Etapa</mat-label
+        ><mat-select name="etapa" [ngModel]="etapa()" (ngModelChange)="etapa.set($event)"
+          ><mat-option [value]="null">Todas</mat-option>
+          @for (e of etapasFiltro(); track e.id) {
+            <mat-option [value]="e.id">{{ e.nome }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <mat-form-field
+        ><mat-label>Tipo de veículo</mat-label
+        ><mat-select name="tipo" [ngModel]="tipoVeiculo()" (ngModelChange)="tipoVeiculo.set($event)"
+          ><mat-option [value]="null">Todos</mat-option>
+          @for (t of tipos(); track t.id) {
+            <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <button
+        mat-flat-button
+        class="crm-acao-destaque"
+        type="submit"
+        [disabled]="carregando() || gravando()"
+      >
+        Filtrar
+      </button>
+    </form>
+  }
+  @if (erro()) {
+    <p class="crm-erro" role="alert">
+      {{ erro() }} <button mat-button (click)="carregar()">Recarregar fila</button>
+    </p>
+  }
+  @if (selecionado(); as linha) {
+    <app-registro-na-fila
+      [linha]="linha"
+      [aniversario]="aniversario"
+      (registrado)="aoRegistrar()"
+      (cancelado)="selecionado.set(null)"
+      (conflito)="aoConflito($event)"
+      (ocupacaoAlterada)="gravando.set($event)"
+    />
+  }
+  @if (carregando()) {
+    <p role="status">Carregando fila…</p>
+  } @else {
+    <p>{{ linhas().length }} {{ aniversario ? 'pessoa(s)' : 'contrato(s)' }}</p>
+    <div class="crm-card crm-tabela-rolagem">
+      <table class="crm-tabela">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>WhatsApp</th>
+            <th>Veículo / placa</th>
+            <th>Mensalidade</th>
+            <th>{{ aniversario ? 'Aniversário' : 'Data / etapa' }}</th>
+            <th>{{ aniversario ? 'Situação' : 'Atraso' }}</th>
+            <th>Cidade</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (linha of visiveis(); track linha.contratoId) {
+            <tr>
+              <td>
+                {{ linha.nome }}
+                @if (linha.mensagemEnviada) {
+                  <span class="crm-secundario">Mensagem enviada</span>
+                }
+              </td>
+              <td>{{ formatarTelefone(linha.whatsapp) || 'Sem WhatsApp' }}</td>
+              <td>
+                {{ linha.modelo
+                }}<span class="crm-secundario">{{ linha.placa }} · {{ linha.tipoVeiculo }}</span>
+              </td>
+              <td>{{ linha.mensalidade | currency: 'BRL' }}</td>
+              <td>
+                {{ formatarData(linha.data) }}
+                @if (!aniversario) {
+                  <span class="crm-secundario">{{ linha.etapa }}</span>
+                }
+              </td>
+              <td>{{ aniversario ? situacoes[linha.situacao] : linha.diasAtraso + ' dia(s)' }}</td>
+              <td>{{ linha.cidade || '—' }}</td>
+              <td>
+                <div class="crm-acoes">
+                  @if (linha.whatsapp) {
+                    @if (linha.aceitaWhatsapp) {
+                      <a
+                        mat-button
+                        [href]="linkWhatsapp(linha.whatsapp)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        >WhatsApp</a
+                      >
+                    } @else {
+                      <button mat-button disabled title="O associado não aceita contato">
+                        WhatsApp · opt-out
+                      </button>
+                    }
+                  }
+                  <button mat-button [disabled]="gravando()" (click)="escolher(linha)">
+                    {{ aniversario ? 'Registrar mensagem' : 'Registrar' }}</button
+                  ><a mat-button [routerLink]="['/carteira/associados', linha.associadoId]"
+                    >Ver ficha</a
+                  >
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8">Nenhum associado nesta fila com os filtros escolhidos.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <mat-paginator
+      [disabled]="gravando()"
+      [length]="linhas().length"
+      [pageSize]="tamanho()"
+      [pageIndex]="pagina()"
+      [pageSizeOptions]="[10, 25, 50]"
+      (page)="paginar($event)"
+      aria-label="Página da fila"
+    />
+  }
+  <app-aviso-mensalidade />
+</div>

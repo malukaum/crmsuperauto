@@ -1,10 +1,5 @@
 package br.com.superauto.crm.cadastro.api;
 
-import java.time.Clock;
-import java.time.LocalDate;
-import java.util.Optional;
-import java.util.UUID;
-
 import br.com.superauto.crm.cadastro.entidade.Perfil;
 import br.com.superauto.crm.cadastro.entidade.PotencialIndicacao;
 import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
@@ -20,7 +15,10 @@ import br.com.superauto.crm.cadastro.servico.PaginaSolicitada;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
 import br.com.superauto.crm.seguranca.Papeis;
 import br.com.superauto.crm.seguranca.UsuarioAtual;
-
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -54,7 +52,7 @@ public class CarteiraController {
     public record FiltroCarteiraRequest(String busca, Fila fila, Integer cidade, SituacaoContrato situacao,
                                         Short etapa, Short tipoVeiculo, Perfil perfil, PotencialIndicacao potencial,
                                         UUID vendedor, OrdemCarteira ordem, Boolean decrescente, Integer pagina,
-                                        Integer tamanho) {
+                                        Integer tamanho, Boolean excluirCancelados) {
 
         private static final int PRIMEIRA_PAGINA = 0;
         private static final int TAMANHO_PADRAO = 25;
@@ -62,7 +60,8 @@ public class CarteiraController {
         FiltroCarteira filtro() {
             return new FiltroCarteira(TermoBusca.de(busca), Optional.ofNullable(fila), Optional.ofNullable(cidade),
                     Optional.ofNullable(situacao), Optional.ofNullable(etapa), Optional.ofNullable(tipoVeiculo),
-                    Optional.ofNullable(perfil), Optional.ofNullable(potencial), Optional.ofNullable(vendedor));
+                    Optional.ofNullable(perfil), Optional.ofNullable(potencial), Optional.ofNullable(vendedor),
+                    Boolean.TRUE.equals(excluirCancelados));
         }
 
         Ordenacao ordenacao() {

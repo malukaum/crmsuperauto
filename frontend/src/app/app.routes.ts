@@ -33,7 +33,10 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'inicio' },
       {
         path: 'inicio',
-        loadComponent: () => import('./paginas/areacliente/cliente-inicio/cliente-inicio').then((m) => m.ClienteInicio),
+        loadComponent: () =>
+          import('./paginas/areacliente/cliente-inicio/cliente-inicio').then(
+            (m) => m.ClienteInicio,
+          ),
         title: 'Início' + SUFIXO,
       },
       emConstrucao('veiculos', 'Veículos'),
@@ -53,21 +56,43 @@ export const routes: Routes = [
         path: 'painel',
         loadComponent: () => import('./paginas/relacionamento/painel/painel').then((m) => m.Painel),
         title: 'Painel' + SUFIXO,
+        canActivate: [papelGuard],
+        data: { papeis: [...EQUIPE_INTERNA] },
       },
-      emConstrucao('contatos-hoje', 'Contatos de hoje'),
-      emConstrucao('atrasados', 'Atrasados'),
-      emConstrucao('aniversariantes', 'Aniversariantes'),
+      {
+        path: 'contatos-hoje',
+        loadComponent: () => import('./paginas/relacionamento/filas/filas').then((m) => m.Filas),
+        title: 'Contatos de hoje' + SUFIXO,
+        canActivate: [papelGuard],
+        data: { papeis: [...EQUIPE_INTERNA], fila: 'hoje' },
+      },
+      {
+        path: 'atrasados',
+        loadComponent: () => import('./paginas/relacionamento/filas/filas').then((m) => m.Filas),
+        title: 'Atrasados' + SUFIXO,
+        canActivate: [papelGuard],
+        data: { papeis: [...EQUIPE_INTERNA], fila: 'atrasados' },
+      },
+      {
+        path: 'aniversariantes',
+        loadComponent: () => import('./paginas/relacionamento/filas/filas').then((m) => m.Filas),
+        title: 'Aniversariantes' + SUFIXO,
+        canActivate: [papelGuard],
+        data: { papeis: [...EQUIPE_INTERNA], fila: 'aniversarios' },
+      },
       {
         path: 'carteira',
         children: [
           {
             path: '',
-            loadComponent: () => import('./paginas/cadastro/carteira/carteira').then((m) => m.Carteira),
+            loadComponent: () =>
+              import('./paginas/cadastro/carteira/carteira').then((m) => m.Carteira),
             title: 'Carteira' + SUFIXO,
           },
           {
             path: 'novo',
-            loadComponent: () => import('./paginas/cadastro/novo-contrato/novo-contrato').then((m) => m.NovoContrato),
+            loadComponent: () =>
+              import('./paginas/cadastro/novo-contrato/novo-contrato').then((m) => m.NovoContrato),
             title: 'Novo contrato' + SUFIXO,
             canActivate: [papelGuard],
             data: { papeis: [...GERENCIAL_OU_VENDEDOR] },
@@ -75,12 +100,23 @@ export const routes: Routes = [
           {
             path: 'associados/:id',
             loadComponent: () =>
-              import('./paginas/cadastro/ficha-associado/ficha-associado').then((m) => m.FichaAssociado),
+              import('./paginas/cadastro/ficha-associado/ficha-associado').then(
+                (m) => m.FichaAssociado,
+              ),
             title: 'Ficha do cliente' + SUFIXO,
           },
         ],
       },
-      emConstrucao('atendimentos', 'Atendimentos'),
+      {
+        path: 'atendimentos',
+        loadComponent: () =>
+          import('./paginas/relacionamento/atendimentos-mes/atendimentos-mes').then(
+            (m) => m.AtendimentosMes,
+          ),
+        title: 'Atendimentos do mês' + SUFIXO,
+        canActivate: [papelGuard],
+        data: { papeis: [...EQUIPE_INTERNA] },
+      },
       emConstrucao('indicacoes', 'Indicações'),
       // Gestão: o guard repete a regra do menu (ACE-02); a API recusa com 403 de qualquer forma.
       emConstrucao('inteligencia', 'Inteligência', GERENCIAL_OU_VENDEDOR),
@@ -91,11 +127,23 @@ export const routes: Routes = [
         canActivate: [papelGuard],
         data: { papeis: ['gerencial'] satisfies Papel[] },
         children: [
-          { path: '', pathMatch: 'full', redirectTo: 'usuarios' },
+          { path: '', pathMatch: 'full', redirectTo: 'regua' },
+          {
+            path: 'regua',
+            loadComponent: () =>
+              import('./paginas/relacionamento/configuracao-regua/configuracao-regua').then(
+                (m) => m.ConfiguracaoRegua,
+              ),
+            title: 'Prazos da régua' + SUFIXO,
+            canActivate: [papelGuard],
+            data: { papeis: ['gerencial'] satisfies Papel[] },
+          },
           {
             path: 'usuarios',
             loadComponent: () =>
-              import('./paginas/acesso/usuarios-equipe/usuarios-equipe').then((m) => m.UsuariosEquipe),
+              import('./paginas/acesso/usuarios-equipe/usuarios-equipe').then(
+                (m) => m.UsuariosEquipe,
+              ),
             title: 'Usuários da equipe' + SUFIXO,
           },
         ],

@@ -4,19 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import java.time.LocalDate;
-import java.util.Map;
-import java.util.UUID;
-
 import br.com.superauto.crm.auditoria.entidade.EventoAuditoria;
 import br.com.superauto.crm.auditoria.entidade.OperacaoAuditoria;
 import br.com.superauto.crm.cadastro.entidade.ContratoCadastrado;
 import br.com.superauto.crm.cadastro.entidade.ContratoTransferido;
-import br.com.superauto.crm.cadastro.entidade.Mensalidade;
 import br.com.superauto.crm.cadastro.entidade.MensalidadeReajustada;
 import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
 import br.com.superauto.crm.cadastro.entidade.SituacaoContratoAlterada;
-
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
+import java.time.LocalDate;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

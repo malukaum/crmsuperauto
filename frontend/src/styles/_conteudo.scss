@@ -97,3 +97,10 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+
+// Ações de uma linha ou formulário, com quebra em telas estreitas.
+.crm-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

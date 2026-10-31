@@ -6,22 +6,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
 import br.com.superauto.crm.cadastro.entidade.CarteiraExportada;
 import br.com.superauto.crm.cadastro.entidade.LinhaCarteira;
-import br.com.superauto.crm.cadastro.entidade.Mensalidade;
-import br.com.superauto.crm.cadastro.entidade.Placa;
 import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
 import br.com.superauto.crm.cadastro.repositorio.ConsultaCarteira;
 import br.com.superauto.crm.cadastro.repositorio.FiltroCarteira;
 import br.com.superauto.crm.compartilhado.entidade.Documento;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
+import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
+import br.com.superauto.crm.compartilhado.entidade.Placa;
 import br.com.superauto.crm.compartilhado.entidade.Telefone;
-
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
