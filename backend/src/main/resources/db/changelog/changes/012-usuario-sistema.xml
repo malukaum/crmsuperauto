@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      Usuário técnico (não existe no Keycloak): autor dos atendimentos e das
+      importações vindos da planilha. Os logins do Windows não são mapeados.
+    -->
+    <changeSet id="012-usuario-sistema-importacao" author="crm-superauto">
+        <insert tableName="usuario">
+            <column name="id" value="00000000-0000-0000-0000-000000000000"/>
+            <column name="username" value="sistema.importacao"/>
+            <column name="nome" value="Importação da planilha"/>
+            <column name="ativo" valueBoolean="false"/>
+        </insert>
+        <rollback>
+            <delete tableName="usuario">
+                <where>id = '00000000-0000-0000-0000-000000000000'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

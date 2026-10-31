@@ -34,5 +34,7 @@
     <include file="changes/008-auditoria.xml" relativeToChangelogFile="true"/>
     <include file="changes/009-visoes.xml" relativeToChangelogFile="true"/>
     <include file="changes/010-dados-iniciais.xml" relativeToChangelogFile="true"/>
+    <include file="changes/011-busca-sem-acento.xml" relativeToChangelogFile="true"/>
+    <include file="changes/012-usuario-sistema.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

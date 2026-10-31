@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Busca por nome sem acento e sem diferenciar maiúsculas ("José" = "jose"). -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="011-extensao-unaccent" author="crm-superauto">
+        <sql>CREATE EXTENSION IF NOT EXISTS unaccent</sql>
+        <rollback>
+            <sql>DROP EXTENSION IF EXISTS unaccent</sql>
+        </rollback>
+    </changeSet>
+
+    <!--
+      Normalização para busca: sem acento e em minúsculas.
+      unaccent() não é IMMUTABLE por padrão; este wrapper fixa o dicionário
+      para poder ser usado em índice.
+    -->
+    <changeSet id="011-funcao-texto-busca" author="crm-superauto">
+        <sql splitStatements="false"><![CDATA[
+            CREATE FUNCTION texto_busca(texto text) RETURNS text
+                LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
+                AS $$ SELECT lower(public.unaccent('public.unaccent'::regdictionary, texto)) $$
+        ]]></sql>
+        <rollback>
+            <sql>DROP FUNCTION texto_busca(text)</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Busca por trecho do nome, sem acento: WHERE texto_busca(nome) LIKE '%' || texto_busca(:termo) || '%' -->
+    <changeSet id="011-associado-indice-nome-busca" author="crm-superauto">
+        <dropIndex tableName="associado" indexName="ix_associado_nome_trgm"/>
+        <sql>CREATE INDEX ix_associado_nome_busca ON associado USING gin (texto_busca(nome) gin_trgm_ops)</sql>
+        <rollback>
+            <sql>DROP INDEX ix_associado_nome_busca</sql>
+            <sql>CREATE INDEX ix_associado_nome_trgm ON associado USING gin (lower(nome) gin_trgm_ops)</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
