@@ -1,0 +1,260 @@
+<div class="crm-pagina">
+  <header class="cabecalho">
+    <div>
+      <h1 class="crm-titulo-pagina">Carteira</h1>
+      <p class="crm-subtitulo">Uma linha por contrato (placa). Busque por nome, placa, CPF/CNPJ ou telefone.</p>
+    </div>
+    <div class="cabecalho__acoes">
+      <button
+        *temPapel="podeExportar"
+        mat-stroked-button
+        type="button"
+        [matMenuTriggerFor]="formatos"
+        [disabled]="exportando()"
+      >
+        <mat-icon>download</mat-icon>
+        Exportar
+      </button>
+      <mat-menu #formatos="matMenu">
+        <button mat-menu-item type="button" (click)="exportar('XLSX')">
+          <mat-icon>table_view</mat-icon>
+          <span>Excel (.xlsx)</span>
+        </button>
+        <button mat-menu-item type="button" (click)="exportar('CSV')">
+          <mat-icon>description</mat-icon>
+          <span>CSV</span>
+        </button>
+      </mat-menu>
+      <a *temPapel="podeExportar" mat-flat-button routerLink="/carteira/novo">
+        <mat-icon>add</mat-icon>
+        Novo contrato
+      </a>
+    </div>
+  </header>
+
+  <section class="crm-card filtros" aria-label="Filtros">
+    <mat-form-field class="filtros__busca" subscriptSizing="dynamic">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Buscar</mat-label>
+      <input matInput [formControl]="busca" placeholder="Nome, placa, CPF/CNPJ ou telefone" autocomplete="off" />
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Fila</mat-label>
+      <mat-select [value]="filtro().fila" (valueChange)="filtrar({ fila: $event })">
+        <mat-option [value]="undefined">Todas</mat-option>
+        @for (f of filas; track f) {
+          <mat-option [value]="f">{{ nomeFila[f] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <app-campo-cidade
+      rotulo="Cidade"
+      subscript="dynamic"
+      [cidade]="cidadeEscolhida()"
+      (escolhida)="escolherCidade($event)"
+    />
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Situação</mat-label>
+      <mat-select [value]="filtro().situacao" (valueChange)="filtrar({ situacao: $event })">
+        <mat-option [value]="undefined">Todas</mat-option>
+        @for (s of situacoes; track s) {
+          <mat-option [value]="s">{{ nomeSituacao[s] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Etapa</mat-label>
+      <mat-select [value]="filtro().etapa" (valueChange)="filtrar({ etapa: $event })">
+        <mat-option [value]="undefined">Todas</mat-option>
+        @for (e of etapas(); track e.id) {
+          <mat-option [value]="e.id">{{ e.nome }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Tipo de veículo</mat-label>
+      <mat-select [value]="filtro().tipoVeiculo" (valueChange)="filtrar({ tipoVeiculo: $event })">
+        <mat-option [value]="undefined">Todos</mat-option>
+        @for (t of tiposVeiculo(); track t.id) {
+          <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Perfil</mat-label>
+      <mat-select [value]="filtro().perfil" (valueChange)="filtrar({ perfil: $event })">
+        <mat-option [value]="undefined">Todos</mat-option>
+        @for (p of perfis; track p) {
+          <mat-option [value]="p">{{ nomePerfil[p] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Potencial de indicação</mat-label>
+      <mat-select [value]="filtro().potencial" (valueChange)="filtrar({ potencial: $event })">
+        <mat-option [value]="undefined">Todos</mat-option>
+        @for (p of potenciais; track p) {
+          <mat-option [value]="p">{{ nomePotencial[p] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (veFiltroDeVendedor()) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Vendedor</mat-label>
+        <mat-select [value]="filtro().vendedor" (valueChange)="filtrar({ vendedor: $event })">
+          <mat-option [value]="undefined">Todos</mat-option>
+          @for (v of vendedores(); track v.id) {
+            <mat-option [value]="v.id">{{ v.nome }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    @if (temFiltro()) {
+      <button mat-button type="button" class="filtros__limpar" (click)="limparFiltros()">
+        <mat-icon>filter_alt_off</mat-icon>
+        Limpar filtros
+      </button>
+    }
+  </section>
+
+  <section class="crm-card lista">
+    @if (carregando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (gerencial() && marcados().size) {
+      <div class="lote">
+        <span>{{ marcados().size }} {{ marcados().size === 1 ? 'contrato marcado' : 'contratos marcados' }}</span>
+        <button mat-flat-button type="button" (click)="ativarMarcados()">
+          <mat-icon>task_alt</mat-icon>
+          Marcar como ativos
+        </button>
+      </div>
+    }
+
+    @if (erro(); as e) {
+      <div class="estado" role="alert">
+        <mat-icon>cloud_off</mat-icon>
+        <p>{{ e }}</p>
+      </div>
+    } @else if (resultado(); as r) {
+      @if (r.linhas.length === 0) {
+        <div class="estado">
+          <mat-icon>search_off</mat-icon>
+          <p>Nenhum contrato encontrado com estes filtros.</p>
+        </div>
+      } @else {
+        <div class="tabela-rolagem">
+          <table class="tabela">
+            <thead>
+              <tr>
+                @if (gerencial()) {
+                  <th class="marcar"><span class="cdk-visually-hidden">Marcar</span></th>
+                }
+                <th>
+                  <button type="button" class="ordenar" (click)="ordenar('NOME')" [attr.aria-sort]="ordenadoPor('NOME')">
+                    Cliente <mat-icon>{{ ordenadoPor('NOME') === 'descending' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="ordenar" (click)="ordenar('PLACA')" [attr.aria-sort]="ordenadoPor('PLACA')">
+                    Placa e modelo <mat-icon>{{ ordenadoPor('PLACA') === 'descending' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="ordenar" (click)="ordenar('CIDADE')" [attr.aria-sort]="ordenadoPor('CIDADE')">
+                    Cidade <mat-icon>{{ ordenadoPor('CIDADE') === 'descending' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                  </button>
+                </th>
+                <th class="num">
+                  <button type="button" class="ordenar" (click)="ordenar('MENSALIDADE')" [attr.aria-sort]="ordenadoPor('MENSALIDADE')">
+                    Mensalidade <mat-icon>{{ ordenadoPor('MENSALIDADE') === 'descending' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="ordenar" (click)="ordenar('SITUACAO')" [attr.aria-sort]="ordenadoPor('SITUACAO')">
+                    Situação <mat-icon>{{ ordenadoPor('SITUACAO') === 'descending' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="ordenar" (click)="ordenar('ETAPA')" [attr.aria-sort]="ordenadoPor('ETAPA')">
+                    Etapa <mat-icon>{{ ordenadoPor('ETAPA') === 'descending' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="ordenar" (click)="ordenar('PROXIMO_CONTATO')" [attr.aria-sort]="ordenadoPor('PROXIMO_CONTATO')">
+                    Próximo contato <mat-icon>{{ ordenadoPor('PROXIMO_CONTATO') === 'descending' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="ordenar" (click)="ordenar('VENDEDOR')" [attr.aria-sort]="ordenadoPor('VENDEDOR')">
+                    Vendedor <mat-icon>{{ ordenadoPor('VENDEDOR') === 'descending' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                  </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (l of r.linhas; track l.contratoId) {
+                <tr class="linha" (click)="abrirFicha(l)">
+                  @if (gerencial()) {
+                    <td class="marcar" (click)="$event.stopPropagation()">
+                      @if (l.situacao === 'A_CONFERIR') {
+                        <mat-checkbox
+                          [checked]="marcados().has(l.contratoId)"
+                          (change)="marcar(l, $event.checked)"
+                          [aria-label]="'Marcar ' + l.placa"
+                        />
+                      }
+                    </td>
+                  }
+                  <td class="cliente">
+                    <a [routerLink]="['/carteira/associados', l.associadoId]" (click)="$event.stopPropagation()">{{ l.associado }}</a>
+                    <span class="secundario">{{ l.documento ?? '—' }}</span>
+                  </td>
+                  <td class="placa">
+                    <strong>{{ l.placa }}</strong>
+                    <span class="secundario">{{ l.modelo }}</span>
+                  </td>
+                  <td>{{ l.cidade ? l.cidade + ' / ' + l.uf : '—' }}</td>
+                  <td class="num">{{ l.mensalidade | currency: 'BRL' }}</td>
+                  <td>{{ nomeSituacao[l.situacao] }}</td>
+                  <td>{{ l.etapaPendente ?? '—' }}</td>
+                  <td class="proximo">
+                    <span>{{ formatarData(l.proximoContato) || '—' }}</span>
+                    <app-status-chip [tipo]="chipDaFila(l.fila)">{{ descreverFila(l.fila, l.diasAtraso) }}</app-status-chip>
+                  </td>
+                  <td>{{ l.vendedorNome ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <footer class="rodape">
+        <div class="rodape__totais">
+          <strong>{{ r.totalContratos }} {{ r.totalContratos === 1 ? 'contrato' : 'contratos' }}</strong>
+          <span>· {{ r.somaMensalidades | currency: 'BRL' }} em mensalidades</span>
+          <app-aviso-mensalidade />
+        </div>
+        <mat-paginator
+          [length]="r.totalContratos"
+          [pageIndex]="filtro().pagina ?? 0"
+          [pageSize]="filtro().tamanho"
+          [pageSizeOptions]="tamanhos"
+          (page)="mudarPagina($event)"
+          aria-label="Páginas da carteira"
+        />
+      </footer>
+    }
+  </section>
+</div>

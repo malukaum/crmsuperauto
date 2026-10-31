@@ -1,10 +1,11 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { PapelEquipe } from '../auth/papel';
 import { Problema } from './api.service';
+import { problemaDe as problemaDaApi } from './problema';
 
 export interface UsuarioEquipe {
   id: string;
@@ -72,16 +73,7 @@ export class UsuariosEquipeApi {
 }
 
 export function problemaDe(erro: unknown): ProblemaUsuarios {
-  if (erro instanceof HttpErrorResponse) {
-    if (erro.status === 0) {
-      return { status: 0, detail: 'Não foi possível falar com o servidor. Verifique a conexão e tente novamente.' };
-    }
-    if (erro.error && typeof erro.error === 'object') {
-      return { status: erro.status, ...(erro.error as ProblemaUsuarios) };
-    }
-    return { status: erro.status, detail: 'Ocorreu um erro inesperado. Tente novamente.' };
-  }
-  return { detail: 'Ocorreu um erro inesperado. Tente novamente.' };
+  return problemaDaApi(erro) as ProblemaUsuarios;
 }
 
 export function nomeCompleto(u: Pick<UsuarioEquipe, 'nome' | 'sobrenome' | 'username'>): string {

@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
@@ -85,6 +86,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         pd.setProperty("codigo", ex.getCodigo());
         ex.getDados().forEach(pd::setProperty);
         return pd;
+    }
+
+    /** A trava otimista ({@code @Version}) recusou a gravação: duas pessoas salvaram a mesma ficha ao mesmo tempo (RG-06). */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    ProblemDetail edicaoSimultanea(ObjectOptimisticLockingFailureException ex, HttpServletRequest request) {
+        return negocio(NegocioException.edicaoSimultanea(), request);
     }
 
     @ExceptionHandler(IntegracaoIndisponivelException.class)

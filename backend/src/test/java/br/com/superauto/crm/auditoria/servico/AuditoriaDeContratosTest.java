@@ -4,12 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
 import br.com.superauto.crm.auditoria.entidade.EventoAuditoria;
 import br.com.superauto.crm.auditoria.entidade.OperacaoAuditoria;
+import br.com.superauto.crm.cadastro.entidade.ContratoCadastrado;
 import br.com.superauto.crm.cadastro.entidade.ContratoTransferido;
+import br.com.superauto.crm.cadastro.entidade.Mensalidade;
+import br.com.superauto.crm.cadastro.entidade.MensalidadeReajustada;
+import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
+import br.com.superauto.crm.cadastro.entidade.SituacaoContratoAlterada;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +50,42 @@ class AuditoriaDeContratosTest {
         auditoria.aoTransferir(new ContratoTransferido(7L, null, UUID.randomUUID(), UUID.randomUUID()));
 
         assertThat(registrado().getDadosAnteriores()).containsEntry("vendedorId", null);
+    }
+
+    @Test
+    @DisplayName("CAR-05: reajuste de R$ 124,82 para R$ 139,90 fica na auditoria com os dois valores e quem alterou")
+    void reajuste() {
+        UUID gerente = UUID.randomUUID();
+
+        auditoria.aoReajustar(new MensalidadeReajustada(42L, Mensalidade.de("124.82"), Mensalidade.de("139.90"), gerente));
+
+        var evento = registrado();
+        assertThat(evento.getOperacao()).isEqualTo(OperacaoAuditoria.ALTERACAO);
+        assertThat(evento.getUsuarioId()).isEqualTo(gerente);
+        assertThat(evento.getDadosAnteriores()).isEqualTo(Map.of("mensalidade", "124.82"));
+        assertThat(evento.getDadosNovos()).isEqualTo(Map.of("mensalidade", "139.90"));
+    }
+
+    @Test
+    @DisplayName("CAR-05: mudança de situação registra a anterior e a nova")
+    void situacao() {
+        auditoria.aoAlterarSituacao(new SituacaoContratoAlterada(42L, SituacaoContrato.ATIVO, SituacaoContrato.CANCELADO,
+                UUID.randomUUID()));
+
+        assertThat(registrado().getDadosNovos()).isEqualTo(Map.of("situacao", "CANCELADO"));
+    }
+
+    @Test
+    @DisplayName("CAR-02: contrato cadastrado vira evento de criação com vendedor, mensalidade e adesão")
+    void cadastro() {
+        UUID vendedor = UUID.randomUUID();
+
+        auditoria.aoCadastrar(new ContratoCadastrado(42L, 1L, 2L, vendedor, Mensalidade.de("99.90"),
+                LocalDate.of(2026, 3, 13), vendedor));
+
+        var evento = registrado();
+        assertThat(evento.getOperacao()).isEqualTo(OperacaoAuditoria.CRIACAO);
+        assertThat(evento.getDadosNovos()).containsEntry("mensalidade", "99.90").containsEntry("dataAdesao", "2026-03-13");
     }
 
     private EventoAuditoria registrado() {

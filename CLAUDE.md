@@ -103,6 +103,7 @@ implementa na sua `infraestrutura`. Outra opção são eventos de domínio.
 - **Erros por exceção com significado**, nunca por código de retorno. Não engula exceção sem log e sem motivo explícito.
 - **Comentários explicam o porquê, não o quê.** Se o comentário descreve o que o código faz, renomeie ou extraia em vez de comentar. Javadoc curto em classes públicas e portas, dizendo a responsabilidade e as regras (RG/história) que implementam.
 - **Sem código morto, comentado ou duplicado** (DRY): apague; o git guarda o histórico.
+- **Lombok** só para tirar código repetitivo: `@Getter`, `@RequiredArgsConstructor`, `@NoArgsConstructor(access = PROTECTED)` nas entidades. `@Data` e `@Setter` são proibidos (erro de compilação via `backend/lombok.config`), porque estado muda só por métodos de domínio; evite `@EqualsAndHashCode`/`@ToString` em entidades JPA. Getter que devolve `Optional` ou cópia imutável continua escrito à mão; `record` não precisa de Lombok.
 - **Imutabilidade por padrão:** `record` para DTOs e objetos de valor, campos `final`, coleções devolvidas sem permitir alteração externa.
 - **Testes limpos:** um conceito por teste, `@DisplayName` descrevendo a regra, estrutura dado/quando/então visível.
 - **Regra do escoteiro:** ao tocar num arquivo, deixe-o um pouco melhor do que encontrou, sem desviar do escopo pedido.
@@ -111,7 +112,7 @@ implementa na sua `infraestrutura`. Outra opção são eventos de domínio.
 
 | Camada | Tecnologia |
 |---|---|
-| Backend | Java 21 · Spring Boot 4.1 · Spring Security 7 (resource server JWT) · Spring Data JPA / **Hibernate 7.4** · Liquibase · Maven |
+| Backend | Java 21 · Spring Boot 4.1 · Spring Security 7 (resource server JWT) · Spring Data JPA / **Hibernate 7.4** · Liquibase · Maven · Lombok · Apache POI (exportação .xlsx) |
 | Frontend | Angular 22 (standalone, signals, zoneless, control flow) · Angular Material 3 · SCSS · Vitest |
 | Identidade | Keycloak 26 (realm `crm`) |
 | Banco | PostgreSQL 16 |

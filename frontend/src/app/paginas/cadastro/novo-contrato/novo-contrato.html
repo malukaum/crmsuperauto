@@ -1,0 +1,154 @@
+<div class="crm-pagina">
+  <p class="trilha"><a routerLink="/carteira">Carteira</a></p>
+  <h1 class="crm-titulo-pagina">Novo contrato</h1>
+  <p class="crm-subtitulo">
+    O contrato nasce "A conferir" e entra na régua de pós-venda com o D+7 em adesão + 7 dias.
+  </p>
+
+  @if (etapa() === 'documento') {
+    <form class="crm-card bloco documento" (ngSubmit)="continuar()">
+      <h2>Quem é o cliente?</h2>
+      <p class="ajuda">Comece pelo CPF ou CNPJ. Se a pessoa já estiver na carteira, os dados dela são carregados.</p>
+      <mat-form-field>
+        <mat-label>CPF ou CNPJ</mat-label>
+        <input matInput [formControl]="documento" autocomplete="off" required />
+        @if (documento.touched && documento.invalid) {
+          <mat-error>Informe um CPF ou CNPJ.</mat-error>
+        }
+      </mat-form-field>
+      @if (erro(); as e) {
+        <p class="erro" role="alert">{{ e }}</p>
+      }
+      <div class="acoes">
+        <a mat-button routerLink="/carteira">Cancelar</a>
+        <button mat-flat-button type="submit" [disabled]="ocupado()">Continuar</button>
+      </div>
+    </form>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="salvar()">
+      <section class="crm-card bloco">
+        <div class="bloco__titulo">
+          <h2>Cliente</h2>
+          <button mat-button type="button" (click)="trocarDocumento()">Trocar documento</button>
+        </div>
+        @if (pessoaExistente(); as p) {
+          <p class="existente">
+            <mat-icon>person_check</mat-icon>
+            <span>
+              <strong>{{ p.nome }}</strong> já está na carteira{{ p.cidade ? ' (' + p.cidade + ' / ' + p.uf + ')' : '' }}.
+              Informe só o novo veículo e o contrato.
+            </span>
+          </p>
+        } @else {
+          <div class="grade">
+            <mat-form-field class="largo">
+              <mat-label>Nome</mat-label>
+              <input matInput formControlName="nome" required />
+              @if (erroCampo('nome'); as e) { <mat-error>{{ e }}</mat-error> }
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>WhatsApp</mat-label>
+              <input matInput formControlName="whatsapp" placeholder="(37) 9 9999-9999" required />
+              @if (erroCampo('whatsapp'); as e) { <mat-error>{{ e }}</mat-error> }
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>E-mail (opcional)</mat-label>
+              <input matInput type="email" formControlName="email" />
+              @if (erroCampo('email'); as e) { <mat-error>{{ e }}</mat-error> }
+            </mat-form-field>
+            <app-campo-cidade
+              [obrigatorio]="true"
+              [cidade]="cidade()"
+              [erro]="form.touched && !cidade() ? 'Escolha a cidade na lista.' : null"
+              (escolhida)="cidade.set($event)"
+            />
+            @if (pessoaFisica()) {
+              <mat-form-field>
+                <mat-label>Nascimento (opcional)</mat-label>
+                <input matInput type="date" formControlName="dataNascimento" [max]="hoje" />
+              </mat-form-field>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="crm-card bloco">
+        <h2>Veículo</h2>
+        <div class="grade">
+          <mat-form-field>
+            <mat-label>Placa</mat-label>
+            <input matInput formControlName="placa" class="placa" placeholder="ABC1D23" required />
+            @if (erroCampo('placa'); as e) { <mat-error>{{ e }}</mat-error> }
+          </mat-form-field>
+          <mat-form-field class="largo">
+            <mat-label>Modelo</mat-label>
+            <input matInput formControlName="modelo" required />
+            @if (erroCampo('modelo'); as e) { <mat-error>{{ e }}</mat-error> }
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Tipo de veículo</mat-label>
+            <mat-select formControlName="tipoVeiculoId" required>
+              @for (t of tiposVeiculo(); track t.id) {
+                <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+              }
+            </mat-select>
+            @if (erroCampo('tipoVeiculoId'); as e) { <mat-error>{{ e }}</mat-error> }
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="crm-card bloco">
+        <h2>Contrato</h2>
+        <div class="grade">
+          <mat-form-field>
+            <mat-label>Mensalidade (R$)</mat-label>
+            <input matInput type="number" min="0" step="0.01" formControlName="mensalidade" required />
+            @if (erroCampo('mensalidade'); as e) { <mat-error>{{ e }}</mat-error> }
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Adesão (cadastro no SGA)</mat-label>
+            <input matInput type="date" formControlName="dataAdesao" [max]="hoje" required />
+            @if (erroCampo('dataAdesao'); as e) { <mat-error>{{ e }}</mat-error> }
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Data da venda (opcional)</mat-label>
+            <input matInput type="date" formControlName="dataVenda" />
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Código do SGA (opcional)</mat-label>
+            <input matInput formControlName="codigoSga" />
+            @if (erroCampo('codigoSga'); as e) { <mat-error>{{ e }}</mat-error> }
+          </mat-form-field>
+          @if (gerencial()) {
+            <mat-form-field>
+              <mat-label>Vendedor</mat-label>
+              <mat-select formControlName="vendedorId" required>
+                @for (v of vendedores(); track v.id) {
+                  <mat-option [value]="v.id">{{ v.nome }}</mat-option>
+                }
+              </mat-select>
+              @if (erroCampo('vendedorId'); as e) { <mat-error>{{ e }}</mat-error> }
+            </mat-form-field>
+          }
+        </div>
+        <app-aviso-mensalidade />
+      </section>
+
+      @if (erro(); as e) {
+        <p class="erro" role="alert">
+          {{ e }}
+          @if (fichaDaPlaca(); as id) {
+            <a [routerLink]="['/carteira/associados', id]">Abrir a ficha existente</a>
+          }
+        </p>
+      }
+      @if (ocupado()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+      <div class="acoes">
+        <a mat-button routerLink="/carteira">Cancelar</a>
+        <button mat-flat-button type="submit" [disabled]="ocupado()">Cadastrar contrato</button>
+      </div>
+    </form>
+  }
+</div>

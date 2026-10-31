@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Carteira de clientes (CAR): municípios do IBGE e anonimização (LGPD). -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Tabela oficial do IBGE (API de localidades). O cadastro exige cidade/UF (CAR-02). -->
+    <changeSet id="013-carga-municipio" author="crm-superauto">
+        <loadData tableName="municipio" file="../dados/municipio.csv"
+                  relativeToChangelogFile="true" encoding="UTF-8" separator="," quotchar="&quot;">
+            <column name="codigo_ibge" type="string"/>
+            <column name="nome" type="string"/>
+            <column name="uf_sigla" type="string"/>
+        </loadData>
+        <rollback>
+            <delete tableName="municipio"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Busca de cidade por nome sem acento no cadastro. -->
+    <changeSet id="013-municipio-indice-nome-busca" author="crm-superauto">
+        <sql>CREATE INDEX ix_municipio_nome_busca ON municipio USING gin (texto_busca(nome) gin_trgm_ops)</sql>
+        <rollback>
+            <sql>DROP INDEX ix_municipio_nome_busca</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- CAR-08: o documento é apagado na anonimização; fica obrigatório para quem não foi anonimizado. -->
+    <changeSet id="013-associado-documento-anonimizacao" author="crm-superauto">
+        <dropNotNullConstraint tableName="associado" columnName="documento" columnDataType="varchar(14)"/>
+        <sql>
+            ALTER TABLE associado
+                ADD CONSTRAINT ck_associado_documento_obrigatorio CHECK (documento IS NOT NULL OR anonimizado_em IS NOT NULL)
+        </sql>
+        <rollback>
+            <sql>ALTER TABLE associado DROP CONSTRAINT ck_associado_documento_obrigatorio</sql>
+            <addNotNullConstraint tableName="associado" columnName="documento" columnDataType="varchar(14)"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Busca por telefone com trecho dos dígitos (RG-05). -->
+    <changeSet id="013-contato-indice-valor-trgm" author="crm-superauto">
+        <sql>CREATE INDEX ix_contato_associado_valor_trgm ON contato_associado USING gin (valor gin_trgm_ops)</sql>
+        <rollback>
+            <sql>DROP INDEX ix_contato_associado_valor_trgm</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

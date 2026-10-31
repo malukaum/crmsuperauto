@@ -17,6 +17,7 @@ public final class Papeis {
 
     public static final String SO_GERENCIAL = "hasRole('GERENCIAL')";
     public static final String GERENCIAL_OU_VENDEDOR = "hasAnyRole('GERENCIAL', 'VENDEDOR')";
+    public static final String GERENCIAL_OU_ATENDENTE = "hasAnyRole('GERENCIAL', 'ATENDENTE')";
     public static final String SO_CLIENTE = "hasRole('CLIENTE')";
     public static final String EQUIPE_INTERNA = "hasAnyRole('GERENCIAL', 'VENDEDOR', 'ATENDENTE')";
 

@@ -57,7 +57,29 @@ export const routes: Routes = [
       emConstrucao('contatos-hoje', 'Contatos de hoje'),
       emConstrucao('atrasados', 'Atrasados'),
       emConstrucao('aniversariantes', 'Aniversariantes'),
-      emConstrucao('carteira', 'Carteira'),
+      {
+        path: 'carteira',
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./paginas/cadastro/carteira/carteira').then((m) => m.Carteira),
+            title: 'Carteira' + SUFIXO,
+          },
+          {
+            path: 'novo',
+            loadComponent: () => import('./paginas/cadastro/novo-contrato/novo-contrato').then((m) => m.NovoContrato),
+            title: 'Novo contrato' + SUFIXO,
+            canActivate: [papelGuard],
+            data: { papeis: [...GERENCIAL_OU_VENDEDOR] },
+          },
+          {
+            path: 'associados/:id',
+            loadComponent: () =>
+              import('./paginas/cadastro/ficha-associado/ficha-associado').then((m) => m.FichaAssociado),
+            title: 'Ficha do cliente' + SUFIXO,
+          },
+        ],
+      },
       emConstrucao('atendimentos', 'Atendimentos'),
       emConstrucao('indicacoes', 'Indicações'),
       // Gestão: o guard repete a regra do menu (ACE-02); a API recusa com 403 de qualquer forma.

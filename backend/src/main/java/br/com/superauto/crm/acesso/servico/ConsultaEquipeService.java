@@ -15,7 +15,10 @@ import br.com.superauto.crm.seguranca.Papeis;
 
 import org.springframework.stereotype.Service;
 
-/** Lado de leitura da gestão de usuários (ACE-04): quem está na equipe, com papel e carteira de cada um. */
+/**
+ * Lado de leitura da equipe: quem está na equipe, com papel e carteira de cada um (ACE-04), e os vendedores ativos
+ * para os formulários e filtros da carteira.
+ */
 @Service
 public class ConsultaEquipeService {
 
@@ -46,6 +49,16 @@ public class ConsultaEquipeService {
                 .sorted(Comparator.comparing(Conta::ativo).reversed()
                         .thenComparing(Conta::nomeCompleto, Collator.getInstance(PORTUGUES_DO_BRASIL)))
                 .map(conta -> UsuarioEquipe.de(conta, papelPorId.get(conta.id()), carteiras.getOrDefault(conta.id(), 0L)))
+                .toList();
+    }
+
+    /** Vendedores ativos em ordem alfabética. */
+    public List<VendedorDaEquipe> vendedoresAtivos() {
+        return identidade.contasComPapel(Papeis.VENDEDOR).stream()
+                .filter(Conta::ativo)
+                .filter(conta -> !RegrasEquipe.ehContaTecnica(conta))
+                .sorted(Comparator.comparing(Conta::nomeCompleto, Collator.getInstance(PORTUGUES_DO_BRASIL)))
+                .map(conta -> new VendedorDaEquipe(conta.id(), conta.nomeCompleto()))
                 .toList();
     }
 }

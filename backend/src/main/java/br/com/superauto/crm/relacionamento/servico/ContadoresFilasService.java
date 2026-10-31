@@ -3,7 +3,7 @@ package br.com.superauto.crm.relacionamento.servico;
 import java.util.Optional;
 import java.util.UUID;
 
-import br.com.superauto.crm.relacionamento.entidade.Fila;
+import br.com.superauto.crm.compartilhado.entidade.Fila;
 import br.com.superauto.crm.relacionamento.repositorio.PosicaoFilaRepository;
 
 import org.springframework.stereotype.Service;

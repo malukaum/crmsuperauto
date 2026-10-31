@@ -1,0 +1,175 @@
+:host {
+  display: block;
+}
+
+.cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  &__acoes {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+
+  &__busca {
+    grid-column: 1 / -1;
+  }
+
+  &__limpar {
+    justify-self: start;
+  }
+}
+
+.lista {
+  padding: 0;
+  overflow: hidden;
+}
+
+.lote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--crm-azul-fundo);
+  color: var(--crm-azul);
+  font-weight: 600;
+}
+
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--crm-texto-secundario);
+
+  mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+  }
+}
+
+.tabela-rolagem {
+  overflow-x: auto;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--crm-borda);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--crm-borda);
+    vertical-align: middle;
+  }
+
+  .num {
+    text-align: right;
+  }
+
+  .marcar {
+    width: 40px;
+    padding-right: 0;
+  }
+}
+
+.ordenar {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--crm-texto-secundario);
+  cursor: pointer;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    opacity: 0;
+  }
+
+  &[aria-sort] {
+    color: var(--crm-texto);
+
+    mat-icon {
+      opacity: 1;
+    }
+  }
+}
+
+.linha {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--crm-fundo);
+  }
+}
+
+.cliente a {
+  font-weight: 600;
+  color: var(--crm-texto);
+  text-decoration: none;
+}
+
+.secundario {
+  display: block;
+  font-size: 12px;
+  color: var(--crm-texto-secundario);
+}
+
+.placa strong {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
+.proximo {
+  white-space: nowrap;
+
+  span {
+    margin-right: 8px;
+  }
+}
+
+.rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px 8px 20px;
+  border-top: 1px solid var(--crm-borda);
+
+  &__totais {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+  }
+}

@@ -1,6 +1,7 @@
 package br.com.superauto.crm.cadastro.repositorio;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import br.com.superauto.crm.cadastro.entidade.Contrato;
@@ -23,4 +24,16 @@ public interface ContratoRepository extends JpaRepository<Contrato, Long> {
     long countByVendedorIdAndSituacaoNot(UUID vendedorId, SituacaoContrato situacao);
 
     List<Contrato> findByVendedorIdAndSituacaoNot(UUID vendedorId, SituacaoContrato situacao);
+
+    /** O contrato não cancelado do veículo, se houver: um veículo só tem um vigente por vez. */
+    Optional<Contrato> findFirstByVeiculoIdAndSituacaoNot(Long veiculoId, SituacaoContrato situacao);
+
+    boolean existsByCodigoSga(String codigoSga);
+
+    boolean existsByCodigoSgaAndIdNot(String codigoSga, Long id);
+
+    List<Contrato> findByAssociadoId(Long associadoId);
+
+    /** RG-03: o vendedor só enxerga a pessoa se tiver algum contrato dela. */
+    boolean existsByAssociadoIdAndVendedorId(Long associadoId, UUID vendedorId);
 }

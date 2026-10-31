@@ -79,6 +79,21 @@ public class EventoAuditoria {
         return new EventoAuditoria(item, OperacaoAuditoria.ALTERACAO, autor, alteracao);
     }
 
+    /** Alguém viu um dado pessoal protegido, como o documento completo (RG-04). */
+    public static EventoAuditoria visualizacao(ItemAuditado item, UUID autor, Map<String, ?> dados) {
+        return new EventoAuditoria(item, OperacaoAuditoria.VISUALIZACAO, autor, new Alteracao(null, dados));
+    }
+
+    /** Alguém exportou dados (CAR-07): o filtro usado e a quantidade de linhas. */
+    public static EventoAuditoria exportacao(ItemAuditado item, UUID autor, Map<String, ?> dados) {
+        return new EventoAuditoria(item, OperacaoAuditoria.EXPORTACAO, autor, new Alteracao(null, dados));
+    }
+
+    /** Os dados pessoais foram apagados (CAR-08). Nada pessoal é guardado no evento. */
+    public static EventoAuditoria anonimizacao(ItemAuditado item, UUID autor) {
+        return new EventoAuditoria(item, OperacaoAuditoria.ANONIMIZACAO, autor, new Alteracao(null, null));
+    }
+
     private static Map<String, Object> copia(Map<String, ?> dados) {
         return dados == null ? null : new LinkedHashMap<>(dados);
     }

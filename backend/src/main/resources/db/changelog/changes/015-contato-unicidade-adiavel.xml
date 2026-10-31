@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CAR-04 · Unicidades dos contatos conferidas no fim da transação.
+  Trocar o principal de um tipo, ou remover e recadastrar o mesmo número, mexe em duas linhas na mesma gravação;
+  o Hibernate não garante a ordem desses comandos (inserções vêm antes das exclusões), então a regra só pode ser
+  conferida no commit. As regras continuam as mesmas: um principal por tipo e nenhum contato repetido.
+-->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="015-contato-unicidade-adiavel" author="crm-superauto">
+        <sql><![CDATA[
+            ALTER TABLE contato_associado
+                DROP CONSTRAINT uk_contato_associado,
+                ADD CONSTRAINT uk_contato_associado UNIQUE (associado_id, tipo, valor) DEFERRABLE INITIALLY DEFERRED;
+
+            DROP INDEX uk_contato_associado_principal;
+            ALTER TABLE contato_associado
+                ADD CONSTRAINT uk_contato_associado_principal
+                    EXCLUDE USING btree (associado_id WITH =, tipo WITH =) WHERE (principal)
+                    DEFERRABLE INITIALLY DEFERRED;
+        ]]></sql>
+        <rollback>
+            <sql><![CDATA[
+                ALTER TABLE contato_associado DROP CONSTRAINT uk_contato_associado_principal;
+                CREATE UNIQUE INDEX uk_contato_associado_principal ON contato_associado (associado_id, tipo) WHERE principal;
+                ALTER TABLE contato_associado
+                    DROP CONSTRAINT uk_contato_associado,
+                    ADD CONSTRAINT uk_contato_associado UNIQUE (associado_id, tipo, valor);
+            ]]></sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

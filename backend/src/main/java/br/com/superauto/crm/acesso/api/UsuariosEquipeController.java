@@ -14,7 +14,6 @@ import br.com.superauto.crm.acesso.servico.GestaoUsuariosService;
 import br.com.superauto.crm.acesso.servico.NovoUsuario;
 import br.com.superauto.crm.acesso.servico.ResultadoCriacaoUsuario;
 import br.com.superauto.crm.acesso.servico.UsuarioEquipe;
-import br.com.superauto.crm.erro.NegocioException;
 import br.com.superauto.crm.seguranca.Papeis;
 import br.com.superauto.crm.seguranca.UsuarioAtual;
 
@@ -103,7 +102,6 @@ public class UsuariosEquipeController {
     }
 
     private static UUID autor(JwtAuthenticationToken auth) {
-        return UsuarioAtual.id(auth.getToken())
-                .orElseThrow(() -> NegocioException.invalido("token-sem-id", "O token não identifica o usuário."));
+        return UsuarioAtual.exigirId(auth);
     }
 }

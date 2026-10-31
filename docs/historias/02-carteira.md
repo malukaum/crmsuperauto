@@ -144,3 +144,26 @@ A carteira substitui a aba CARTEIRA. A lista tem uma linha por contrato (placa),
 **Critérios de aceite**
 
 - Dado um cliente anonimizado, quando busco pelo CPF antigo, então nada aparece, mas os indicadores por cidade continuam contando o contrato dele.
+
+### Decisões de implementação
+
+Pontos que as histórias não diziam e foram decididos na implementação (31/10/2026). Revise os marcados como proposta junto com as regras **(proposta)** acima.
+
+| História | Decisão |
+| --- | --- |
+| CAR-01 | A busca procura o termo ao mesmo tempo no nome (sem acento), na placa e no CPF/CNPJ (só letras e dígitos) e em qualquer telefone do associado (só dígitos). Para placa, documento e telefone, o trecho precisa ter ao menos 3 caracteres. |
+| CAR-01 | Filtros, ordenação e página ficam no endereço da página: voltar da ficha devolve a lista como estava, e o endereço pode ser compartilhado. Página padrão de 25 linhas. Contrato sem régua ativa aparece na fila "Sem data". |
+| CAR-01 · RG-04 | Na lista e na ficha o documento aparece sempre mascarado, para todos os papéis; gerencial e vendedor veem o completo pelo botão "mostrar" da ficha, e cada exibição vai para a auditoria. |
+| CAR-02 | Se a pessoa já existe, a tela mostra nome e cidade dela e não pede de novo os dados pessoais (nem permite alterá-los ali; a correção é pela ficha). |
+| CAR-02 | Placa já cadastrada sem contrato vigente reaproveita o veículo, com o modelo e o tipo informados agora. |
+| CAR-02 | O gerencial é obrigado a escolher o vendedor (um vendedor ativo). O vendedor que cadastra é sempre o vendedor do contrato, mesmo que indique outro. |
+| CAR-02 | Adesão e venda são datas; são gravadas como o início do dia em São Paulo. O código do SGA não pode repetir em outro contrato. |
+| CAR-02 | O telefone também é aceito com o zero de discagem à frente do DDD ("037 99869-2950"). |
+| CAR-03 | O cabeçalho mostra a fila mais urgente entre os contratos (Atrasado, Hoje, Futuro…). Na régua de cada contrato, as etapas antes da pendente aparecem como concluídas, a pendente na data do próximo contato e as futuras somando os prazos da régua. O formulário de atendimento ao lado chega com a ATD-01. |
+| CAR-03 · RG-03 | O vendedor que abre a ficha de quem não tem contrato dele recebe "Cliente não encontrado na carteira". |
+| CAR-04 | O primeiro contato de um tipo já nasce principal. Removendo o principal, o mais antigo do mesmo tipo passa a ser o principal. O mesmo número pode ser WhatsApp e telefone ao mesmo tempo. O aviso de número repetido em outro cliente **(proposta)** ainda não foi feito. |
+| CAR-04 | Dados pessoais (nome, nascimento, cidade) são corrigidos na ficha por gerencial e vendedor; o atendente só altera contatos. O documento não é editável. |
+| CAR-05 | Na alteração do contrato, mensalidade, vendedor e código do SGA são gravados antes da situação; contrato cancelado não tem mais a mensalidade nem o vendedor alterados. A ativação em lote ignora os contratos escolhidos que não estão "a conferir" e informa quantos foram ignorados (até 500 por vez). |
+| CAR-06 | A contagem de promotores na Inteligência depende da INT-01, ainda não implementada. |
+| CAR-07 | A exportação sai em Excel (.xlsx, padrão), com mensalidade como valor em reais, datas como datas e o cabeçalho congelado e com filtro, ou em CSV (UTF-8, separador ";"). Texto que pareça fórmula entra sempre como texto. |
+| CAR-08 · RG-08 | A trilha de auditoria é mantida na anonimização: os eventos gravados antes (criação, contatos) continuam como foram registrados. Decisão do negócio: a auditoria é necessária e não fere a LGPD. O evento da anonimização em si não guarda nenhum dado pessoal. |

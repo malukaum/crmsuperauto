@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Carteira de clientes (CAR): visões de leitura da carteira e da ficha.
+  Como as de 009-visoes.xml, usam runOnChange: editar o SELECT recria a visão na próxima subida.
+-->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      CAR-01 · Uma linha por contrato (placa), com a pessoa, o veículo, a régua e a fila.
+      A fila vem de vw_fila_contato; contrato sem régua ativa fica em SEM_DATA (ou na própria situação,
+      se suspenso ou cancelado). "telefones" junta os números do associado para a busca por telefone (RG-05).
+    -->
+    <changeSet id="014-vw-carteira" author="crm-superauto" runOnChange="true">
+        <createView viewName="vw_carteira" replaceIfExists="true"><![CDATA[
+SELECT c.id                  AS contrato_id,
+       c.versao              AS contrato_versao,
+       a.id                  AS associado_id,
+       a.nome                AS associado_nome,
+       a.documento,
+       a.perfil,
+       a.potencial_indicacao,
+       a.municipio_id,
+       m.nome                AS cidade,
+       m.uf_sigla            AS uf,
+       v.placa,
+       v.modelo,
+       v.tipo_veiculo_id,
+       tv.descricao          AS tipo_veiculo,
+       c.valor_mensalidade,
+       c.situacao,
+       c.codigo_sga,
+       c.aderido_em,
+       c.vendido_em,
+       c.encerrado_em,
+       c.vendedor_id,
+       u.nome                AS vendedor_nome,
+       ac.etapa_pendente_id,
+       e.nome                AS etapa_pendente,
+       e.ordem               AS etapa_ordem,
+       ac.proximo_contato_em,
+       COALESCE(f.fila, CASE WHEN c.situacao IN ('CANCELADO', 'SUSPENSO') THEN c.situacao ELSE 'SEM_DATA' END) AS fila,
+       COALESCE(f.dias_atraso, 0) AS dias_atraso,
+       w.valor               AS whatsapp,
+       w.aceita_contato      AS whatsapp_aceita_contato,
+       (SELECT string_agg(ca.valor, ' ')
+          FROM contato_associado ca
+         WHERE ca.associado_id = a.id
+           AND ca.tipo IN ('WHATSAPP', 'TELEFONE')) AS telefones
+  FROM contrato c
+  JOIN associado a                 ON a.id = c.associado_id
+  JOIN veiculo v                   ON v.id = c.veiculo_id
+  JOIN tipo_veiculo tv             ON tv.id = v.tipo_veiculo_id
+  LEFT JOIN municipio m            ON m.id = a.municipio_id
+  LEFT JOIN usuario u              ON u.id = c.vendedor_id
+  LEFT JOIN acompanhamento_contrato ac ON ac.contrato_id = c.id
+  LEFT JOIN etapa_relacionamento e ON e.id = ac.etapa_pendente_id
+  LEFT JOIN vw_fila_contato f      ON f.contrato_id = c.id
+  LEFT JOIN contato_associado w    ON w.associado_id = a.id AND w.tipo = 'WHATSAPP' AND w.principal
+        ]]></createView>
+    </changeSet>
+
+    <!--
+      CAR-03 · Histórico de atendimentos da ficha, com os nomes de tipo, etapa e autor.
+      "corrigido" marca o atendimento que já tem um registro de correção apontando para ele (ATD-04).
+    -->
+    <changeSet id="014-vw-historico-atendimento" author="crm-superauto" runOnChange="true">
+        <createView viewName="vw_historico_atendimento" replaceIfExists="true"><![CDATA[
+SELECT at.id,
+       at.associado_id,
+       at.contrato_id,
+       v.placa,
+       tc.descricao          AS tipo,
+       e.nome                AS etapa,
+       at.resultado,
+       at.descricao,
+       at.retorno_agendado_para,
+       at.realizado_em,
+       u.nome                AS registrado_por,
+       at.corrige_atendimento_id,
+       EXISTS (SELECT 1 FROM atendimento cor WHERE cor.corrige_atendimento_id = at.id) AS corrigido
+  FROM atendimento at
+  JOIN tipo_contato tc            ON tc.id = at.tipo_contato_id
+  JOIN usuario u                  ON u.id = at.registrado_por
+  LEFT JOIN etapa_relacionamento e ON e.id = at.etapa_id
+  LEFT JOIN contrato c            ON c.id = at.contrato_id
+  LEFT JOIN veiculo v             ON v.id = c.veiculo_id
+        ]]></createView>
+    </changeSet>
+
+</databaseChangeLog>

@@ -2,7 +2,7 @@ package br.com.superauto.crm.relacionamento.repositorio;
 
 import java.util.UUID;
 
-import br.com.superauto.crm.relacionamento.entidade.Fila;
+import br.com.superauto.crm.compartilhado.entidade.Fila;
 import br.com.superauto.crm.relacionamento.entidade.PosicaoFila;
 
 import org.springframework.data.repository.Repository;

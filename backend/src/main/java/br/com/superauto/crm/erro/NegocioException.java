@@ -18,6 +18,8 @@ public class NegocioException extends RuntimeException {
         INVALIDO
     }
 
+    public static final String CODIGO_EDICAO_SIMULTANEA = "edicao-simultanea";
+
     private final Tipo tipo;
     private final String codigo;
     private final Map<String, Object> dados;
@@ -47,6 +49,12 @@ public class NegocioException extends RuntimeException {
 
     public static NegocioException invalido(String codigo, String mensagem) {
         return new NegocioException(Tipo.INVALIDO, codigo, mensagem);
+    }
+
+    /** RG-06: a ficha mudou desde que foi aberta; nada é sobrescrito em silêncio. */
+    public static NegocioException edicaoSimultanea() {
+        return conflito(CODIGO_EDICAO_SIMULTANEA,
+                "Este cadastro foi alterado por outra pessoa. Recarregue para ver a versão atual.");
     }
 
     public Tipo getTipo() {

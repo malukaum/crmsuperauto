@@ -36,5 +36,8 @@
     <include file="changes/010-dados-iniciais.xml" relativeToChangelogFile="true"/>
     <include file="changes/011-busca-sem-acento.xml" relativeToChangelogFile="true"/>
     <include file="changes/012-usuario-sistema.xml" relativeToChangelogFile="true"/>
+    <include file="changes/013-carteira.xml" relativeToChangelogFile="true"/>
+    <include file="changes/014-carteira-visoes.xml" relativeToChangelogFile="true"/>
+    <include file="changes/015-contato-unicidade-adiavel.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

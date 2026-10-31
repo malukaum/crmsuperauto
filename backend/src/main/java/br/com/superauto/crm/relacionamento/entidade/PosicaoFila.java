@@ -10,6 +10,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import br.com.superauto.crm.compartilhado.entidade.Fila;
+
 import org.hibernate.annotations.Immutable;
 
 /**

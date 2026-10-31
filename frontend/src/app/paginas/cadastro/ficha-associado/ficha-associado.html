@@ -1,0 +1,254 @@
+<div class="crm-pagina">
+  <button mat-button type="button" class="voltar" (click)="voltar()">
+    <mat-icon>arrow_back</mat-icon>
+    Carteira
+  </button>
+
+  @if (carregando()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (erro(); as e) {
+    <div class="crm-card estado" role="alert">
+      <mat-icon>person_search</mat-icon>
+      <p>{{ e }}</p>
+      <a mat-stroked-button routerLink="/carteira">Voltar para a carteira</a>
+    </div>
+  } @else if (ficha(); as f) {
+    <header class="cabecalho">
+      <div class="cabecalho__identidade">
+        <h1 class="crm-titulo-pagina">{{ f.nome }}</h1>
+        <div class="chips">
+          @if (filaDoCabecalho(); as fc) {
+            <app-status-chip [tipo]="chipDaFila(fc.fila)">{{ descreverFila(fc.fila, fc.diasAtraso) }}</app-status-chip>
+          }
+          @if (f.anonimizado) {
+            <app-status-chip tipo="neutro">Anonimizado</app-status-chip>
+          } @else {
+            <app-status-chip tipo="neutro">Perfil: {{ nomePerfil[f.perfil] }}</app-status-chip>
+            <app-status-chip tipo="neutro">Potencial: {{ nomePotencial[f.potencial] }}</app-status-chip>
+          }
+        </div>
+      </div>
+      @if (!f.anonimizado) {
+        <div class="cabecalho__acoes">
+          @if (whatsapp(); as w) {
+            @if (w.aceitaContato) {
+              <a mat-flat-button class="whatsapp" [href]="linkWhatsapp(w)" target="_blank" rel="noopener">
+                <mat-icon>chat</mat-icon>
+                WhatsApp
+              </a>
+            } @else {
+              <span matTooltip="O cliente não aceita contato por este número (opt-out).">
+                <button mat-flat-button type="button" disabled>
+                  <mat-icon>chat</mat-icon>
+                  WhatsApp
+                </button>
+              </span>
+            }
+          }
+          <button *temPapel="gerencialOuVendedor" mat-stroked-button type="button" (click)="editarDados()">
+            <mat-icon>edit</mat-icon>
+            Editar
+          </button>
+          <button mat-stroked-button type="button" (click)="classificar()">
+            <mat-icon>label</mat-icon>
+            Classificar
+          </button>
+          @if (gerencial()) {
+            <button mat-icon-button type="button" [matMenuTriggerFor]="mais" aria-label="Mais ações" matTooltip="Mais ações">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #mais="matMenu" xPosition="before">
+              <button
+                mat-menu-item
+                type="button"
+                [disabled]="!podeAnonimizar()"
+                (click)="anonimizar()"
+                [matTooltip]="podeAnonimizar() ? '' : 'Só com todos os contratos cancelados.'"
+              >
+                <mat-icon>person_remove</mat-icon>
+                <span>Anonimizar (LGPD)</span>
+              </button>
+            </mat-menu>
+          }
+        </div>
+      }
+    </header>
+
+    <div class="colunas">
+      <div class="principal">
+        <section class="crm-card bloco">
+          <h2>Dados</h2>
+          <dl class="dados">
+            <div>
+              <dt>{{ f.pessoaFisica ? 'CPF' : 'CNPJ' }}</dt>
+              <dd>
+                {{ documentoCompleto() ?? f.documento ?? '—' }}
+                @if (f.documento && !documentoCompleto()) {
+                  <button *temPapel="gerencialOuVendedor" mat-button type="button" class="mostrar" (click)="mostrarDocumento()">
+                    Mostrar
+                  </button>
+                }
+              </dd>
+            </div>
+            @if (f.pessoaFisica) {
+              <div>
+                <dt>Nascimento</dt>
+                <dd>{{ formatarData(f.dataNascimento) || '—' }}</dd>
+              </div>
+            }
+            <div>
+              <dt>Cidade</dt>
+              <dd>{{ f.cidade ? f.cidade + ' / ' + f.uf : '—' }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="crm-card bloco">
+          <div class="bloco__titulo">
+            <h2>Contatos</h2>
+            @if (!f.anonimizado) {
+              <button mat-button type="button" (click)="novoContato()">
+                <mat-icon>add</mat-icon>
+                Novo contato
+              </button>
+            }
+          </div>
+          @if (f.contatos.length === 0) {
+            <p class="vazio">Nenhum contato.</p>
+          }
+          <ul class="contatos">
+            @for (c of f.contatos; track c.id) {
+              <li>
+                <mat-icon>{{ c.tipo === 'EMAIL' ? 'mail' : c.tipo === 'WHATSAPP' ? 'chat' : 'call' }}</mat-icon>
+                <div class="contatos__valor">
+                  <strong>{{ c.exibicao }}</strong>
+                  <span>
+                    {{ nomeTipoContato[c.tipo] }}{{ c.principal ? ' · principal' : '' }}
+                    @if (!c.aceitaContato) {
+                      · <span class="optout">não aceita contato</span>
+                    }
+                  </span>
+                </div>
+                <button mat-icon-button type="button" [matMenuTriggerFor]="acoesContato" [attr.aria-label]="'Ações do contato ' + c.exibicao">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #acoesContato="matMenu" xPosition="before">
+                  <button mat-menu-item type="button" (click)="alterarContato(c)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Alterar</span>
+                  </button>
+                  <button mat-menu-item type="button" (click)="removerContato(c)">
+                    <mat-icon>delete</mat-icon>
+                    <span>Remover</span>
+                  </button>
+                </mat-menu>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="crm-card bloco">
+          <div class="bloco__titulo">
+            <h2>Veículos e contratos</h2>
+            <app-aviso-mensalidade />
+          </div>
+          @for (k of f.contratos; track k.id) {
+            <article class="contrato">
+              <div class="contrato__topo">
+                <div>
+                  <strong class="placa">{{ k.placa }}</strong>
+                  <span class="secundario">{{ k.modelo }} · {{ k.tipoVeiculo }}</span>
+                </div>
+                <div class="chips">
+                  <app-status-chip [tipo]="k.situacao === 'ATIVO' ? 'ativo' : 'neutro'">{{ nomeSituacao[k.situacao] }}</app-status-chip>
+                  <app-status-chip [tipo]="chipDaFila(k.fila)">{{ descreverFila(k.fila, k.diasAtraso) }}</app-status-chip>
+                  @if (gerencial()) {
+                    <button mat-icon-button type="button" (click)="alterarContrato(k)" aria-label="Alterar contrato" matTooltip="Alterar contrato">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+              <dl class="dados dados--contrato">
+                <div><dt>Mensalidade</dt><dd>{{ k.mensalidade | currency: 'BRL' }}</dd></div>
+                <div><dt>Adesão</dt><dd>{{ formatarData(k.aderidoEm) }}</dd></div>
+                <div><dt>Vendedor</dt><dd>{{ k.vendedorNome ?? '—' }}</dd></div>
+                <div><dt>Código SGA</dt><dd>{{ k.codigoSga ?? '—' }}</dd></div>
+                @if (k.encerradoEm) {
+                  <div><dt>Encerrado em</dt><dd>{{ formatarData(k.encerradoEm) }}</dd></div>
+                }
+              </dl>
+              @if (k.regua.length) {
+                <ol class="regua" aria-label="Régua de pós-venda">
+                  @for (e of k.regua; track e.codigo) {
+                    <li [class]="'regua__etapa regua__etapa--' + e.situacao.toLowerCase()">
+                      <strong>{{ e.nome }}</strong>
+                      <span>{{ e.situacao === 'CONCLUIDA' ? 'concluída' : formatarData(e.prevista) || 'sem data' }}</span>
+                    </li>
+                  }
+                </ol>
+              }
+            </article>
+          }
+        </section>
+
+        <section class="crm-card bloco">
+          <h2>Histórico de atendimentos</h2>
+          @if (f.atendimentos.length === 0) {
+            <p class="vazio">Nenhum atendimento registrado.</p>
+          }
+          <ul class="historico">
+            @for (a of f.atendimentos; track a.id) {
+              <li [class.corrigido]="a.corrigido">
+                <div class="historico__topo">
+                  <strong>{{ a.realizadoEm | date: 'dd/MM/yyyy HH:mm' : 'America/Sao_Paulo' }}</strong>
+                  <span>{{ a.tipo }}{{ a.etapa ? ' · ' + a.etapa : '' }}{{ a.placa ? ' · ' + a.placa : '' }}</span>
+                  <span class="resultado">{{ nomeResultado[a.resultado] ?? a.resultado }}</span>
+                  @if (a.corrigido) {
+                    <app-status-chip tipo="neutro">corrigido</app-status-chip>
+                  }
+                  @if (a.corrigeAtendimentoId) {
+                    <app-status-chip tipo="hoje">correção</app-status-chip>
+                  }
+                </div>
+                @if (a.descricao) {
+                  <p>{{ a.descricao }}</p>
+                }
+                <span class="secundario">
+                  {{ a.registradoPor }}
+                  @if (a.retornoAgendadoPara) {
+                    · retorno em {{ formatarData(a.retornoAgendadoPara) }}
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="crm-card bloco">
+          <h2>Indicações feitas</h2>
+          @if (f.indicacoes.length === 0) {
+            <p class="vazio">Nenhuma indicação deste cliente.</p>
+          }
+          <ul class="indicacoes">
+            @for (i of f.indicacoes; track i.id) {
+              <li>
+                <strong>{{ i.indicadoNome }}</strong>
+                <span>{{ nomeStatusIndicacao[i.status] ?? i.status }} · {{ i.registradaEm | date: 'dd/MM/yyyy' : 'America/Sao_Paulo' }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+
+      <aside class="lateral">
+        <section class="crm-card bloco">
+          <h2>Registrar atendimento</h2>
+          <p class="vazio">O formulário de atendimento chega com a história ATD-01.</p>
+        </section>
+      </aside>
+    </div>
+  }
+</div>

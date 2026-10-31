@@ -167,14 +167,15 @@ Visão geral, decisões e regras: [Modelo de dados](README.md).
 
 **Regras de integridade**
 
-- `uk_contato_associado`: `UNIQUE (associado_id, tipo, valor)`
+- `uk_contato_associado`: `UNIQUE (associado_id, tipo, valor) DEFERRABLE INITIALLY DEFERRED` (conferida no commit, changeset 015)
 - `ck_contato_associado_tipo`: `CHECK (((tipo) = ANY (ARRAY['WHATSAPP', 'TELEFONE', 'EMAIL'])))`
 - `ck_contato_associado_valor`: `CHECK (((((tipo) = ANY (ARRAY['WHATSAPP', 'TELEFONE'])) AND ((valor) ~ '^55[1-9][0-9]{9,10}$')) OR (((tipo) = 'EMAIL') AND ((valor) ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'))))`
 
 **Índices adicionais**
 
 - `ix_contato_associado_valor`: `btree (valor)`
-- `uk_contato_associado_principal`: `UNIQUE btree (associado_id, tipo) WHERE principal`
+- `ix_contato_associado_valor_trgm`: `gin (valor gin_trgm_ops)` (busca por trecho do telefone, RG-05)
+- `uk_contato_associado_principal`: `EXCLUDE USING btree (associado_id WITH =, tipo WITH =) WHERE (principal) DEFERRABLE INITIALLY DEFERRED` (um principal por tipo, conferido no commit: trocar o principal mexe em duas linhas na mesma gravação)
 
 ### `veiculo`
 
@@ -393,6 +394,8 @@ Visão geral, decisões e regras: [Modelo de dados](README.md).
 | --- | --- |
 | `vw_fila_contato` | Fila de cada contrato com régua ativa: `HOJE`, `ATRASADO`, `FUTURO`, `SEM_DATA`, `SUSPENSO` ou `CANCELADO`, e os dias de atraso. |
 | `vw_aniversariante` | Próximo aniversário e dias até ele, para associados com contrato vigente; 29/02 vira 28/02 em ano não bissexto. |
+| `vw_carteira` | CAR-01 · Uma linha por contrato com associado, documento, cidade/UF, veículo, mensalidade, situação, etapa pendente, próximo contato, fila (de `vw_fila_contato`; sem régua ativa = `SEM_DATA`), vendedor, WhatsApp principal com opt-out e todos os telefones do associado (só para a busca). |
+| `vw_historico_atendimento` | CAR-03 · Atendimentos com nome do tipo, da etapa e do autor, placa do contrato e a marca `corrigido` (já existe um registro que o corrige, ATD-04). |
 | `vw_ultimo_contato_regua` | Último contato de régua concluído por contrato (ÚLTIMO CONTATO e ETAPA CONCLUÍDA da planilha). |
 | `texto_busca(text)` | Remove acentos e põe em minúsculas. Busca: `texto_busca(nome) LIKE '%' \|\| texto_busca(:termo) \|\| '%'`. |
 
@@ -407,4 +410,4 @@ O "hoje" das visões é sempre `(now() AT TIME ZONE 'America/Sao_Paulo')::date`.
 | `tipo_contato` | `POS_VENDA`, `ANIVERSARIO`, `SUPORTE`, `INDICACAO`, `REAPROXIMACAO`, `COMERCIAL` |
 | `etapa_relacionamento` | `D7` (7 dias, inicial) → `D30` (23) → `D60` (30) → `D90` (30) → `TRIMESTRAL` (90, repete) |
 | `usuario` | `sistema.importacao` ("Importação da planilha", inativo, uuid `00000000-0000-0000-0000-000000000000`) |
-| `municipio` | Vazia nesta versão; carga do IBGE na migration V3 |
+| `municipio` | Os 5.571 municípios do IBGE (changeset `013-carga-municipio`, arquivo `dados/municipio.csv`), com índice `ix_municipio_nome_busca` sobre `texto_busca(nome)` |
