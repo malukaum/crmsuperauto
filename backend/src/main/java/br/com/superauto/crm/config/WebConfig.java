@@ -1,7 +1,7 @@
 package br.com.superauto.crm.config;
 
-import br.com.superauto.crm.acesso.ProjecaoUsuarioInterceptor;
-import br.com.superauto.crm.acesso.ProjecaoUsuarioService;
+import br.com.superauto.crm.acesso.api.ProjecaoUsuarioInterceptor;
+import br.com.superauto.crm.acesso.servico.ProjecaoUsuarioService;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;

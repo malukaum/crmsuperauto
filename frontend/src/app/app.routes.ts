@@ -2,8 +2,8 @@ import { Routes } from '@angular/router';
 
 import { inicioPorPapelGuard, papelGuard } from './core/auth/papel.guard';
 import { EQUIPE_INTERNA, GERENCIAL_OU_VENDEDOR, Papel } from './core/auth/papel';
-import { AcessoNegado } from './paginas/acesso-negado/acesso-negado';
-import { EmConstrucao } from './paginas/em-construcao/em-construcao';
+import { AcessoNegado } from './paginas/acesso/acesso-negado/acesso-negado';
+import { EmConstrucao } from './shared/em-construcao/em-construcao';
 
 const SUFIXO = ' · CRM Super Auto';
 
@@ -33,7 +33,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'inicio' },
       {
         path: 'inicio',
-        loadComponent: () => import('./paginas/cliente-inicio/cliente-inicio').then((m) => m.ClienteInicio),
+        loadComponent: () => import('./paginas/areacliente/cliente-inicio/cliente-inicio').then((m) => m.ClienteInicio),
         title: 'Início' + SUFIXO,
       },
       emConstrucao('veiculos', 'Veículos'),
@@ -51,7 +51,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'painel',
-        loadComponent: () => import('./paginas/painel/painel').then((m) => m.Painel),
+        loadComponent: () => import('./paginas/relacionamento/painel/painel').then((m) => m.Painel),
         title: 'Painel' + SUFIXO,
       },
       emConstrucao('contatos-hoje', 'Contatos de hoje'),
@@ -73,7 +73,7 @@ export const routes: Routes = [
           {
             path: 'usuarios',
             loadComponent: () =>
-              import('./paginas/configuracoes/usuarios/usuarios-equipe').then((m) => m.UsuariosEquipe),
+              import('./paginas/acesso/usuarios-equipe/usuarios-equipe').then((m) => m.UsuariosEquipe),
             title: 'Usuários da equipe' + SUFIXO,
           },
         ],

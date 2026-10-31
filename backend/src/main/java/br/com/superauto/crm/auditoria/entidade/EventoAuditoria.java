@@ -1,0 +1,117 @@
+package br.com.superauto.crm.auditoria.entidade;
+
+import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+/**
+ * Um evento de auditoria (RG-08): quem, quando, valor anterior e valor novo. Só é inserido, nunca alterado
+ * ({@link Immutable}). Os mapas viram {@code jsonb} pelo próprio Hibernate.
+ */
+@Entity
+@Immutable
+@Table(name = "auditoria_evento")
+public class EventoAuditoria {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 60)
+    private String entidade;
+
+    @Column(name = "entidade_id", nullable = false, length = 40)
+    private String entidadeId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OperacaoAuditoria operacao;
+
+    @Column(name = "usuario_id")
+    private UUID usuarioId;
+
+    @CreationTimestamp
+    @Column(name = "ocorrido_em", nullable = false, updatable = false)
+    private OffsetDateTime ocorridoEm;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "dados_anteriores", columnDefinition = "jsonb")
+    private Map<String, Object> dadosAnteriores;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "dados_novos", columnDefinition = "jsonb")
+    private Map<String, Object> dadosNovos;
+
+    protected EventoAuditoria() {
+    }
+
+    private EventoAuditoria(ItemAuditado item, OperacaoAuditoria operacao, UUID autor, Alteracao alteracao) {
+        this.entidade = item.entidade();
+        this.entidadeId = item.id();
+        this.operacao = operacao;
+        this.usuarioId = autor;
+        this.dadosAnteriores = copia(alteracao.anterior());
+        this.dadosNovos = copia(alteracao.novo());
+    }
+
+    /** O item nasceu com os dados informados. */
+    public static EventoAuditoria criacao(ItemAuditado item, UUID autor, Map<String, ?> dados) {
+        return new EventoAuditoria(item, OperacaoAuditoria.CRIACAO, autor, new Alteracao(null, dados));
+    }
+
+    /** O item mudou: valores anteriores e novos só dos campos alterados. */
+    public static EventoAuditoria alteracao(ItemAuditado item, UUID autor, Alteracao alteracao) {
+        return new EventoAuditoria(item, OperacaoAuditoria.ALTERACAO, autor, alteracao);
+    }
+
+    private static Map<String, Object> copia(Map<String, ?> dados) {
+        return dados == null ? null : new LinkedHashMap<>(dados);
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getEntidade() {
+        return entidade;
+    }
+
+    public String getEntidadeId() {
+        return entidadeId;
+    }
+
+    public OperacaoAuditoria getOperacao() {
+        return operacao;
+    }
+
+    public UUID getUsuarioId() {
+        return usuarioId;
+    }
+
+    public OffsetDateTime getOcorridoEm() {
+        return ocorridoEm;
+    }
+
+    public Map<String, Object> getDadosAnteriores() {
+        return dadosAnteriores;
+    }
+
+    public Map<String, Object> getDadosNovos() {
+        return dadosNovos;
+    }
+}

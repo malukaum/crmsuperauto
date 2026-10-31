@@ -76,7 +76,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(NegocioException.class)
     ProblemDetail negocio(NegocioException ex, HttpServletRequest request) {
-        ProblemDetail pd = problema(ex.getStatus(), ex.getMessage(), request.getRequestURI());
+        HttpStatus status = switch (ex.getTipo()) {
+            case NAO_ENCONTRADO -> HttpStatus.NOT_FOUND;
+            case CONFLITO -> HttpStatus.CONFLICT;
+            case INVALIDO -> HttpStatus.UNPROCESSABLE_CONTENT;
+        };
+        ProblemDetail pd = problema(status, ex.getMessage(), request.getRequestURI());
         pd.setProperty("codigo", ex.getCodigo());
         ex.getDados().forEach(pd::setProperty);
         return pd;

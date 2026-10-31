@@ -2,43 +2,55 @@ package br.com.superauto.crm.erro;
 
 import java.util.Map;
 
-import org.springframework.http.HttpStatus;
-
 /**
- * Erro previsto de regra de negócio. Sai como ProblemDetail com o status e a mensagem informados;
- * {@code codigo} e {@code dados} viram propriedades extras para o front decidir o que fazer.
+ * Erro previsto de regra de negócio. Não conhece HTTP: o {@link Tipo} diz a natureza do erro e o
+ * {@link GlobalExceptionHandler} decide como ele sai na API. {@code codigo} e {@code dados} viram
+ * propriedades extras para o front decidir o que fazer.
  */
 public class NegocioException extends RuntimeException {
 
-    private final HttpStatus status;
+    public enum Tipo {
+        /** O recurso não existe (ou não é visível para esta operação). */
+        NAO_ENCONTRADO,
+        /** O estado atual impede a operação (ex.: duplicidade, pendência a resolver antes). */
+        CONFLITO,
+        /** Os dados ou a operação pedida violam uma regra. */
+        INVALIDO
+    }
+
+    private final Tipo tipo;
     private final String codigo;
     private final Map<String, Object> dados;
 
-    public NegocioException(HttpStatus status, String codigo, String mensagem, Map<String, Object> dados) {
+    public NegocioException(Tipo tipo, String codigo, String mensagem, Map<String, Object> dados) {
         super(mensagem);
-        this.status = status;
+        this.tipo = tipo;
         this.codigo = codigo;
         this.dados = dados == null ? Map.of() : Map.copyOf(dados);
     }
 
-    public NegocioException(HttpStatus status, String codigo, String mensagem) {
-        this(status, codigo, mensagem, null);
+    public NegocioException(Tipo tipo, String codigo, String mensagem) {
+        this(tipo, codigo, mensagem, null);
     }
 
     public static NegocioException naoEncontrado(String mensagem) {
-        return new NegocioException(HttpStatus.NOT_FOUND, "nao-encontrado", mensagem);
+        return new NegocioException(Tipo.NAO_ENCONTRADO, "nao-encontrado", mensagem);
     }
 
     public static NegocioException conflito(String codigo, String mensagem) {
-        return new NegocioException(HttpStatus.CONFLICT, codigo, mensagem);
+        return new NegocioException(Tipo.CONFLITO, codigo, mensagem);
+    }
+
+    public static NegocioException conflito(String codigo, String mensagem, Map<String, Object> dados) {
+        return new NegocioException(Tipo.CONFLITO, codigo, mensagem, dados);
     }
 
     public static NegocioException invalido(String codigo, String mensagem) {
-        return new NegocioException(HttpStatus.UNPROCESSABLE_CONTENT, codigo, mensagem);
+        return new NegocioException(Tipo.INVALIDO, codigo, mensagem);
     }
 
-    public HttpStatus getStatus() {
-        return status;
+    public Tipo getTipo() {
+        return tipo;
     }
 
     public String getCodigo() {

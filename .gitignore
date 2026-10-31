@@ -15,3 +15,6 @@ frontend/coverage/
 *.iml
 .vscode/
 .DS_Store
+
+# Claude Code (configuração pessoal; a do projeto em .claude/ é versionada)
+.claude/settings.local.json
