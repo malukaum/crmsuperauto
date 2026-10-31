@@ -12,6 +12,7 @@ import { filter, interval, map, merge } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { EQUIPE_INTERNA, GERENCIAL_OU_VENDEDOR, Papel } from '../../core/auth/papel';
 import { ContadoresMenu, MenuService } from '../../core/api/menu.service';
+import { Marca } from '../../shared/marca/marca';
 
 type Contador = keyof ContadoresMenu;
 
@@ -83,6 +84,7 @@ export function menuPara(papeis: readonly Papel[]): GrupoMenu[] {
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
+    Marca,
   ],
   templateUrl: './layout-interno.html',
   styleUrl: './layout-interno.scss',

@@ -1,0 +1,35 @@
+// Formulários de páginas e diálogos.
+
+// Coluna de campos de um diálogo. Qualificada pelo mat-dialog-content porque o estilo dele
+// (display: block) é carregado depois do global e venceria um seletor de uma classe só.
+.mat-mdc-dialog-content.crm-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: min(440px, 80vw);
+}
+
+// Dois campos lado a lado; um embaixo do outro no celular.
+.crm-linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 599.98px) {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+.crm-largura-total {
+  width: 100%;
+}
+
+// Botões ao fim de um formulário de página.
+.crm-acoes {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}

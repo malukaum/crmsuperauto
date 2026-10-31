@@ -1,8 +1,8 @@
 <section class="crm-card integracao">
-  <header class="integracao__cabecalho">
+  <header class="crm-cabecalho">
     <div>
       <h2>Verificação da integração</h2>
-      <p class="integracao__descricao">Chamadas reais à API com o seu token. O resultado depende do seu papel.</p>
+      <p class="crm-subtitulo">Chamadas reais à API com o seu token. O resultado depende do seu papel.</p>
     </div>
     <button mat-flat-button type="button" (click)="testar()" [disabled]="carregando()">
       <mat-icon>refresh</mat-icon>
@@ -34,7 +34,7 @@
         </dl>
       } @else {
         <app-status-chip [tipo]="tipoDoStatus(me.status)">{{ rotuloDoStatus(me.status) }}</app-status-chip>
-        <p class="integracao__problema">{{ me.problema?.detail }}</p>
+        <p class="crm-secundario">{{ me.problema?.detail }}</p>
       }
     </div>
   }
@@ -42,8 +42,8 @@
   @if (pings().length) {
     <div class="integracao__bloco">
       <h3>Controle de acesso por papel</h3>
-      <div class="tabela-rolagem">
-        <table class="integracao__tabela">
+      <div class="crm-tabela-rolagem">
+        <table class="crm-tabela crm-tabela--empilhada integracao__tabela">
           <thead>
             <tr>
               <th>Endpoint</th>

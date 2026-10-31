@@ -41,7 +41,7 @@ export interface DadosDesativar {
             Escolha quem fica com {{ contratos() === 1 ? 'ele' : 'eles' }}:
           </p>
           @if (dados.vendedores.length) {
-            <mat-form-field class="campo">
+            <mat-form-field class="crm-largura-total">
               <mat-label>Transferir contratos para</mat-label>
               <mat-select [value]="destino()" (valueChange)="destino.set($event)" required>
                 @for (v of dados.vendedores; track v.id) {
@@ -50,12 +50,12 @@ export interface DadosDesativar {
               </mat-select>
             </mat-form-field>
           } @else {
-            <p class="erro">Não há outro vendedor ativo. Cadastre ou reative um vendedor antes de desativar este.</p>
+            <p class="crm-erro">Não há outro vendedor ativo. Cadastre ou reative um vendedor antes de desativar este.</p>
           }
         </div>
       }
       @if (erro(); as e) {
-        <p class="erro" role="alert">{{ e }}</p>
+        <p class="crm-erro" role="alert">{{ e }}</p>
       }
     </mat-dialog-content>
     @if (salvando()) {
@@ -75,15 +75,9 @@ export interface DadosDesativar {
     .transferencia {
       margin-top: 8px;
       padding: 12px 16px 4px;
-      border-radius: 10px;
+      border-radius: var(--crm-raio-botao);
       background: var(--crm-laranja-fundo);
       color: var(--crm-laranja-texto);
-    }
-    .campo {
-      width: 100%;
-    }
-    .erro {
-      color: var(--mat-sys-error);
     }
   `,
 })

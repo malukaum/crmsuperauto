@@ -16,7 +16,6 @@ import { problemaDe } from '../../../core/api/problema';
 import { ReferenciasApi } from '../../../core/api/referencias-api.service';
 import { AvisoMensalidade } from '../../../shared/aviso-mensalidade/aviso-mensalidade';
 import { NOME_SITUACAO } from '../../../shared/formatos/formatos';
-import { ESTILOS_DIALOGO } from './estilos-dialogo';
 
 /** Mudanças permitidas pela CAR-05; Cancelado é definitivo (proposta). */
 const DESTINOS: Record<SituacaoContrato, SituacaoContrato[]> = {
@@ -47,8 +46,8 @@ export function situacoesPermitidas(atual: SituacaoContrato): SituacaoContrato[]
   template: `
     <h2 mat-dialog-title>Contrato {{ contrato.placa }}</h2>
     <form [formGroup]="form" (ngSubmit)="salvar()">
-      <mat-dialog-content class="campos">
-        <div class="linha">
+      <mat-dialog-content class="crm-campos">
+        <div class="crm-linha">
           <mat-form-field>
             <mat-label>Situação</mat-label>
             <mat-select formControlName="situacao">
@@ -62,7 +61,7 @@ export function situacoesPermitidas(atual: SituacaoContrato): SituacaoContrato[]
             <input matInput type="number" min="0" step="0.01" formControlName="mensalidade" required />
           </mat-form-field>
         </div>
-        <div class="linha">
+        <div class="crm-linha">
           <mat-form-field>
             <mat-label>Vendedor</mat-label>
             <mat-select formControlName="vendedorId" required>
@@ -81,14 +80,14 @@ export function situacoesPermitidas(atual: SituacaoContrato): SituacaoContrato[]
         </div>
         <app-aviso-mensalidade />
         @if (cancelando()) {
-          <p class="ajuda">
+          <p class="crm-ajuda">
             Cancelar é definitivo: grava a data de encerramento e tira o contrato das filas. O histórico continua.
             Para voltar, cadastre um novo contrato.
           </p>
           <mat-checkbox formControlName="confirmaCancelamento">Confirmo o cancelamento</mat-checkbox>
         }
         @if (erro(); as e) {
-          <p class="erro" role="alert">{{ e }}</p>
+          <p class="crm-erro" role="alert">{{ e }}</p>
         }
       </mat-dialog-content>
       <mat-dialog-actions align="end">
@@ -97,7 +96,6 @@ export function situacoesPermitidas(atual: SituacaoContrato): SituacaoContrato[]
       </mat-dialog-actions>
     </form>
   `,
-  styles: ESTILOS_DIALOGO,
 })
 export class ContratoDialog {
   protected readonly contrato = inject<ContratoDaFicha>(MAT_DIALOG_DATA);

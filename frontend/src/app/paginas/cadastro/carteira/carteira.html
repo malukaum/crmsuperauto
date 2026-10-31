@@ -1,10 +1,10 @@
 <div class="crm-pagina">
-  <header class="cabecalho">
+  <header class="crm-cabecalho">
     <div>
       <h1 class="crm-titulo-pagina">Carteira</h1>
       <p class="crm-subtitulo">Uma linha por contrato (placa). Busque por nome, placa, CPF/CNPJ ou telefone.</p>
     </div>
-    <div class="cabecalho__acoes">
+    <div class="crm-cabecalho__acoes">
       <button
         *temPapel="podeExportar"
         mat-stroked-button
@@ -25,7 +25,7 @@
           <span>CSV</span>
         </button>
       </mat-menu>
-      <a *temPapel="podeExportar" mat-flat-button routerLink="/carteira/novo">
+      <a *temPapel="podeExportar" mat-flat-button class="crm-acao-destaque" routerLink="/carteira/novo">
         <mat-icon>add</mat-icon>
         Novo contrato
       </a>
@@ -126,7 +126,7 @@
     }
   </section>
 
-  <section class="crm-card lista">
+  <section class="crm-card crm-card--lista">
     @if (carregando()) {
       <mat-progress-bar mode="indeterminate" />
     }
@@ -142,19 +142,19 @@
     }
 
     @if (erro(); as e) {
-      <div class="estado" role="alert">
+      <div class="crm-estado" role="alert">
         <mat-icon>cloud_off</mat-icon>
         <p>{{ e }}</p>
       </div>
     } @else if (resultado(); as r) {
       @if (r.linhas.length === 0) {
-        <div class="estado">
+        <div class="crm-estado">
           <mat-icon>search_off</mat-icon>
           <p>Nenhum contrato encontrado com estes filtros.</p>
         </div>
       } @else {
-        <div class="tabela-rolagem">
-          <table class="tabela">
+        <div class="crm-tabela-rolagem">
+          <table class="crm-tabela">
             <thead>
               <tr>
                 @if (gerencial()) {
@@ -204,7 +204,7 @@
             </thead>
             <tbody>
               @for (l of r.linhas; track l.contratoId) {
-                <tr class="linha" (click)="abrirFicha(l)">
+                <tr class="crm-tabela__linha--clicavel" (click)="abrirFicha(l)">
                   @if (gerencial()) {
                     <td class="marcar" (click)="$event.stopPropagation()">
                       @if (l.situacao === 'A_CONFERIR') {
@@ -218,11 +218,11 @@
                   }
                   <td class="cliente">
                     <a [routerLink]="['/carteira/associados', l.associadoId]" (click)="$event.stopPropagation()">{{ l.associado }}</a>
-                    <span class="secundario">{{ l.documento ?? '—' }}</span>
+                    <span class="crm-secundario">{{ l.documento ?? '—' }}</span>
                   </td>
                   <td class="placa">
                     <strong>{{ l.placa }}</strong>
-                    <span class="secundario">{{ l.modelo }}</span>
+                    <span class="crm-secundario">{{ l.modelo }}</span>
                   </td>
                   <td>{{ l.cidade ? l.cidade + ' / ' + l.uf : '—' }}</td>
                   <td class="num">{{ l.mensalidade | currency: 'BRL' }}</td>

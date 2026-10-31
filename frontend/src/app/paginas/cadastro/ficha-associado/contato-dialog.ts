@@ -10,7 +10,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { AssociadosApi, ContatoDaFicha, NovoContato, TipoContato } from '../../../core/api/associados-api.service';
 import { problemaDe } from '../../../core/api/problema';
 import { NOME_TIPO_CONTATO } from '../../../shared/formatos/formatos';
-import { ESTILOS_DIALOGO } from './estilos-dialogo';
 
 export interface DadosContatoDialog {
   associadoId: number;
@@ -38,8 +37,8 @@ export interface DadosContatoDialog {
   template: `
     <h2 mat-dialog-title>{{ dados.contato ? 'Alterar contato' : 'Novo contato' }}</h2>
     <form [formGroup]="form" (ngSubmit)="salvar()">
-      <mat-dialog-content class="campos">
-        <div class="linha">
+      <mat-dialog-content class="crm-campos">
+        <div class="crm-linha">
           <mat-form-field>
             <mat-label>Tipo</mat-label>
             <mat-select formControlName="tipo">
@@ -59,7 +58,7 @@ export interface DadosContatoDialog {
         <mat-checkbox formControlName="principal">Principal deste tipo (o WhatsApp principal é o usado nas filas)</mat-checkbox>
         <mat-checkbox formControlName="naoAceitaContato">Não aceita contato (opt-out)</mat-checkbox>
         @if (erro(); as e) {
-          <p class="erro" role="alert">{{ e }}</p>
+          <p class="crm-erro" role="alert">{{ e }}</p>
         }
       </mat-dialog-content>
       <mat-dialog-actions align="end">
@@ -68,7 +67,6 @@ export interface DadosContatoDialog {
       </mat-dialog-actions>
     </form>
   `,
-  styles: ESTILOS_DIALOGO,
 })
 export class ContatoDialog {
   protected readonly dados = inject<DadosContatoDialog>(MAT_DIALOG_DATA);

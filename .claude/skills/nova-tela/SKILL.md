@@ -37,6 +37,8 @@ export class XApi {
 - Estado em `signal` (`carregando`, `erro`, dados) e derivados em `computed`. Sem `BehaviorSubject` para estado de tela.
 - Template com `@if` / `@for (...; track ...)`; nada de `*ngIf`/`*ngFor`.
 - Angular Material 3 para componentes; tokens de `src/styles/_tokens.scss` e `_theme-colors.scss` para cores e espaçamentos.
+- Antes de escrever SCSS, use as classes globais `crm-*` de `src/styles/` (`crm-pagina`, `crm-cabecalho`, `crm-card`, `crm-bloco`, `crm-estado`, `crm-tabela`, `crm-lista`, `crm-dados`, `crm-campos`, `crm-erro`...). O `.scss` da tela guarda só o que é dela; estilo que aparecer em uma segunda tela sobe para o parcial global certo.
+- Ação principal da página com `class="crm-acao-destaque"` (amarelo da marca). Marca e logo: `app-marca` e `app-logo-completa` (`shared/marca`), imagens em `public/marca/`.
 - Diálogos em arquivos próprios na mesma pasta (`novo-x-dialog.ts`).
 - Mensagens de erro: mostre `problema.detail`; use `problema.codigo` para decidir fluxos (ex.: `contratos-a-transferir` abre outro diálogo).
 - Comentário de uma linha no topo: `/** CAR-01 · Buscar e filtrar a carteira. */`.

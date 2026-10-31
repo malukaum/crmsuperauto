@@ -1,26 +1,45 @@
-// Tokens da marca Super Auto. Use sempre estas variáveis (ou os tokens --mat-sys-* do tema),
-// nunca a cor "solta", para manter a interface consistente.
+// Tokens da marca Super Auto · Linha Truck (cores tiradas da logo). Use sempre estas variáveis (ou os
+// tokens --mat-sys-* do tema), nunca a cor "solta", para manter a interface consistente.
+// O tema de login do Keycloak (infra/keycloak/themes/crm/login/resources/css/crm.css) repete estes valores.
 :root {
-  --crm-marinho: #0d1b2a; // menu lateral, títulos
-  --crm-vermelho: #c52b3a; // ação principal
+  // Marca
+  --crm-azul-marca: #1d357f; // fundo da logo: menu lateral, barras, títulos, ação principal
+  --crm-azul-marca-escuro: #14255c; // rodapé do menu, avatar, texto sobre o amarelo
+  --crm-amarelo: #f8c80a; // destaque da marca: item ativo, ação de destaque
+  --crm-sobre-amarelo: var(--crm-azul-marca-escuro);
+
+  // Textos sobre o azul da marca (contraste AA)
+  --crm-sobre-azul: #ffffff;
+  --crm-sobre-azul-texto: #dfe5f5;
+  --crm-sobre-azul-secundario: #a9b6df;
+  --crm-sobre-azul-realce: rgba(255, 255, 255, 0.08);
+  --crm-sobre-azul-selecao: rgba(255, 255, 255, 0.14);
+
+  // Situações
   --crm-azul: #1e5aa8; // links, status "Hoje"
   --crm-azul-fundo: #e3ecf8;
   --crm-laranja: #e2711d; // status "Atrasado" (borda/ícone)
   --crm-laranja-texto: #9a3b00;
   --crm-laranja-fundo: #fdebdc;
+  --crm-sobre-laranja: #1b1200;
   --crm-verde: #1c6b3e; // WhatsApp, contrato ativo
   --crm-verde-fundo: #e1f1e7;
+
+  // Neutros
   --crm-texto: #1b2430;
   --crm-texto-secundario: #5b6675;
   --crm-fundo: #f4f6f9;
+  --crm-fundo-campo: #eef1f5; // campo de formulário preenchido
   --crm-superficie: #ffffff;
   --crm-borda: #e2e6ec;
 
+  // Formas e medidas
   --crm-raio-card: 14px;
   --crm-raio-botao: 10px;
   --crm-altura-botao: 44px;
   --crm-raio-chip: 999px;
-
   --crm-largura-menu: 248px;
+
   --crm-fonte: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --crm-fonte-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }

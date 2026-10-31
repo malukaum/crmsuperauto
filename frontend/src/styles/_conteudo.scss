@@ -1,0 +1,99 @@
+// Peças de conteúdo repetidas entre as telas: estados vazios, textos de apoio, listas e dados.
+
+// Carregando, vazio, erro ou "em construção": ícone grande, mensagem e, opcionalmente, uma ação.
+.crm-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--crm-texto-secundario);
+
+  > mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.crm-estado__titulo {
+  font-weight: 600;
+  color: var(--crm-azul-marca);
+}
+
+// Linha de apoio abaixo de um valor principal.
+.crm-secundario {
+  display: block;
+  font-size: 13px;
+  color: var(--crm-texto-secundario);
+}
+
+// Ausência de valor ("—", "Nenhum contato.").
+.crm-vazio {
+  margin: 0;
+  color: var(--crm-texto-secundario);
+}
+
+// Explicação curta antes de um formulário ou campo.
+.crm-ajuda {
+  margin: 0 0 16px;
+  color: var(--crm-texto-secundario);
+}
+
+// Mensagem de erro fora de um campo (resposta da API).
+.crm-erro {
+  margin: 4px 0 0;
+  color: var(--mat-sys-error);
+
+  a {
+    margin-left: 8px;
+    font-weight: 600;
+  }
+}
+
+// Lista de itens separados por linha (contatos, histórico, indicações).
+.crm-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  > li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--crm-borda);
+  }
+
+  > li:last-child {
+    border-bottom: 0;
+  }
+}
+
+// Pares rótulo/valor em grade (<dl> com um <div> por par).
+.crm-dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 0;
+
+  dt {
+    font-size: 12px;
+    color: var(--crm-texto-secundario);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-weight: 500;
+    word-break: break-word;
+  }
+}
+
+.crm-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}

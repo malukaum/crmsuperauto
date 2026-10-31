@@ -1,0 +1,105 @@
+// Tema Angular Material 3 com as cores da marca: azul como primária (ação principal, foco, seleção) e
+// amarelo como terciária (destaque).
+@use '@angular/material' as mat;
+@use './theme-colors' as cores;
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: cores.$primary-palette,
+        tertiary: cores.$tertiary-palette,
+        theme-type: light,
+      ),
+      typography: (
+        plain-family: var(--crm-fonte),
+        brand-family: var(--crm-fonte),
+        bold-weight: 600,
+        medium-weight: 500,
+        regular-weight: 400,
+      ),
+      density: 0,
+    )
+  );
+
+  // As paletas M3 geradas aproximam as cores; aqui fixamos os valores exatos da marca.
+  @include mat.theme-overrides(
+    (
+      primary: var(--crm-azul-marca),
+      on-primary: var(--crm-sobre-azul),
+      tertiary: var(--crm-amarelo),
+      on-tertiary: var(--crm-sobre-amarelo),
+      background: var(--crm-fundo),
+      on-background: var(--crm-texto),
+      surface: var(--crm-superficie),
+      on-surface: var(--crm-texto),
+      on-surface-variant: var(--crm-texto-secundario),
+      surface-container-low: var(--crm-superficie),
+      surface-container: var(--crm-fundo),
+      // Sem estes, campos preenchidos e menus herdam o tom lilás da paleta neutra gerada.
+      surface-variant: var(--crm-fundo-campo),
+      surface-container-high: var(--crm-fundo-campo),
+      surface-container-highest: var(--crm-fundo-campo),
+      outline-variant: var(--crm-borda),
+    )
+  );
+
+  @include mat.button-overrides(
+    (
+      filled-container-shape: var(--crm-raio-botao),
+      filled-container-height: var(--crm-altura-botao),
+      outlined-container-shape: var(--crm-raio-botao),
+      outlined-container-height: var(--crm-altura-botao),
+      text-container-shape: var(--crm-raio-botao),
+      text-container-height: var(--crm-altura-botao),
+      protected-container-shape: var(--crm-raio-botao),
+      protected-container-height: var(--crm-altura-botao),
+    )
+  );
+
+  @include mat.card-overrides(
+    (
+      elevated-container-shape: var(--crm-raio-card),
+      outlined-container-shape: var(--crm-raio-card),
+      filled-container-shape: var(--crm-raio-card),
+      outlined-outline-color: var(--crm-borda),
+    )
+  );
+
+  @include mat.chips-overrides(
+    (
+      container-shape-radius: var(--crm-raio-chip),
+    )
+  );
+
+  @include mat.sidenav-overrides(
+    (
+      container-width: var(--crm-largura-menu),
+      container-background-color: var(--crm-azul-marca),
+      container-shape: 0,
+      content-background-color: var(--crm-fundo),
+    )
+  );
+}
+
+// Ação de destaque da página (ex.: "Novo contrato"): botão preenchido no amarelo da marca.
+.crm-acao-destaque {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--crm-amarelo),
+      filled-label-text-color: var(--crm-sobre-amarelo),
+      filled-state-layer-color: var(--crm-sobre-amarelo),
+    )
+  );
+}
+
+// Botão de WhatsApp: verde do canal.
+.crm-acao-whatsapp {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--crm-verde),
+    )
+  );
+}

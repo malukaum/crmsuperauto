@@ -2,98 +2,11 @@
   display: block;
 }
 
-.cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-
-  .crm-subtitulo {
-    max-width: 720px;
-  }
-}
-
-.trilha {
-  margin: 0 0 4px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--crm-texto-secundario);
-}
-
-.lista {
-  padding: 0;
-  overflow: hidden;
-}
-
 .resumo {
   margin: 0;
   padding: 16px 20px 0;
   color: var(--crm-texto-secundario);
   font-size: 13px;
-}
-
-.estado {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 48px 24px;
-  text-align: center;
-  color: var(--crm-texto-secundario);
-
-  mat-icon {
-    font-size: 36px;
-    width: 36px;
-    height: 36px;
-  }
-}
-
-.tabela-rolagem {
-  overflow-x: auto;
-}
-
-.tabela {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-
-  th {
-    text-align: left;
-    font-weight: 600;
-    color: var(--crm-texto-secundario);
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--crm-borda);
-    white-space: nowrap;
-  }
-
-  td {
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--crm-borda);
-    vertical-align: middle;
-  }
-
-  tr:last-child td {
-    border-bottom: 0;
-  }
-
-  .num {
-    text-align: right;
-  }
-}
-
-.nome {
-  strong {
-    color: var(--crm-texto);
-  }
-
-  .email {
-    display: block;
-    font-size: 13px;
-    color: var(--crm-texto-secundario);
-  }
 }
 
 .voce {
@@ -107,12 +20,8 @@
 }
 
 .username {
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-family: var(--crm-fonte-mono);
   font-size: 13px;
-}
-
-.vazio {
-  color: var(--crm-texto-secundario);
 }
 
 .acoes {
@@ -128,62 +37,22 @@ tr.inativo {
   }
 }
 
-// No celular, cada usuário vira um bloco: nome e ações em cima; papel, situação e contratos embaixo.
+// No celular: nome e ações em cima; usuário, papel, situação e contratos embaixo.
 @media (max-width: 719.98px) {
-  .tabela {
-    thead {
-      display: none;
-    }
+  .nome {
+    grid-column: 1;
+    grid-row: 1;
+  }
 
-    tr {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 6px 12px;
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--crm-borda);
-    }
+  .acoes {
+    grid-column: 2;
+    grid-row: 1;
+  }
 
-    tr:last-child {
-      border-bottom: 0;
-    }
-
-    td {
-      padding: 0;
-      border: 0;
-    }
-
-    .nome {
-      grid-column: 1;
-      grid-row: 1;
-    }
-
-    .acoes {
-      grid-column: 2;
-      grid-row: 1;
-    }
-
-    .username,
-    .papel,
-    .situacao,
-    .contratos {
-      grid-column: 1 / -1;
-      text-align: left;
-    }
-
-    .username::before {
-      content: 'Usuário: ';
-      font-family: var(--crm-fonte);
-      color: var(--crm-texto-secundario);
-    }
-
-    .papel::before {
-      content: 'Papel: ';
-      color: var(--crm-texto-secundario);
-    }
-
-    .contratos::before {
-      content: 'Contratos vigentes: ';
-      color: var(--crm-texto-secundario);
-    }
+  .username,
+  .papel,
+  .situacao,
+  .contratos {
+    grid-column: 1 / -1;
   }
 }

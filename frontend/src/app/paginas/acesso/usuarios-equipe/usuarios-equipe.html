@@ -1,32 +1,32 @@
 <div class="crm-pagina">
-  <header class="cabecalho">
+  <header class="crm-cabecalho">
     <div>
-      <p class="trilha">Configurações</p>
+      <p class="crm-trilha">Configurações</p>
       <h1 class="crm-titulo-pagina">Usuários da equipe</h1>
       <p class="crm-subtitulo">
         Quem acessa a carteira e com qual papel. Usuários não são excluídos, só desativados, para o histórico
         manter o autor de cada atendimento. Contas de cliente nascem pelo primeiro acesso na área do associado.
       </p>
     </div>
-    <button mat-flat-button type="button" (click)="novo()">
+    <button mat-flat-button type="button" class="crm-acao-destaque" (click)="novo()">
       <mat-icon>person_add</mat-icon>
       Novo usuário
     </button>
   </header>
 
-  <section class="crm-card lista">
+  <section class="crm-card crm-card--lista">
     @if (carregando()) {
       <mat-progress-bar mode="indeterminate" />
     }
 
     @if (erro(); as e) {
-      <div class="estado" role="alert">
+      <div class="crm-estado" role="alert">
         <mat-icon>cloud_off</mat-icon>
         <p>{{ e }}</p>
         <button mat-stroked-button type="button" (click)="carregar()">Tentar novamente</button>
       </div>
     } @else if (!carregando() && usuarios().length === 0) {
-      <div class="estado">
+      <div class="crm-estado">
         <mat-icon>group_off</mat-icon>
         <p>Nenhum usuário da equipe cadastrado.</p>
       </div>
@@ -37,8 +37,8 @@
           · {{ resumo().inativos }} {{ resumo().inativos === 1 ? 'desativado' : 'desativados' }}
         }
       </p>
-      <div class="tabela-rolagem">
-        <table class="tabela">
+      <div class="crm-tabela-rolagem">
+        <table class="crm-tabela crm-tabela--empilhada">
           <thead>
             <tr>
               <th>Nome</th>
@@ -57,10 +57,10 @@
                   @if (ehVoce(u)) {
                     <span class="voce">você</span>
                   }
-                  <span class="email">{{ u.email ?? '—' }}</span>
+                  <span class="crm-secundario">{{ u.email ?? '—' }}</span>
                 </td>
-                <td class="username">{{ u.username }}</td>
-                <td class="papel">{{ nomePapel[u.papel] }}</td>
+                <td class="username" data-rotulo="Usuário">{{ u.username }}</td>
+                <td class="papel" data-rotulo="Papel">{{ nomePapel[u.papel] }}</td>
                 <td class="situacao">
                   @if (!u.ativo) {
                     <app-status-chip tipo="neutro">Desativado</app-status-chip>
@@ -70,11 +70,11 @@
                     <app-status-chip tipo="ativo">Ativo</app-status-chip>
                   }
                 </td>
-                <td class="num contratos">
+                <td class="num contratos" data-rotulo="Contratos vigentes">
                   @if (u.contratosVigentes) {
                     {{ u.contratosVigentes }}
                   } @else {
-                    <span class="vazio">—</span>
+                    <span class="crm-vazio">—</span>
                   }
                 </td>
                 <td class="acoes">

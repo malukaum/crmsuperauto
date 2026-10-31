@@ -9,7 +9,6 @@ import { AssociadosApi, FichaAssociado } from '../../../core/api/associados-api.
 import { problemaDe } from '../../../core/api/problema';
 import { Cidade } from '../../../core/api/referencias-api.service';
 import { CampoCidade } from '../../../shared/campo-cidade/campo-cidade';
-import { ESTILOS_DIALOGO } from './estilos-dialogo';
 
 /** Corrigir nome, nascimento (só pessoa física) e cidade. Gerencial e vendedor; o atendente só altera contatos. */
 @Component({
@@ -19,7 +18,7 @@ import { ESTILOS_DIALOGO } from './estilos-dialogo';
   template: `
     <h2 mat-dialog-title>Editar dados do cliente</h2>
     <form [formGroup]="form" (ngSubmit)="salvar()">
-      <mat-dialog-content class="campos">
+      <mat-dialog-content class="crm-campos">
         <mat-form-field>
           <mat-label>Nome</mat-label>
           <input matInput formControlName="nome" required />
@@ -35,7 +34,7 @@ import { ESTILOS_DIALOGO } from './estilos-dialogo';
         }
         <app-campo-cidade [obrigatorio]="true" [cidade]="cidade()" (escolhida)="cidade.set($event)" />
         @if (erro(); as e) {
-          <p class="erro" role="alert">{{ e }}</p>
+          <p class="crm-erro" role="alert">{{ e }}</p>
         }
       </mat-dialog-content>
       <mat-dialog-actions align="end">
@@ -44,7 +43,6 @@ import { ESTILOS_DIALOGO } from './estilos-dialogo';
       </mat-dialog-actions>
     </form>
   `,
-  styles: ESTILOS_DIALOGO,
 })
 export class DadosPessoaisDialog {
   protected readonly ficha = inject<FichaAssociado>(MAT_DIALOG_DATA);

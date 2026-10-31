@@ -182,6 +182,8 @@ Pendência conhecida: `Placa`, `Telefone` e `Documento` nascem junto com o mapea
 - Template com control flow (`@if`, `@for`), arquivos `.ts` / `.html` / `.scss` separados por página.
 - Cliente HTTP em `core/api/<nome>-api.service.ts`, com as interfaces TypeScript espelhando os DTOs do backend.
 - Rotas novas em `app.routes.ts` com `loadComponent`, `title` com o sufixo `· CRM Super Auto` e `papelGuard` + `data.papeis`.
+- Tema e estilos globais em `src/styles/` (`_tokens`, `_tema`, `_base`, `_pagina`, `_conteudo`, `_tabela`, `_formulario`): cores só por token (`--crm-azul-marca`, `--crm-amarelo`...), estilo usado por mais de uma tela vira classe `crm-*` global, e o `.scss` da tela guarda só o que é dela.
+- Identidade visual (logo Super Auto · Linha Truck): imagens em `public/marca/`, componentes `app-marca` e `app-logo-completa`; o tema de login do Keycloak repete os tokens.
 - Formatos RG-02: datas dd/mm/aaaa, R$ 1.234,56, telefone (37) 9 9999-9999, placa maiúscula sem hífen.
 - Erros da API chegam como ProblemDetail: use `detail` para a mensagem e `codigo` para decidir o fluxo.
 

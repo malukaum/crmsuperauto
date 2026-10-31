@@ -4,15 +4,17 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LogoCompleta } from '../../../shared/marca/logo-completa';
 
 @Component({
   selector: 'app-acesso-negado',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, RouterLink],
+  imports: [MatButtonModule, MatIconModule, RouterLink, LogoCompleta],
   template: `
-    <main class="negado">
-      <div class="crm-card negado__card">
-        <mat-icon class="negado__icone">lock</mat-icon>
+    <main class="crm-tela-marca">
+      <app-logo-completa class="crm-tela-marca__logo" />
+      <div class="crm-card crm-tela-marca__cartao">
+        <mat-icon class="icone">lock</mat-icon>
         <h1>Acesso negado</h1>
         @if (auth.logado()) {
           <p>
@@ -22,7 +24,7 @@ import { AuthService } from '../../../core/auth/auth.service';
         } @else {
           <p>Você precisa entrar para acessar esta página.</p>
         }
-        <div class="negado__acoes">
+        <div class="acoes">
           @if (auth.logado() && auth.papeis().length) {
             <a mat-flat-button routerLink="/">Ir para o início</a>
           }
@@ -36,31 +38,13 @@ import { AuthService } from '../../../core/auth/auth.service';
     </main>
   `,
   styles: `
-    .negado {
-      min-height: 100dvh;
-      display: grid;
-      place-items: center;
-      padding: 16px;
-      box-sizing: border-box;
-    }
-    .negado__card {
-      max-width: 440px;
-      text-align: center;
-      padding: 40px 32px;
-    }
-    .negado__icone {
+    .icone {
       font-size: 40px;
       width: 40px;
       height: 40px;
-      color: var(--crm-vermelho);
+      color: var(--crm-azul-marca);
     }
-    h1 {
-      margin: 12px 0 8px;
-    }
-    p {
-      color: var(--crm-texto-secundario);
-    }
-    .negado__acoes {
+    .acoes {
       display: flex;
       gap: 12px;
       justify-content: center;

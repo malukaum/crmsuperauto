@@ -1,14 +1,14 @@
 <div class="crm-pagina">
-  <p class="trilha"><a routerLink="/carteira">Carteira</a></p>
+  <p class="crm-trilha"><a routerLink="/carteira">Carteira</a></p>
   <h1 class="crm-titulo-pagina">Novo contrato</h1>
   <p class="crm-subtitulo">
     O contrato nasce "A conferir" e entra na régua de pós-venda com o D+7 em adesão + 7 dias.
   </p>
 
   @if (etapa() === 'documento') {
-    <form class="crm-card bloco documento" (ngSubmit)="continuar()">
+    <form class="crm-card crm-bloco documento" (ngSubmit)="continuar()">
       <h2>Quem é o cliente?</h2>
-      <p class="ajuda">Comece pelo CPF ou CNPJ. Se a pessoa já estiver na carteira, os dados dela são carregados.</p>
+      <p class="crm-ajuda">Comece pelo CPF ou CNPJ. Se a pessoa já estiver na carteira, os dados dela são carregados.</p>
       <mat-form-field>
         <mat-label>CPF ou CNPJ</mat-label>
         <input matInput [formControl]="documento" autocomplete="off" required />
@@ -17,17 +17,17 @@
         }
       </mat-form-field>
       @if (erro(); as e) {
-        <p class="erro" role="alert">{{ e }}</p>
+        <p class="crm-erro" role="alert">{{ e }}</p>
       }
-      <div class="acoes">
+      <div class="crm-acoes">
         <a mat-button routerLink="/carteira">Cancelar</a>
         <button mat-flat-button type="submit" [disabled]="ocupado()">Continuar</button>
       </div>
     </form>
   } @else {
     <form [formGroup]="form" (ngSubmit)="salvar()">
-      <section class="crm-card bloco">
-        <div class="bloco__titulo">
+      <section class="crm-card crm-bloco">
+        <div class="crm-bloco__titulo">
           <h2>Cliente</h2>
           <button mat-button type="button" (click)="trocarDocumento()">Trocar documento</button>
         </div>
@@ -72,7 +72,7 @@
         }
       </section>
 
-      <section class="crm-card bloco">
+      <section class="crm-card crm-bloco">
         <h2>Veículo</h2>
         <div class="grade">
           <mat-form-field>
@@ -97,7 +97,7 @@
         </div>
       </section>
 
-      <section class="crm-card bloco">
+      <section class="crm-card crm-bloco">
         <h2>Contrato</h2>
         <div class="grade">
           <mat-form-field>
@@ -135,7 +135,7 @@
       </section>
 
       @if (erro(); as e) {
-        <p class="erro" role="alert">
+        <p class="crm-erro" role="alert">
           {{ e }}
           @if (fichaDaPlaca(); as id) {
             <a [routerLink]="['/carteira/associados', id]">Abrir a ficha existente</a>
@@ -145,7 +145,7 @@
       @if (ocupado()) {
         <mat-progress-bar mode="indeterminate" />
       }
-      <div class="acoes">
+      <div class="crm-acoes">
         <a mat-button routerLink="/carteira">Cancelar</a>
         <button mat-flat-button type="submit" [disabled]="ocupado()">Cadastrar contrato</button>
       </div>

@@ -15,26 +15,13 @@ h3 {
   color: var(--crm-texto-secundario);
 }
 
-.integracao__cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.integracao__descricao {
-  margin: 0;
-  color: var(--crm-texto-secundario);
-}
-
 .integracao__bloco {
   padding-top: 20px;
   margin-top: 20px;
   border-top: 1px solid var(--crm-borda);
 }
 
+// Pares rótulo/valor em duas colunas fixas.
 .integracao__dados {
   display: grid;
   grid-template-columns: max-content 1fr;
@@ -52,42 +39,9 @@ h3 {
   }
 }
 
-.integracao__problema {
-  color: var(--crm-texto-secundario);
-}
-
-.tabela-rolagem {
-  overflow-x: auto;
-}
-
-.integracao__tabela {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-
-  th {
-    text-align: left;
-    font-weight: 600;
-    color: var(--crm-texto-secundario);
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--crm-borda);
-    white-space: nowrap;
-  }
-
-  td {
-    padding: 12px;
-    border-bottom: 1px solid var(--crm-borda);
-    vertical-align: middle;
-  }
-
-  tr:last-child td {
-    border-bottom: 0;
-  }
-
-  code {
-    font-size: 13px;
-    white-space: nowrap;
-  }
+.integracao__tabela code {
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .integracao__resposta {
@@ -95,30 +49,9 @@ h3 {
   min-width: 200px;
 }
 
-// No celular cada linha vira um bloco: endpoint, resultado e, abaixo, quem acessa e a resposta.
-@media (max-width: 599.98px) {
+// No celular: endpoint e resultado em cima; quem acessa e a resposta embaixo.
+@media (max-width: 719.98px) {
   .integracao__tabela {
-    thead {
-      display: none;
-    }
-
-    tr {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 4px 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--crm-borda);
-    }
-
-    tr:last-child {
-      border-bottom: 0;
-    }
-
-    td {
-      padding: 0;
-      border: 0;
-    }
-
     td:nth-child(1) {
       grid-column: 1;
       grid-row: 1;

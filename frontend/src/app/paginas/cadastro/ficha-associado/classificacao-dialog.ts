@@ -9,7 +9,6 @@ import { AssociadosApi, FichaAssociado } from '../../../core/api/associados-api.
 import { Perfil, PotencialIndicacao } from '../../../core/api/carteira-api.service';
 import { problemaDe } from '../../../core/api/problema';
 import { NOME_PERFIL, NOME_POTENCIAL } from '../../../shared/formatos/formatos';
-import { ESTILOS_DIALOGO } from './estilos-dialogo';
 
 /** CAR-06 · Perfil e potencial de indicação. Uso interno: o cliente nunca vê. */
 @Component({
@@ -19,9 +18,9 @@ import { ESTILOS_DIALOGO } from './estilos-dialogo';
   template: `
     <h2 mat-dialog-title>Classificar cliente</h2>
     <form [formGroup]="form" (ngSubmit)="salvar()">
-      <mat-dialog-content class="campos">
-        <p class="ajuda">Uso interno: o cliente nunca vê esta classificação.</p>
-        <div class="linha">
+      <mat-dialog-content class="crm-campos">
+        <p class="crm-ajuda">Uso interno: o cliente nunca vê esta classificação.</p>
+        <div class="crm-linha">
           <mat-form-field>
             <mat-label>Perfil</mat-label>
             <mat-select formControlName="perfil">
@@ -40,7 +39,7 @@ import { ESTILOS_DIALOGO } from './estilos-dialogo';
           </mat-form-field>
         </div>
         @if (erro(); as e) {
-          <p class="erro" role="alert">{{ e }}</p>
+          <p class="crm-erro" role="alert">{{ e }}</p>
         }
       </mat-dialog-content>
       <mat-dialog-actions align="end">
@@ -49,7 +48,6 @@ import { ESTILOS_DIALOGO } from './estilos-dialogo';
       </mat-dialog-actions>
     </form>
   `,
-  styles: ESTILOS_DIALOGO,
 })
 export class ClassificacaoDialog {
   protected readonly ficha = inject<FichaAssociado>(MAT_DIALOG_DATA);

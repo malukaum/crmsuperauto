@@ -2,20 +2,6 @@
   display: block;
 }
 
-.cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-
-  &__acoes {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-}
-
 .filtros {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -32,11 +18,7 @@
   }
 }
 
-.lista {
-  padding: 0;
-  overflow: hidden;
-}
-
+// Ações em lote sobre os contratos marcados.
 .lote {
   display: flex;
   align-items: center;
@@ -48,54 +30,12 @@
   font-weight: 600;
 }
 
-.estado {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 48px 24px;
-  text-align: center;
-  color: var(--crm-texto-secundario);
-
-  mat-icon {
-    font-size: 36px;
-    width: 36px;
-    height: 36px;
-  }
+.crm-tabela .marcar {
+  width: 40px;
+  padding-right: 0;
 }
 
-.tabela-rolagem {
-  overflow-x: auto;
-}
-
-.tabela {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-
-  th {
-    text-align: left;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--crm-borda);
-    white-space: nowrap;
-  }
-
-  td {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--crm-borda);
-    vertical-align: middle;
-  }
-
-  .num {
-    text-align: right;
-  }
-
-  .marcar {
-    width: 40px;
-    padding-right: 0;
-  }
-}
-
+// Cabeçalho de coluna que ordena a tabela.
 .ordenar {
   display: inline-flex;
   align-items: center;
@@ -124,28 +64,13 @@
   }
 }
 
-.linha {
-  cursor: pointer;
-
-  &:hover {
-    background: var(--crm-fundo);
-  }
-}
-
 .cliente a {
   font-weight: 600;
   color: var(--crm-texto);
   text-decoration: none;
 }
 
-.secundario {
-  display: block;
-  font-size: 12px;
-  color: var(--crm-texto-secundario);
-}
-
 .placa strong {
-  font-variant-numeric: tabular-nums;
   letter-spacing: 0.03em;
 }
 

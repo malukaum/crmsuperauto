@@ -7,7 +7,6 @@ import { MatInputModule } from '@angular/material/input';
 
 import { AssociadosApi, FichaAssociado } from '../../../core/api/associados-api.service';
 import { problemaDe } from '../../../core/api/problema';
-import { ESTILOS_DIALOGO } from './estilos-dialogo';
 
 export const PALAVRA_DE_CONFIRMACAO = 'ANONIMIZAR';
 
@@ -18,8 +17,8 @@ export const PALAVRA_DE_CONFIRMACAO = 'ANONIMIZAR';
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
   template: `
     <h2 mat-dialog-title>Anonimizar {{ ficha.nome }}?</h2>
-    <mat-dialog-content class="campos">
-      <p class="ajuda">
+    <mat-dialog-content class="crm-campos">
+      <p class="crm-ajuda">
         Nome, documento, nascimento e contatos são apagados e a conta da área do cliente é desativada. Contratos e
         atendimentos continuam nos relatórios, mas a descrição dos atendimentos é apagada. Não há como desfazer.
       </p>
@@ -28,7 +27,7 @@ export const PALAVRA_DE_CONFIRMACAO = 'ANONIMIZAR';
         <input matInput [formControl]="confirmacao" autocomplete="off" />
       </mat-form-field>
       @if (erro(); as e) {
-        <p class="erro" role="alert">{{ e }}</p>
+        <p class="crm-erro" role="alert">{{ e }}</p>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -43,7 +42,6 @@ export const PALAVRA_DE_CONFIRMACAO = 'ANONIMIZAR';
       </button>
     </mat-dialog-actions>
   `,
-  styles: ESTILOS_DIALOGO,
 })
 export class AnonimizarDialog {
   protected readonly ficha = inject<FichaAssociado>(MAT_DIALOG_DATA);

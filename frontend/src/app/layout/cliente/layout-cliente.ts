@@ -4,12 +4,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { Marca } from '../../shared/marca/marca';
 
 /** Área do associado: mobile-first, header marinho e navegação inferior. */
 @Component({
   selector: 'app-layout-cliente',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [MatButtonModule, MatIconModule, RouterLink, RouterLinkActive, RouterOutlet, Marca],
   templateUrl: './layout-cliente.html',
   styleUrl: './layout-cliente.scss',
 })

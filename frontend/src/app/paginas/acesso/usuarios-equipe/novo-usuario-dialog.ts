@@ -26,9 +26,9 @@ import { NOME_PAPEL, PAPEIS_EQUIPE, PapelEquipe } from '../../../core/auth/papel
   template: `
     <h2 mat-dialog-title>Novo usuário da equipe</h2>
     <form [formGroup]="form" (ngSubmit)="salvar()">
-      <mat-dialog-content class="campos">
-        <p class="aviso">A pessoa recebe um e-mail com o link para definir a própria senha.</p>
-        <div class="linha">
+      <mat-dialog-content class="crm-campos">
+        <p class="crm-ajuda">A pessoa recebe um e-mail com o link para definir a própria senha.</p>
+        <div class="crm-linha">
           <mat-form-field>
             <mat-label>Nome</mat-label>
             <input matInput formControlName="nome" autocomplete="off" required />
@@ -71,7 +71,7 @@ import { NOME_PAPEL, PAPEIS_EQUIPE, PapelEquipe } from '../../../core/auth/papel
           }
         </mat-form-field>
         @if (erro(); as e) {
-          <p class="erro" role="alert">{{ e }}</p>
+          <p class="crm-erro" role="alert">{{ e }}</p>
         }
       </mat-dialog-content>
       @if (salvando()) {
@@ -82,33 +82,6 @@ import { NOME_PAPEL, PAPEIS_EQUIPE, PapelEquipe } from '../../../core/auth/papel
         <button mat-flat-button type="submit" [disabled]="salvando()">Criar usuário</button>
       </mat-dialog-actions>
     </form>
-  `,
-  styles: `
-    .campos {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: min(480px, 80vw);
-    }
-    .linha {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    @media (max-width: 599.98px) {
-      .linha {
-        grid-template-columns: 1fr;
-        gap: 4px;
-      }
-    }
-    .aviso {
-      margin: 0 0 12px;
-      color: var(--crm-texto-secundario);
-    }
-    .erro {
-      margin: 4px 0 0;
-      color: var(--mat-sys-error);
-    }
   `,
 })
 export class NovoUsuarioDialog {

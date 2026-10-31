@@ -3,15 +3,17 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterOutlet } from '@angular/router';
 
 import { AuthService } from './core/auth/auth.service';
+import { LogoCompleta } from './shared/marca/logo-completa';
 
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, MatButtonModule],
+  imports: [RouterOutlet, MatButtonModule, LogoCompleta],
   template: `
     @if (auth.erroInicializacao(); as erro) {
-      <main class="falha">
-        <div class="crm-card">
+      <main class="crm-tela-marca">
+        <app-logo-completa class="crm-tela-marca__logo" />
+        <div class="crm-card crm-tela-marca__cartao">
           <h1>Login indisponível</h1>
           <p>{{ erro }}</p>
           <button mat-flat-button type="button" (click)="recarregar()">Tentar novamente</button>
@@ -19,21 +21,6 @@ import { AuthService } from './core/auth/auth.service';
       </main>
     } @else {
       <router-outlet />
-    }
-  `,
-  styles: `
-    .falha {
-      min-height: 100dvh;
-      display: grid;
-      place-items: center;
-      padding: 16px;
-      text-align: center;
-    }
-    .falha .crm-card {
-      max-width: 420px;
-    }
-    p {
-      color: var(--crm-texto-secundario);
     }
   `,
 })

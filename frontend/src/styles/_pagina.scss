@@ -1,0 +1,128 @@
+// Estrutura comum das páginas: área útil, cabeçalho, cartões e blocos.
+.crm-pagina {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  @media (max-width: 599.98px) {
+    padding: 16px;
+  }
+}
+
+.crm-trilha {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--crm-texto-secundario);
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.crm-titulo-pagina {
+  margin: 0 0 4px;
+  font-size: 24px;
+}
+
+.crm-subtitulo {
+  margin: 0 0 24px;
+  max-width: 720px;
+  color: var(--crm-texto-secundario);
+}
+
+// Título da página à esquerda e ações à direita.
+.crm-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  .crm-subtitulo {
+    margin-bottom: 0;
+  }
+}
+
+.crm-cabecalho__acoes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.crm-card {
+  background: var(--crm-superficie);
+  border: 1px solid var(--crm-borda);
+  border-radius: var(--crm-raio-card);
+  padding: 20px;
+}
+
+// Cartão cujo conteúdo (tabela, lista) encosta nas bordas.
+.crm-card--lista {
+  padding: 0;
+  overflow: hidden;
+}
+
+// Seção de uma página em cartões empilhados.
+.crm-bloco {
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 16px;
+  }
+}
+
+.crm-bloco__titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+// Tela inteira sobre o azul da marca, com a logo e um cartão no centro (falha de login, acesso negado).
+.crm-tela-marca {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  background-color: var(--crm-azul-marca);
+  background-image:
+    radial-gradient(1100px 560px at 90% -10%, rgba(248, 200, 10, 0.16), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(20, 37, 92, 0.85), transparent 60%);
+}
+
+.crm-tela-marca__logo {
+  width: min(320px, 80vw);
+}
+
+.crm-tela-marca__cartao {
+  max-width: 440px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+
+  h1 {
+    margin: 12px 0 8px;
+  }
+
+  p {
+    color: var(--crm-texto-secundario);
+  }
+}

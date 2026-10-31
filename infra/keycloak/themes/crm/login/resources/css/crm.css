@@ -2,21 +2,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --crm-marinho: #0d1b2a;
-    --crm-vermelho: #c52b3a;
-    --crm-vermelho-escuro: #a3202e;
+    --crm-azul-marca: #1d357f;
+    --crm-azul-marca-escuro: #14255c;
+    --crm-amarelo: #f8c80a;
     --crm-azul: #1e5aa8;
     --crm-texto: #1b2430;
     --crm-texto-secundario: #5b6675;
     --crm-borda: #e2e6ec;
     --crm-fonte: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-    --keycloak-card-top-color: var(--crm-vermelho);
+    --keycloak-card-top-color: var(--crm-amarelo);
 
     --pf-v5-global--FontFamily--text: var(--crm-fonte);
     --pf-v5-global--FontFamily--heading: var(--crm-fonte);
-    --pf-v5-global--primary-color--100: var(--crm-vermelho);
-    --pf-v5-global--primary-color--200: var(--crm-vermelho-escuro);
+    --pf-v5-global--primary-color--100: var(--crm-azul-marca);
+    --pf-v5-global--primary-color--200: var(--crm-azul-marca-escuro);
     --pf-v5-global--link--Color: var(--crm-azul);
     --pf-v5-global--link--Color--hover: #174a8b;
     --pf-v5-global--Color--100: var(--crm-texto);
@@ -25,38 +25,22 @@
 }
 
 .login-pf body {
-    background: var(--crm-marinho);
+    background: var(--crm-azul-marca);
     background-image:
-        radial-gradient(1200px 600px at 85% -10%, rgba(197, 43, 58, 0.22), transparent 60%),
-        radial-gradient(900px 500px at -10% 110%, rgba(30, 90, 168, 0.25), transparent 60%);
+        radial-gradient(1100px 560px at 90% -10%, rgba(248, 200, 10, 0.16), transparent 60%),
+        radial-gradient(900px 500px at -10% 110%, rgba(20, 37, 92, 0.85), transparent 60%);
     font-family: var(--crm-fonte);
 }
 
-/* Cabeçalho: selo "SA" e o nome do realm ("CRM Super Auto"). */
+/* Cabeçalho: a logo completa no lugar do nome do realm (o texto fica só para leitores de tela). */
 #kc-header-wrapper {
-    font-size: 22px;
-    letter-spacing: 0.04em;
-    text-transform: none;
-    font-weight: 500;
-}
-
-#kc-header-wrapper::before {
-    content: 'SA';
-    display: grid;
-    margin: 0 auto 12px;
-    place-items: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    background: var(--crm-vermelho);
-    color: #fff;
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 0;
-}
-
-#kc-header-wrapper b {
-    font-weight: 700;
+    width: min(320px, 80vw);
+    aspect-ratio: 720 / 219;
+    margin: 0 auto 24px;
+    padding: 0;
+    background: url('../img/logo.png') center / contain no-repeat;
+    color: transparent;
+    font-size: 0;
 }
 
 /* Cartão do formulário */
@@ -71,7 +55,7 @@
 }
 
 .pf-v5-c-title {
-    color: var(--crm-marinho);
+    color: var(--crm-azul-marca);
     font-weight: 600;
 }
 

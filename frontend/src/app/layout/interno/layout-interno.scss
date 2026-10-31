@@ -10,7 +10,7 @@
 .menu {
   width: var(--crm-largura-menu);
   border-right: 0;
-  color: #e6ebf2;
+  color: var(--crm-sobre-azul-texto);
 }
 
 // O conteúdo do sidenav precisa ocupar toda a altura para o rodapé ficar embaixo.
@@ -20,34 +20,7 @@
 }
 
 .menu__marca {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   padding: 20px 20px 16px;
-
-  strong {
-    display: block;
-    color: #fff;
-    font-size: 15px;
-  }
-
-  span {
-    font-size: 12px;
-    color: #9fb0c4;
-  }
-}
-
-.menu__logo {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--crm-vermelho);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-  flex-shrink: 0;
 }
 
 .menu__nav {
@@ -67,7 +40,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #7f91a8;
+  color: var(--crm-sobre-azul-secundario);
 }
 
 .menu__item {
@@ -76,8 +49,8 @@
   gap: 12px;
   height: 40px;
   padding: 0 12px;
-  border-radius: 10px;
-  color: #d4dce7;
+  border-radius: var(--crm-raio-botao);
+  color: var(--crm-sobre-azul-texto);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -87,15 +60,15 @@
     font-size: 20px;
     width: 20px;
     height: 20px;
-    color: #9fb0c4;
+    color: var(--crm-sobre-azul-secundario);
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--crm-sobre-azul-realce);
   }
 
   &:focus-visible {
-    outline: 2px solid #fff;
+    outline: 2px solid var(--crm-sobre-azul);
     outline-offset: -2px;
   }
 }
@@ -112,8 +85,8 @@
   padding: 0 7px;
   box-sizing: border-box;
   border-radius: var(--crm-raio-chip);
-  background: var(--crm-azul);
-  color: #fff;
+  background: var(--crm-sobre-azul);
+  color: var(--crm-azul-marca);
   font-size: 11px;
   font-weight: 600;
   line-height: 20px;
@@ -123,19 +96,18 @@
 
 .menu__contador--atrasado {
   background: var(--crm-laranja);
-  color: #1b1200;
+  color: var(--crm-sobre-laranja);
 }
 
+// Item ativo: realce claro, ícone e marca à esquerda no amarelo da logo.
 .menu__item--ativo {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--crm-sobre-azul-selecao);
+  color: var(--crm-sobre-azul);
+  box-shadow: inset 3px 0 0 var(--crm-amarelo);
 
   mat-icon {
-    color: #fff;
+    color: var(--crm-amarelo);
   }
-
-  // Marca vermelha à esquerda do item ativo.
-  box-shadow: inset 3px 0 0 var(--crm-vermelho);
 }
 
 .menu__rodape {
@@ -143,7 +115,7 @@
   align-items: center;
   gap: 10px;
   padding: 14px 12px 14px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--crm-azul-marca-escuro);
 }
 
 .menu__avatar {
@@ -152,10 +124,10 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #1f3247;
-  color: #fff;
+  background: var(--crm-amarelo);
+  color: var(--crm-sobre-amarelo);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
@@ -172,18 +144,18 @@
   }
 
   strong {
-    color: #fff;
+    color: var(--crm-sobre-azul);
     font-size: 13px;
   }
 
   span {
-    color: #9fb0c4;
+    color: var(--crm-sobre-azul-secundario);
     font-size: 12px;
   }
 }
 
 .menu__sair {
-  color: #d4dce7;
+  color: var(--crm-sobre-azul-texto);
 }
 
 .conteudo {
@@ -194,9 +166,7 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--crm-marinho);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
   gap: 4px;
+  background: var(--crm-azul-marca);
+  color: var(--crm-sobre-azul);
 }

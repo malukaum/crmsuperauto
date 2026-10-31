@@ -9,16 +9,16 @@
   }
 
   @if (erro(); as e) {
-    <div class="crm-card estado" role="alert">
+    <div class="crm-card crm-estado" role="alert">
       <mat-icon>person_search</mat-icon>
       <p>{{ e }}</p>
       <a mat-stroked-button routerLink="/carteira">Voltar para a carteira</a>
     </div>
   } @else if (ficha(); as f) {
-    <header class="cabecalho">
-      <div class="cabecalho__identidade">
+    <header class="crm-cabecalho">
+      <div>
         <h1 class="crm-titulo-pagina">{{ f.nome }}</h1>
-        <div class="chips">
+        <div class="crm-chips">
           @if (filaDoCabecalho(); as fc) {
             <app-status-chip [tipo]="chipDaFila(fc.fila)">{{ descreverFila(fc.fila, fc.diasAtraso) }}</app-status-chip>
           }
@@ -31,10 +31,10 @@
         </div>
       </div>
       @if (!f.anonimizado) {
-        <div class="cabecalho__acoes">
+        <div class="crm-cabecalho__acoes">
           @if (whatsapp(); as w) {
             @if (w.aceitaContato) {
-              <a mat-flat-button class="whatsapp" [href]="linkWhatsapp(w)" target="_blank" rel="noopener">
+              <a mat-flat-button class="crm-acao-whatsapp" [href]="linkWhatsapp(w)" target="_blank" rel="noopener">
                 <mat-icon>chat</mat-icon>
                 WhatsApp
               </a>
@@ -78,9 +78,9 @@
 
     <div class="colunas">
       <div class="principal">
-        <section class="crm-card bloco">
+        <section class="crm-card crm-bloco">
           <h2>Dados</h2>
-          <dl class="dados">
+          <dl class="crm-dados">
             <div>
               <dt>{{ f.pessoaFisica ? 'CPF' : 'CNPJ' }}</dt>
               <dd>
@@ -105,8 +105,8 @@
           </dl>
         </section>
 
-        <section class="crm-card bloco">
-          <div class="bloco__titulo">
+        <section class="crm-card crm-bloco">
+          <div class="crm-bloco__titulo">
             <h2>Contatos</h2>
             @if (!f.anonimizado) {
               <button mat-button type="button" (click)="novoContato()">
@@ -116,15 +116,15 @@
             }
           </div>
           @if (f.contatos.length === 0) {
-            <p class="vazio">Nenhum contato.</p>
+            <p class="crm-vazio">Nenhum contato.</p>
           }
-          <ul class="contatos">
+          <ul class="crm-lista contatos">
             @for (c of f.contatos; track c.id) {
               <li>
                 <mat-icon>{{ c.tipo === 'EMAIL' ? 'mail' : c.tipo === 'WHATSAPP' ? 'chat' : 'call' }}</mat-icon>
                 <div class="contatos__valor">
                   <strong>{{ c.exibicao }}</strong>
-                  <span>
+                  <span class="crm-secundario">
                     {{ nomeTipoContato[c.tipo] }}{{ c.principal ? ' · principal' : '' }}
                     @if (!c.aceitaContato) {
                       · <span class="optout">não aceita contato</span>
@@ -149,8 +149,8 @@
           </ul>
         </section>
 
-        <section class="crm-card bloco">
-          <div class="bloco__titulo">
+        <section class="crm-card crm-bloco">
+          <div class="crm-bloco__titulo">
             <h2>Veículos e contratos</h2>
             <app-aviso-mensalidade />
           </div>
@@ -159,9 +159,9 @@
               <div class="contrato__topo">
                 <div>
                   <strong class="placa">{{ k.placa }}</strong>
-                  <span class="secundario">{{ k.modelo }} · {{ k.tipoVeiculo }}</span>
+                  <span class="crm-secundario">{{ k.modelo }} · {{ k.tipoVeiculo }}</span>
                 </div>
-                <div class="chips">
+                <div class="crm-chips">
                   <app-status-chip [tipo]="k.situacao === 'ATIVO' ? 'ativo' : 'neutro'">{{ nomeSituacao[k.situacao] }}</app-status-chip>
                   <app-status-chip [tipo]="chipDaFila(k.fila)">{{ descreverFila(k.fila, k.diasAtraso) }}</app-status-chip>
                   @if (gerencial()) {
@@ -171,7 +171,7 @@
                   }
                 </div>
               </div>
-              <dl class="dados dados--contrato">
+              <dl class="crm-dados dados-contrato">
                 <div><dt>Mensalidade</dt><dd>{{ k.mensalidade | currency: 'BRL' }}</dd></div>
                 <div><dt>Adesão</dt><dd>{{ formatarData(k.aderidoEm) }}</dd></div>
                 <div><dt>Vendedor</dt><dd>{{ k.vendedorNome ?? '—' }}</dd></div>
@@ -194,12 +194,12 @@
           }
         </section>
 
-        <section class="crm-card bloco">
+        <section class="crm-card crm-bloco">
           <h2>Histórico de atendimentos</h2>
           @if (f.atendimentos.length === 0) {
-            <p class="vazio">Nenhum atendimento registrado.</p>
+            <p class="crm-vazio">Nenhum atendimento registrado.</p>
           }
-          <ul class="historico">
+          <ul class="crm-lista historico">
             @for (a of f.atendimentos; track a.id) {
               <li [class.corrigido]="a.corrigido">
                 <div class="historico__topo">
@@ -216,7 +216,7 @@
                 @if (a.descricao) {
                   <p>{{ a.descricao }}</p>
                 }
-                <span class="secundario">
+                <span class="crm-secundario">
                   {{ a.registradoPor }}
                   @if (a.retornoAgendadoPara) {
                     · retorno em {{ formatarData(a.retornoAgendadoPara) }}
@@ -227,16 +227,16 @@
           </ul>
         </section>
 
-        <section class="crm-card bloco">
+        <section class="crm-card crm-bloco">
           <h2>Indicações feitas</h2>
           @if (f.indicacoes.length === 0) {
-            <p class="vazio">Nenhuma indicação deste cliente.</p>
+            <p class="crm-vazio">Nenhuma indicação deste cliente.</p>
           }
-          <ul class="indicacoes">
+          <ul class="crm-lista">
             @for (i of f.indicacoes; track i.id) {
               <li>
                 <strong>{{ i.indicadoNome }}</strong>
-                <span>{{ nomeStatusIndicacao[i.status] ?? i.status }} · {{ i.registradaEm | date: 'dd/MM/yyyy' : 'America/Sao_Paulo' }}</span>
+                <span class="crm-secundario">{{ nomeStatusIndicacao[i.status] ?? i.status }} · {{ i.registradaEm | date: 'dd/MM/yyyy' : 'America/Sao_Paulo' }}</span>
               </li>
             }
           </ul>
@@ -244,9 +244,9 @@
       </div>
 
       <aside class="lateral">
-        <section class="crm-card bloco">
+        <section class="crm-card crm-bloco">
           <h2>Registrar atendimento</h2>
-          <p class="vazio">O formulário de atendimento chega com a história ATD-01.</p>
+          <p class="crm-vazio">O formulário de atendimento chega com a história ATD-01.</p>
         </section>
       </aside>
     </div>
