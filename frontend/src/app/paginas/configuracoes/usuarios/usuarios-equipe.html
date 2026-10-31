@@ -1,0 +1,131 @@
+<div class="crm-pagina">
+  <header class="cabecalho">
+    <div>
+      <p class="trilha">Configurações</p>
+      <h1 class="crm-titulo-pagina">Usuários da equipe</h1>
+      <p class="crm-subtitulo">
+        Quem acessa a carteira e com qual papel. Usuários não são excluídos, só desativados, para o histórico
+        manter o autor de cada atendimento. Contas de cliente nascem pelo primeiro acesso na área do associado.
+      </p>
+    </div>
+    <button mat-flat-button type="button" (click)="novo()">
+      <mat-icon>person_add</mat-icon>
+      Novo usuário
+    </button>
+  </header>
+
+  <section class="crm-card lista">
+    @if (carregando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (erro(); as e) {
+      <div class="estado" role="alert">
+        <mat-icon>cloud_off</mat-icon>
+        <p>{{ e }}</p>
+        <button mat-stroked-button type="button" (click)="carregar()">Tentar novamente</button>
+      </div>
+    } @else if (!carregando() && usuarios().length === 0) {
+      <div class="estado">
+        <mat-icon>group_off</mat-icon>
+        <p>Nenhum usuário da equipe cadastrado.</p>
+      </div>
+    } @else if (usuarios().length) {
+      <p class="resumo">
+        {{ resumo().ativos }} {{ resumo().ativos === 1 ? 'ativo' : 'ativos' }}
+        @if (resumo().inativos) {
+          · {{ resumo().inativos }} {{ resumo().inativos === 1 ? 'desativado' : 'desativados' }}
+        }
+      </p>
+      <div class="tabela-rolagem">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Usuário</th>
+              <th>Papel</th>
+              <th>Situação</th>
+              <th class="num">Contratos</th>
+              <th><span class="cdk-visually-hidden">Ações</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of usuarios(); track u.id) {
+              <tr [class.inativo]="!u.ativo">
+                <td class="nome">
+                  <strong>{{ nome(u) }}</strong>
+                  @if (ehVoce(u)) {
+                    <span class="voce">você</span>
+                  }
+                  <span class="email">{{ u.email ?? '—' }}</span>
+                </td>
+                <td class="username">{{ u.username }}</td>
+                <td class="papel">{{ nomePapel[u.papel] }}</td>
+                <td class="situacao">
+                  @if (!u.ativo) {
+                    <app-status-chip tipo="neutro">Desativado</app-status-chip>
+                  } @else if (u.aguardandoSenha) {
+                    <app-status-chip tipo="hoje">Aguardando senha</app-status-chip>
+                  } @else {
+                    <app-status-chip tipo="ativo">Ativo</app-status-chip>
+                  }
+                </td>
+                <td class="num contratos">
+                  @if (u.contratosVigentes) {
+                    {{ u.contratosVigentes }}
+                  } @else {
+                    <span class="vazio">—</span>
+                  }
+                </td>
+                <td class="acoes">
+                  @if (!ehVoce(u)) {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      [matMenuTriggerFor]="menuAcoes"
+                      [disabled]="ocupado() === u.id"
+                      [attr.aria-label]="'Ações para ' + nome(u)"
+                      matTooltip="Ações"
+                    >
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #menuAcoes="matMenu" xPosition="before">
+                      @if (u.ativo) {
+                        <button mat-menu-item type="button" [matMenuTriggerFor]="menuPapel">
+                          <mat-icon>badge</mat-icon>
+                          <span>Trocar papel</span>
+                        </button>
+                        @if (u.aguardandoSenha) {
+                          <button mat-menu-item type="button" (click)="reenviarConvite(u)">
+                            <mat-icon>forward_to_inbox</mat-icon>
+                            <span>Reenviar convite</span>
+                          </button>
+                        }
+                        <button mat-menu-item type="button" (click)="desativar(u)">
+                          <mat-icon>person_off</mat-icon>
+                          <span>Desativar</span>
+                        </button>
+                      } @else {
+                        <button mat-menu-item type="button" (click)="reativar(u)">
+                          <mat-icon>person_check</mat-icon>
+                          <span>Reativar</span>
+                        </button>
+                      }
+                    </mat-menu>
+                    <mat-menu #menuPapel="matMenu">
+                      @for (p of papeis; track p) {
+                        <button mat-menu-item type="button" [disabled]="p === u.papel" (click)="trocarPapel(u, p)">
+                          <span>{{ nomePapel[p] }}</span>
+                        </button>
+                      }
+                    </mat-menu>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

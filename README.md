@@ -75,6 +75,9 @@ A senha de todos é `123456`, sem troca obrigatória.
 | `vendedor1` | vendedor | `/painel` |
 | `atendente1` | atendente | `/painel` |
 | `cliente1` | cliente | `/cliente` (tem o atributo `cpf = 12345678909`) |
+| `semperfil` | nenhum | "Acesso negado" (para testar usuário sem papel) |
+
+Novos usuários da equipe são criados pelo gerencial em **Configurações → Usuários**. A pessoa recebe no e-mail (Mailpit, em dev) o link para definir a senha.
 
 O Painel (e o Início do cliente) chama `/api/me` e os três endpoints `ping` com o token do usuário logado e mostra o status de cada um. Por exemplo, `vendedor1` vê 403 em `/api/gestao/ping` e `cliente1` vê 403 em `/api/interno/ping`.
 
@@ -107,6 +110,11 @@ As portas podem ser trocadas copiando `.env.example` para `.env`. Se mudar a por
 - **Issuer e chaves separados.**
   - O `iss` do token é sempre `http://localhost:8180/realms/crm`, que é a URL usada pelo navegador.
   - No Docker, o backend busca as chaves (`KEYCLOAK_JWK_SET_URI`) pela rede interna, em `keycloak:8080`. Por isso não é preciso mexer no `/etc/hosts`.
+- **Acesso (ACE)**
+  - Login no tema `crm` do Keycloak (`infra/keycloak/themes/crm`), em português. 5 senhas erradas seguidas bloqueiam a conta temporariamente.
+  - Na primeira chamada de cada pessoa da equipe, a API cria a projeção local em `usuario` (id = `sub`, username, nome).
+  - Sair encerra a sessão no Keycloak. Sem uso por 30 minutos, o front encerra a sessão (a renovação automática do token, sozinha, a manteria viva).
+  - Gestão de usuários (`/api/gestao/usuarios`, só gerencial) usa a Admin API do Keycloak. Ninguém é excluído, só desativado; vendedor com contratos vigentes só é desativado depois de transferi-los (com auditoria).
 - **Frontend**
   - O token vai só nas chamadas a `/api`.
   - A renovação usa o refresh token quando 75% da validade passou.
@@ -122,8 +130,27 @@ As portas podem ser trocadas copiando `.env.example` para `.env`. Se mudar a por
 | `KEYCLOAK_JWK_SET_URI` | `http://localhost:8180/realms/crm/protocol/openid-connect/certs` |
 | `KEYCLOAK_AUDIENCIA` | `crm-api` |
 | `CORS_ORIGENS` | `http://localhost:4200` (lista separada por vírgula) |
+| `KEYCLOAK_URL` | `http://localhost:8180` (Admin API do Keycloak, para a gestão de usuários) |
+| `KEYCLOAK_ADMIN_CLIENT_SECRET` | `crm-api-dev-secret` (conta de serviço do client `crm-api`: `manage-users`, `view-users`, `query-users`, `view-realm`) |
+| `FRONTEND_URL` | `http://localhost:4200` (destino do link "definir senha") |
 
 O fuso padrão é `America/Sao_Paulo`, exposto como bean `java.time.Clock`. Regras de data devem injetar esse `Clock` em vez de usar `LocalDate.now()`.
+
+## Atualizar um realm que já existe
+
+O `realm-export.json` só é importado num banco vazio. Se o seu Keycloak já tinha o realm `crm` antes do tema e da conta de serviço, ou rode `docker compose down -v` (apaga os dados), ou aplique só as mudanças:
+
+```bash
+docker compose up -d keycloak   # monta a pasta do tema
+docker exec -it crm-superauto-keycloak-1 bash -c '
+K=/opt/keycloak/bin/kcadm.sh
+$K config credentials --server http://localhost:8080 --realm master --user admin --password admin
+$K update realms/crm -s loginTheme=crm
+CID=$($K get clients -r crm -q clientId=crm-api --fields id --format csv --noquotes)
+$K update clients/$CID -r crm -s serviceAccountsEnabled=true -s clientAuthenticatorType=client-secret -s secret=crm-api-dev-secret
+$K add-roles -r crm --uusername service-account-crm-api --cclientid realm-management \
+  --rolename manage-users --rolename view-users --rolename query-users --rolename view-realm'
+```
 
 ## Exportar o realm depois de alterar algo no Keycloak
 

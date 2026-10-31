@@ -11,6 +11,9 @@ crm:
     jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
   cors:
     origens: ${CORS_ORIGENS}
+  keycloak-admin:
+    url: ${KEYCLOAK_URL}
+  frontend-url: ${FRONTEND_URL}
 
 logging:
   level:

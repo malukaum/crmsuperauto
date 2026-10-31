@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 
 import { inicioPorPapelGuard, papelGuard } from './core/auth/papel.guard';
-import { EQUIPE_INTERNA, Papel } from './core/auth/papel';
+import { EQUIPE_INTERNA, GERENCIAL_OU_VENDEDOR, Papel } from './core/auth/papel';
 import { AcessoNegado } from './paginas/acesso-negado/acesso-negado';
 import { EmConstrucao } from './paginas/em-construcao/em-construcao';
 
 const SUFIXO = ' · CRM Super Auto';
 
-function emConstrucao(path: string, titulo: string, papeis?: Papel[]) {
+function emConstrucao(path: string, titulo: string, papeis?: readonly Papel[]) {
   return {
     path,
     component: EmConstrucao,
@@ -60,8 +60,24 @@ export const routes: Routes = [
       emConstrucao('carteira', 'Carteira'),
       emConstrucao('atendimentos', 'Atendimentos'),
       emConstrucao('indicacoes', 'Indicações'),
-      emConstrucao('inteligencia', 'Inteligência', ['gerencial']),
-      emConstrucao('configuracoes', 'Configurações', ['gerencial']),
+      // Gestão: o guard repete a regra do menu (ACE-02); a API recusa com 403 de qualquer forma.
+      emConstrucao('inteligencia', 'Inteligência', GERENCIAL_OU_VENDEDOR),
+      emConstrucao('importacao', 'Importação', ['gerencial']),
+      emConstrucao('auditoria', 'Auditoria', ['gerencial']),
+      {
+        path: 'configuracoes',
+        canActivate: [papelGuard],
+        data: { papeis: ['gerencial'] satisfies Papel[] },
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'usuarios' },
+          {
+            path: 'usuarios',
+            loadComponent: () =>
+              import('./paginas/configuracoes/usuarios/usuarios-equipe').then((m) => m.UsuariosEquipe),
+            title: 'Usuários da equipe' + SUFIXO,
+          },
+        ],
+      },
     ],
   },
 

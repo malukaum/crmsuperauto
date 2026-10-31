@@ -3,6 +3,7 @@ package br.com.superauto.crm.erro;
 import java.net.URI;
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,11 +13,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -71,11 +74,39 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Seu perfil não tem permissão para acessar este recurso.", request.getRequestURI());
     }
 
+    @ExceptionHandler(NegocioException.class)
+    ProblemDetail negocio(NegocioException ex, HttpServletRequest request) {
+        ProblemDetail pd = problema(ex.getStatus(), ex.getMessage(), request.getRequestURI());
+        pd.setProperty("codigo", ex.getCodigo());
+        ex.getDados().forEach(pd::setProperty);
+        return pd;
+    }
+
+    @ExceptionHandler(IntegracaoIndisponivelException.class)
+    ProblemDetail integracaoIndisponivel(IntegracaoIndisponivelException ex, HttpServletRequest request) {
+        log.error("Falha na integração em {}", request.getRequestURI(), ex);
+        return problema(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request.getRequestURI());
+    }
+
     @ExceptionHandler(Exception.class)
     ProblemDetail erroInesperado(Exception ex, HttpServletRequest request) {
         log.error("Erro inesperado em {}", request.getRequestURI(), ex);
         return problema(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Ocorreu um erro inesperado. Tente novamente ou contate o suporte.", request.getRequestURI());
+    }
+
+    /** Erros de Bean Validation: devolve a mensagem de cada campo, em português. */
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers,
+                                                                  HttpStatusCode status, WebRequest request) {
+        Map<String, String> campos = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(e -> campos.putIfAbsent(e.getField(), e.getDefaultMessage()));
+        String rota = request instanceof ServletWebRequest swr ? swr.getRequest().getRequestURI() : null;
+        ProblemDetail pd = problema(HttpStatus.BAD_REQUEST,
+                campos.isEmpty() ? DETALHES.get(400) : String.join(" ", campos.values()), rota);
+        pd.setProperty("campos", campos);
+        return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON).body(pd);
     }
 
     /** Traduz os erros padrão do Spring MVC (404, 405, 400...) mantendo o formato ProblemDetail. */

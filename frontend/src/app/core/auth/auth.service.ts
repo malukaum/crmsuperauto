@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
 
 import { criarAuthConfig } from './auth.config';
+import { InatividadeService } from './inatividade.service';
 import { EQUIPE_INTERNA, NOME_PAPEL, Papel, ehPapel } from './papel';
 
 interface ClaimsToken {
@@ -20,6 +21,7 @@ interface ClaimsToken {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly oauth = inject(OAuthService);
+  private readonly inatividade = inject(InatividadeService);
 
   private readonly accessToken = signal<string | null>(null);
   /** Mensagem amigável quando o Keycloak não responde na inicialização. */
@@ -46,6 +48,14 @@ export class AuthService {
   /** Chamado uma única vez, antes da primeira navegação (provideAppInitializer). */
   async inicializar(): Promise<void> {
     this.oauth.configure(criarAuthConfig());
+
+    // Voltar do navegador depois de sair pode restaurar a página da memória (bfcache), sem recarregar.
+    // Sem token válido, recarrega: o guard manda para o login do Keycloak (ACE-03).
+    window.addEventListener('pageshow', (evento) => {
+      if (evento.persisted && !this.oauth.hasValidAccessToken()) {
+        window.location.reload();
+      }
+    });
 
     this.oauth.events.subscribe((evento) => {
       switch (evento.type) {
@@ -83,6 +93,9 @@ export class AuthService {
       this.erroInicializacao.set('Não foi possível conectar ao servidor de login. Tente novamente em instantes.');
     }
     this.sincronizar();
+    if (this.logado()) {
+      this.inatividade.iniciar(() => this.logout());
+    }
   }
 
   login(): void {
@@ -92,7 +105,12 @@ export class AuthService {
     this.oauth.initCodeFlow();
   }
 
+  /**
+   * Sai de verdade: encerra a sessão no Keycloak (end_session com id_token_hint), não só no navegador.
+   * O Keycloak devolve para a raiz do CRM, que, sem token, pede login de novo.
+   */
   logout(): void {
+    this.inatividade.parar();
     this.oauth.logOut();
   }
 

@@ -44,6 +44,8 @@ services:
       - "${KEYCLOAK_PORT:-8180}:8080"
     volumes:
       - ./infra/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+      # Tema de login com a identidade visual do CRM (loginTheme "crm" no realm).
+      - ./infra/keycloak/themes/crm:/opt/keycloak/themes/crm:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,6 +71,11 @@ services:
       KEYCLOAK_ISSUER: http://localhost:${KEYCLOAK_PORT:-8180}/realms/crm
       KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/crm/protocol/openid-connect/certs
       CORS_ORIGENS: http://localhost:4200,http://localhost:${FRONTEND_PORT:-8081}
+      # Admin API do Keycloak (gestão de usuários), pela rede interna, com a conta de serviço do client crm-api.
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-crm-api-dev-secret}
+      # Destino do link "definir senha" enviado aos usuários novos.
+      FRONTEND_URL: http://localhost:${FRONTEND_PORT:-8081}
       TZ: America/Sao_Paulo
     ports:
       - "${BACKEND_PORT:-8080}:8080"

@@ -32,6 +32,13 @@ crm:
     audiencia: ${KEYCLOAK_AUDIENCIA:crm-api}
   cors:
     origens: ${CORS_ORIGENS:http://localhost:4200}
+  keycloak-admin:
+    url: ${KEYCLOAK_URL:http://localhost:8180}
+    realm: crm
+    client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:crm-api}
+    client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:crm-api-dev-secret}
+  # Para onde o link do e-mail "definir senha" leva o usuário depois de concluir.
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
 
 management:
   endpoints:

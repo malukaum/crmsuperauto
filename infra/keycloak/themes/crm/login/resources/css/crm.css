@@ -1,0 +1,93 @@
+/* Tema de login do CRM Super Auto. Mesmos tokens do front (frontend/src/styles/_tokens.scss). */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --crm-marinho: #0d1b2a;
+    --crm-vermelho: #c52b3a;
+    --crm-vermelho-escuro: #a3202e;
+    --crm-azul: #1e5aa8;
+    --crm-texto: #1b2430;
+    --crm-texto-secundario: #5b6675;
+    --crm-borda: #e2e6ec;
+    --crm-fonte: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    --keycloak-card-top-color: var(--crm-vermelho);
+
+    --pf-v5-global--FontFamily--text: var(--crm-fonte);
+    --pf-v5-global--FontFamily--heading: var(--crm-fonte);
+    --pf-v5-global--primary-color--100: var(--crm-vermelho);
+    --pf-v5-global--primary-color--200: var(--crm-vermelho-escuro);
+    --pf-v5-global--link--Color: var(--crm-azul);
+    --pf-v5-global--link--Color--hover: #174a8b;
+    --pf-v5-global--Color--100: var(--crm-texto);
+    --pf-v5-global--Color--200: var(--crm-texto-secundario);
+    --pf-v5-global--active-color--100: var(--crm-azul);
+}
+
+.login-pf body {
+    background: var(--crm-marinho);
+    background-image:
+        radial-gradient(1200px 600px at 85% -10%, rgba(197, 43, 58, 0.22), transparent 60%),
+        radial-gradient(900px 500px at -10% 110%, rgba(30, 90, 168, 0.25), transparent 60%);
+    font-family: var(--crm-fonte);
+}
+
+/* Cabeçalho: selo "SA" e o nome do realm ("CRM Super Auto"). */
+#kc-header-wrapper {
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    font-weight: 500;
+}
+
+#kc-header-wrapper::before {
+    content: 'SA';
+    display: grid;
+    margin: 0 auto 12px;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--crm-vermelho);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+#kc-header-wrapper b {
+    font-weight: 700;
+}
+
+/* Cartão do formulário */
+.pf-v5-c-login__main {
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+}
+
+.pf-v5-c-login__main-header {
+    border-top-width: 4px;
+}
+
+.pf-v5-c-title {
+    color: var(--crm-marinho);
+    font-weight: 600;
+}
+
+.pf-v5-c-form-control {
+    border-radius: 10px;
+}
+
+.pf-v5-c-button {
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.pf-v5-c-button.pf-m-primary {
+    min-height: 44px;
+}
+
+.pf-v5-c-login__main-footer-band {
+    background: transparent;
+}
