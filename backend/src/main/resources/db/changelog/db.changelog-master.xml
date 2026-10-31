@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CRM Super Auto · changelog principal do Liquibase (PostgreSQL 16)
+
+  Convenções do modelo
+    tabelas no singular, snake_case, em português
+    PK  : id (bigint identity) — exceto usuario (uuid = "sub" do Keycloak)
+    FK  : <entidade>_id
+    nomes de constraint: pk_, fk_, uk_, ck_, ix_
+    datas de evento em timestamptz; datas de calendário em date
+    dinheiro em numeric(12,2); nada de float
+    colunas de controle: criado_em, atualizado_em, versao (lock otimista JPA)
+
+  Convenções dos changesets
+    um arquivo por área do domínio, incluídos na ordem abaixo
+    um changeset por tabela (tabela + checks + índices), com rollback explícito
+    CHECKs, índices parciais/de expressão e a extensão pg_trgm vão em <sql>,
+    porque o Liquibase Community não tem change types para eles
+    changesets já aplicados nunca são editados: toda mudança é um changeset novo
+-->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <include file="changes/001-auditoria-acesso.xml" relativeToChangelogFile="true"/>
+    <include file="changes/002-referencia.xml" relativeToChangelogFile="true"/>
+    <include file="changes/003-acesso.xml" relativeToChangelogFile="true"/>
+    <include file="changes/004-cadastro.xml" relativeToChangelogFile="true"/>
+    <include file="changes/005-relacionamento.xml" relativeToChangelogFile="true"/>
+    <include file="changes/006-comercial.xml" relativeToChangelogFile="true"/>
+    <include file="changes/007-importacao.xml" relativeToChangelogFile="true"/>
+    <include file="changes/008-auditoria.xml" relativeToChangelogFile="true"/>
+    <include file="changes/009-visoes.xml" relativeToChangelogFile="true"/>
+    <include file="changes/010-dados-iniciais.xml" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>

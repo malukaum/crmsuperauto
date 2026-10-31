@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 1. REFERÊNCIA (tabelas de domínio editáveis) -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="002-extensao-pg-trgm" author="crm-superauto">
+        <sql>CREATE EXTENSION IF NOT EXISTS pg_trgm</sql>
+        <rollback>
+            <sql>DROP EXTENSION IF EXISTS pg_trgm</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="002-unidade-federativa" author="crm-superauto">
+        <createTable tableName="unidade_federativa">
+            <column name="sigla" type="char(2)">
+                <constraints primaryKey="true" primaryKeyName="pk_unidade_federativa" nullable="false"/>
+            </column>
+            <column name="nome" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+            ALTER TABLE unidade_federativa
+                ADD CONSTRAINT ck_unidade_federativa_sigla CHECK (sigla ~ '^[A-Z]{2}$');
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="unidade_federativa" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="002-municipio" author="crm-superauto">
+        <createTable tableName="municipio">
+            <column name="id" type="integer" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_municipio" nullable="false"/>
+            </column>
+            <column name="codigo_ibge" type="char(7)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_municipio_codigo_ibge"/>
+            </column>
+            <column name="nome" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="uf_sigla" type="char(2)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_municipio_uf" references="unidade_federativa(sigla)"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="municipio" columnNames="nome, uf_sigla" constraintName="uk_municipio_nome_uf"/>
+        <sql><![CDATA[
+            ALTER TABLE municipio
+                ADD CONSTRAINT ck_municipio_codigo_ibge CHECK (codigo_ibge ~ '^[0-9]{7}$');
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="municipio" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="002-tipo-veiculo" author="crm-superauto">
+        <createTable tableName="tipo_veiculo">
+            <column name="id" type="smallint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_tipo_veiculo" nullable="false"/>
+            </column>
+            <column name="codigo" type="varchar(30)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_tipo_veiculo_codigo"/>
+            </column>
+            <column name="descricao" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ativo" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="002-tipo-contato" author="crm-superauto">
+        <createTable tableName="tipo_contato">
+            <column name="id" type="smallint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_tipo_contato" nullable="false"/>
+            </column>
+            <column name="codigo" type="varchar(30)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_tipo_contato_codigo"/>
+            </column>
+            <column name="descricao" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ativo" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Régua de pós-venda. Substitui a aba CONFIGURACOES. -->
+    <changeSet id="002-etapa-relacionamento" author="crm-superauto">
+        <createTable tableName="etapa_relacionamento"
+                     remarks="Régua de pós-venda. Substitui a aba CONFIGURACOES.">
+            <column name="id" type="smallint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_etapa_relacionamento" nullable="false"/>
+            </column>
+            <column name="codigo" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_etapa_relacionamento_codigo"/>
+            </column>
+            <column name="nome" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ordem" type="smallint">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_etapa_relacionamento_ordem"/>
+            </column>
+            <column name="dias_apos_anterior" type="smallint"
+                    remarks="Dias contados a partir do contato anterior concluído (ou da adesão, para a primeira etapa) até este contato.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="proxima_etapa_id" type="smallint">
+                <constraints foreignKeyName="fk_etapa_relacionamento_proxima" references="etapa_relacionamento(id)"/>
+            </column>
+            <column name="inicial" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+            ALTER TABLE etapa_relacionamento
+                ADD CONSTRAINT ck_etapa_relacionamento_dias CHECK (dias_apos_anterior BETWEEN 1 AND 365);
+            CREATE UNIQUE INDEX uk_etapa_relacionamento_inicial ON etapa_relacionamento (inicial) WHERE inicial;
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="etapa_relacionamento" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

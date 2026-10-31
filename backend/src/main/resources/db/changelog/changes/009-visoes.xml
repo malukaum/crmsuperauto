@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  8. VISÕES (leitura; o "hoje" é sempre no fuso de São Paulo)
+
+  Visões não guardam dados, então seus changesets usam runOnChange: basta
+  editar o SELECT aqui que o Liquibase recria a visão na próxima subida.
+-->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      Último contato concluído da régua por contrato (deriva "ÚLTIMO CONTATO"
+      e "ETAPA CONCLUÍDA" da planilha, sem armazená-los).
+    -->
+    <changeSet id="009-vw-ultimo-contato-regua" author="crm-superauto" runOnChange="true">
+        <createView viewName="vw_ultimo_contato_regua" replaceIfExists="true"><![CDATA[
+SELECT DISTINCT ON (a.contrato_id)
+       a.contrato_id,
+       a.realizado_em AS ultimo_contato_em,
+       a.etapa_id     AS ultima_etapa_concluida_id
+  FROM atendimento a
+ WHERE a.resultado = 'CONCLUIDO'
+   AND a.etapa_id IS NOT NULL
+ ORDER BY a.contrato_id, a.realizado_em DESC, a.id DESC
+        ]]></createView>
+    </changeSet>
+
+    <!-- Filas de atendimento (Hoje / Atrasado / Futuro / Sem data). -->
+    <changeSet id="009-vw-fila-contato" author="crm-superauto" runOnChange="true">
+        <createView viewName="vw_fila_contato" replaceIfExists="true"><![CDATA[
+SELECT c.id            AS contrato_id,
+       c.associado_id,
+       c.vendedor_id,
+       ac.etapa_pendente_id,
+       ac.proximo_contato_em,
+       CASE
+         WHEN c.situacao IN ('CANCELADO', 'SUSPENSO') THEN c.situacao
+         WHEN ac.proximo_contato_em IS NULL THEN 'SEM_DATA'
+         WHEN ac.proximo_contato_em <  (now() AT TIME ZONE 'America/Sao_Paulo')::date THEN 'ATRASADO'
+         WHEN ac.proximo_contato_em =  (now() AT TIME ZONE 'America/Sao_Paulo')::date THEN 'HOJE'
+         ELSE 'FUTURO'
+       END AS fila,
+       GREATEST((now() AT TIME ZONE 'America/Sao_Paulo')::date - ac.proximo_contato_em, 0) AS dias_atraso
+  FROM contrato c
+  JOIN acompanhamento_contrato ac ON ac.contrato_id = c.id
+ WHERE ac.etapa_pendente_id IS NOT NULL
+        ]]></createView>
+    </changeSet>
+
+    <!--
+      Próximo aniversário de cada associado com contrato vigente.
+      29/02 é tratado como 28/02 em anos não bissextos.
+    -->
+    <changeSet id="009-vw-aniversariante" author="crm-superauto" runOnChange="true">
+        <createView viewName="vw_aniversariante" replaceIfExists="true"><![CDATA[
+WITH base AS (
+    SELECT a.id AS associado_id,
+           a.data_nascimento,
+           (now() AT TIME ZONE 'America/Sao_Paulo')::date AS hoje
+      FROM associado a
+     WHERE a.data_nascimento IS NOT NULL
+       AND a.anonimizado_em IS NULL
+       AND EXISTS (SELECT 1 FROM contrato c
+                    WHERE c.associado_id = a.id
+                      AND c.situacao NOT IN ('CANCELADO', 'SUSPENSO'))
+), candidato AS (
+    SELECT b.*,
+           make_date(EXTRACT(YEAR FROM b.hoje)::int, EXTRACT(MONTH FROM b.data_nascimento)::int, 1)
+             + LEAST(EXTRACT(DAY FROM b.data_nascimento)::int,
+                     EXTRACT(DAY FROM (make_date(EXTRACT(YEAR FROM b.hoje)::int, EXTRACT(MONTH FROM b.data_nascimento)::int, 1)
+                                       + interval '1 month - 1 day'))::int) - 1 AS neste_ano
+      FROM base b
+)
+SELECT associado_id,
+       data_nascimento,
+       CASE WHEN neste_ano >= hoje THEN neste_ano
+            ELSE (neste_ano + interval '1 year')::date END AS proximo_aniversario,
+       CASE WHEN neste_ano >= hoje THEN neste_ano - hoje
+            ELSE (neste_ano + interval '1 year')::date - hoje END AS dias_ate
+  FROM candidato
+        ]]></createView>
+    </changeSet>
+
+</databaseChangeLog>

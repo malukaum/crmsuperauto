@@ -1,0 +1,99 @@
+$altura-abas: 64px;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--crm-fundo);
+}
+
+.topo {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(10px + env(safe-area-inset-top)) 8px 10px 16px;
+  background: var(--crm-marinho);
+  color: #fff;
+
+  button {
+    color: #fff;
+  }
+}
+
+.topo__marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  strong {
+    display: block;
+    font-size: 15px;
+  }
+
+  span {
+    font-size: 12px;
+    color: #9fb0c4;
+  }
+}
+
+.topo__logo {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--crm-vermelho);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.conteudo {
+  flex: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding-bottom: calc(#{$altura-abas} + env(safe-area-inset-bottom));
+}
+
+.abas {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: $altura-abas;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--crm-superficie);
+  border-top: 1px solid var(--crm-borda);
+}
+
+.abas__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--crm-texto-secundario);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--crm-azul);
+    outline-offset: -4px;
+  }
+}
+
+.abas__item--ativo {
+  color: var(--crm-vermelho);
+  font-weight: 600;
+}

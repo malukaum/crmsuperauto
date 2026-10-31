@@ -1,0 +1,25 @@
+<header class="topo">
+  <div class="topo__marca">
+    <span class="topo__logo" aria-hidden="true">SA</span>
+    <div>
+      <strong>Super Auto</strong>
+      <span>Área do associado</span>
+    </div>
+  </div>
+  <button mat-icon-button type="button" (click)="auth.logout()" aria-label="Sair">
+    <mat-icon>logout</mat-icon>
+  </button>
+</header>
+
+<main class="conteudo">
+  <router-outlet />
+</main>
+
+<nav class="abas" aria-label="Navegação da área do associado">
+  @for (aba of abas; track aba.rota) {
+    <a class="abas__item" [routerLink]="aba.rota" routerLinkActive="abas__item--ativo" ariaCurrentWhenActive="page">
+      <mat-icon>{{ aba.icone }}</mat-icon>
+      <span>{{ aba.rotulo }}</span>
+    </a>
+  }
+</nav>

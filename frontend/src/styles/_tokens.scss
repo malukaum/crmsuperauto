@@ -1,0 +1,26 @@
+// Tokens da marca Super Auto. Use sempre estas variáveis (ou os tokens --mat-sys-* do tema),
+// nunca a cor "solta", para manter a interface consistente.
+:root {
+  --crm-marinho: #0d1b2a; // menu lateral, títulos
+  --crm-vermelho: #c52b3a; // ação principal
+  --crm-azul: #1e5aa8; // links, status "Hoje"
+  --crm-azul-fundo: #e3ecf8;
+  --crm-laranja: #e2711d; // status "Atrasado" (borda/ícone)
+  --crm-laranja-texto: #9a3b00;
+  --crm-laranja-fundo: #fdebdc;
+  --crm-verde: #1c6b3e; // WhatsApp, contrato ativo
+  --crm-verde-fundo: #e1f1e7;
+  --crm-texto: #1b2430;
+  --crm-texto-secundario: #5b6675;
+  --crm-fundo: #f4f6f9;
+  --crm-superficie: #ffffff;
+  --crm-borda: #e2e6ec;
+
+  --crm-raio-card: 14px;
+  --crm-raio-botao: 10px;
+  --crm-altura-botao: 44px;
+  --crm-raio-chip: 999px;
+
+  --crm-largura-menu: 248px;
+  --crm-fonte: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}

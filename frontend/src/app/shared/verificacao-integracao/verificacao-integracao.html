@@ -1,0 +1,75 @@
+<section class="crm-card integracao">
+  <header class="integracao__cabecalho">
+    <div>
+      <h2>Verificação da integração</h2>
+      <p class="integracao__descricao">Chamadas reais à API com o seu token. O resultado depende do seu papel.</p>
+    </div>
+    <button mat-flat-button type="button" (click)="testar()" [disabled]="carregando()">
+      <mat-icon>refresh</mat-icon>
+      Testar novamente
+    </button>
+  </header>
+
+  @if (carregando()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (me(); as me) {
+    <div class="integracao__bloco">
+      <h3>GET /api/me</h3>
+      @if (me.corpo; as usuario) {
+        <dl class="integracao__dados">
+          <dt>Usuário</dt>
+          <dd>{{ usuario.username }}</dd>
+          <dt>Nome</dt>
+          <dd>{{ usuario.nome ?? '—' }}</dd>
+          <dt>E-mail</dt>
+          <dd>{{ usuario.email ?? '—' }}</dd>
+          <dt>Papéis</dt>
+          <dd>{{ usuario.papeis.length ? usuario.papeis.join(', ') : 'nenhum' }}</dd>
+          @if (usuario.cpf) {
+            <dt>CPF (claim)</dt>
+            <dd class="numero">{{ usuario.cpf }}</dd>
+          }
+        </dl>
+      } @else {
+        <app-status-chip [tipo]="tipoDoStatus(me.status)">{{ rotuloDoStatus(me.status) }}</app-status-chip>
+        <p class="integracao__problema">{{ me.problema?.detail }}</p>
+      }
+    </div>
+  }
+
+  @if (pings().length) {
+    <div class="integracao__bloco">
+      <h3>Controle de acesso por papel</h3>
+      <div class="tabela-rolagem">
+        <table class="integracao__tabela">
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Quem acessa</th>
+              <th>Resultado</th>
+              <th>Resposta</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (linha of pings(); track linha.area) {
+              <tr>
+                <td><code>{{ linha.endpoint }}</code></td>
+                <td>{{ linha.quemAcessa }}</td>
+                <td>
+                  <app-status-chip [tipo]="tipoDoStatus(linha.resultado.status)">
+                    {{ rotuloDoStatus(linha.resultado.status) }}
+                  </app-status-chip>
+                </td>
+                <td class="integracao__resposta">
+                  {{ linha.resultado.corpo?.mensagem ?? linha.resultado.problema?.detail ?? '—' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</section>

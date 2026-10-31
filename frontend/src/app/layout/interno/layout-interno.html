@@ -1,0 +1,61 @@
+<mat-sidenav-container class="layout">
+  <mat-sidenav
+    #menuLateral
+    class="menu"
+    [mode]="celular() ? 'over' : 'side'"
+    [opened]="!celular()"
+    [fixedInViewport]="celular()"
+    aria-label="Menu principal"
+  >
+    <div class="menu__marca">
+      <span class="menu__logo" aria-hidden="true">SA</span>
+      <div>
+        <strong>Super Auto</strong>
+        <span>CRM · Regional Formiga</span>
+      </div>
+    </div>
+
+    <nav class="menu__nav">
+      @for (grupo of menu; track grupo.titulo) {
+        <div class="menu__grupo" *temPapel="grupo.papeis ?? equipeInterna">
+          <p class="menu__titulo-grupo">{{ grupo.titulo }}</p>
+          @for (item of grupo.itens; track item.rota) {
+            <a
+              class="menu__item"
+              [routerLink]="item.rota"
+              routerLinkActive="menu__item--ativo"
+              ariaCurrentWhenActive="page"
+              (click)="aoNavegar()"
+            >
+              <mat-icon>{{ item.icone }}</mat-icon>
+              <span>{{ item.rotulo }}</span>
+            </a>
+          }
+        </div>
+      }
+    </nav>
+
+    <footer class="menu__rodape">
+      <span class="menu__avatar" aria-hidden="true">{{ iniciais() }}</span>
+      <div class="menu__usuario">
+        <strong>{{ auth.nome() }}</strong>
+        <span>{{ auth.nomePapel() }}</span>
+      </div>
+      <button mat-icon-button type="button" class="menu__sair" (click)="auth.logout()" matTooltip="Sair" aria-label="Sair">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </footer>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="conteudo">
+    @if (celular()) {
+      <mat-toolbar class="barra-celular">
+        <button mat-icon-button type="button" (click)="menuLateral.toggle()" aria-label="Abrir menu">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span>Super Auto · CRM</span>
+      </mat-toolbar>
+    }
+    <router-outlet />
+  </mat-sidenav-content>
+</mat-sidenav-container>

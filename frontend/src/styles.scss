@@ -1,0 +1,150 @@
+@use '@angular/material' as mat;
+@use './styles/theme-colors' as cores;
+@use './styles/tokens';
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: cores.$primary-palette,
+        tertiary: cores.$tertiary-palette,
+        theme-type: light,
+      ),
+      typography: (
+        plain-family: var(--crm-fonte),
+        brand-family: var(--crm-fonte),
+        bold-weight: 600,
+        medium-weight: 500,
+        regular-weight: 400,
+      ),
+      density: 0,
+    )
+  );
+
+  // As paletas M3 geradas aproximam as cores; aqui fixamos os valores exatos da marca.
+  @include mat.theme-overrides(
+    (
+      primary: #c52b3a,
+      on-primary: #ffffff,
+      tertiary: #1e5aa8,
+      on-tertiary: #ffffff,
+      background: #f4f6f9,
+      on-background: #1b2430,
+      surface: #ffffff,
+      on-surface: #1b2430,
+      on-surface-variant: #5b6675,
+      surface-container-low: #ffffff,
+      surface-container: #f4f6f9,
+      outline-variant: #e2e6ec,
+    )
+  );
+
+  @include mat.button-overrides(
+    (
+      filled-container-shape: 10px,
+      filled-container-height: 44px,
+      outlined-container-shape: 10px,
+      outlined-container-height: 44px,
+      text-container-shape: 10px,
+      text-container-height: 44px,
+      protected-container-shape: 10px,
+      protected-container-height: 44px,
+    )
+  );
+
+  @include mat.card-overrides(
+    (
+      elevated-container-shape: 14px,
+      outlined-container-shape: 14px,
+      filled-container-shape: 14px,
+      outlined-outline-color: #e2e6ec,
+    )
+  );
+
+  @include mat.chips-overrides(
+    (
+      container-shape-radius: 999px,
+    )
+  );
+
+  @include mat.sidenav-overrides(
+    (
+      container-width: 248px,
+      container-background-color: #0d1b2a,
+      container-shape: 0,
+      content-background-color: #f4f6f9,
+    )
+  );
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--crm-fonte);
+  background: var(--crm-fundo);
+  color: var(--crm-texto);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--crm-marinho);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--crm-azul);
+}
+
+// Números alinhados em tabelas e valores.
+table,
+.mat-mdc-table,
+.valor,
+.numero {
+  font-variant-numeric: tabular-nums;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+// Utilitários simples
+.crm-pagina {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  @media (max-width: 599px) {
+    padding: 16px;
+  }
+}
+
+.crm-titulo-pagina {
+  margin: 0 0 4px;
+  font-size: 24px;
+}
+
+.crm-subtitulo {
+  margin: 0 0 24px;
+  color: var(--crm-texto-secundario);
+}
+
+.crm-card {
+  background: var(--crm-superficie);
+  border: 1px solid var(--crm-borda);
+  border-radius: var(--crm-raio-card);
+  padding: 20px;
+}

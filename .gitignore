@@ -1,0 +1,17 @@
+# Ambiente
+.env
+
+# Backend
+backend/target/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+
+# IDEs / SO
+.idea/
+*.iml
+.vscode/
+.DS_Store

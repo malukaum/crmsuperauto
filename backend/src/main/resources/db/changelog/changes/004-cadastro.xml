@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 3. CADASTRO -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      Pessoa física ou jurídica associada. O tipo de pessoa é derivado do
+      tamanho do documento (11 = CPF, 14 = CNPJ), por isso não é armazenado.
+    -->
+    <changeSet id="004-associado" author="crm-superauto">
+        <createTable tableName="associado"
+                     remarks="Pessoa física ou jurídica associada. Tipo de pessoa derivado do tamanho do documento (11 = CPF, 14 = CNPJ).">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_associado" nullable="false"/>
+            </column>
+            <column name="nome" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documento" type="varchar(14)" remarks="Só dígitos (CNPJ pode ser alfanumérico)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_associado_documento"/>
+            </column>
+            <column name="data_nascimento" type="date"/>
+            <column name="municipio_id" type="integer">
+                <constraints foreignKeyName="fk_associado_municipio" references="municipio(id)"/>
+            </column>
+            <column name="perfil" type="varchar(20)" defaultValue="REGULAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="potencial_indicacao" type="varchar(20)" defaultValue="NAO_AVALIADO">
+                <constraints nullable="false"/>
+            </column>
+            <column name="usuario_id" type="uuid" remarks="Conta na área do cliente">
+                <constraints unique="true" uniqueConstraintName="uk_associado_usuario"
+                             foreignKeyName="fk_associado_usuario" references="usuario(id)"/>
+            </column>
+            <column name="anonimizado_em" type="timestamp with time zone" remarks="LGPD: direito ao esquecimento"/>
+            <column name="criado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="atualizado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="versao" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+            ALTER TABLE associado
+                ADD CONSTRAINT ck_associado_documento CHECK (documento ~ '^[0-9]{11}$' OR documento ~ '^[0-9A-Z]{12}[0-9]{2}$'),
+                ADD CONSTRAINT ck_associado_nascimento_pf CHECK (data_nascimento IS NULL OR length(documento) = 11),
+                ADD CONSTRAINT ck_associado_perfil CHECK (perfil IN ('REGULAR', 'PROMOTOR', 'ATENCAO')),
+                ADD CONSTRAINT ck_associado_potencial CHECK (potencial_indicacao IN ('NAO_AVALIADO', 'ALTO', 'MEDIO', 'BAIXO'));
+
+            CREATE INDEX ix_associado_nome_trgm ON associado USING gin (lower(nome) gin_trgm_ops);
+            CREATE INDEX ix_associado_aniversario ON associado
+                (EXTRACT(MONTH FROM data_nascimento), EXTRACT(DAY FROM data_nascimento))
+                WHERE data_nascimento IS NOT NULL;
+        ]]></sql>
+        <createIndex tableName="associado" indexName="ix_associado_municipio">
+            <column name="municipio_id"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="associado" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Telefones e e-mails (multivalorados → tabela própria, 1FN). -->
+    <changeSet id="004-contato-associado" author="crm-superauto">
+        <createTable tableName="contato_associado" remarks="Telefones e e-mails do associado">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_contato_associado" nullable="false"/>
+            </column>
+            <column name="associado_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="fk_contato_associado_associado" references="associado(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="tipo" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valor" type="varchar(254)" remarks="Telefone: 55 + DDD + número, só dígitos">
+                <constraints nullable="false"/>
+            </column>
+            <column name="principal" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="aceita_contato" type="boolean" defaultValueBoolean="true" remarks="Opt-out">
+                <constraints nullable="false"/>
+            </column>
+            <column name="criado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="contato_associado" columnNames="associado_id, tipo, valor"
+                             constraintName="uk_contato_associado"/>
+        <sql><![CDATA[
+            ALTER TABLE contato_associado
+                ADD CONSTRAINT ck_contato_associado_tipo CHECK (tipo IN ('WHATSAPP', 'TELEFONE', 'EMAIL')),
+                ADD CONSTRAINT ck_contato_associado_valor CHECK (
+                    (tipo IN ('WHATSAPP', 'TELEFONE') AND valor ~ '^55[1-9][0-9]{9,10}$')
+                    OR (tipo = 'EMAIL' AND valor ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                );
+
+            CREATE UNIQUE INDEX uk_contato_associado_principal ON contato_associado (associado_id, tipo) WHERE principal;
+        ]]></sql>
+        <createIndex tableName="contato_associado" indexName="ix_contato_associado_valor">
+            <column name="valor"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="contato_associado" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="004-veiculo" author="crm-superauto">
+        <createTable tableName="veiculo">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_veiculo" nullable="false"/>
+            </column>
+            <column name="placa" type="varchar(7)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_veiculo_placa"/>
+            </column>
+            <column name="modelo" type="varchar(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tipo_veiculo_id" type="smallint">
+                <constraints nullable="false" foreignKeyName="fk_veiculo_tipo" references="tipo_veiculo(id)"/>
+            </column>
+            <column name="criado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="atualizado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="versao" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- placa antiga e Mercosul -->
+        <sql><![CDATA[
+            ALTER TABLE veiculo
+                ADD CONSTRAINT ck_veiculo_placa CHECK (placa ~ '^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$');
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="veiculo" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <!--
+      Contrato de proteção de um veículo para um associado (dados do SGA).
+      A FK para importacao_registro é criada em 007-importacao.xml, depois da tabela existir.
+    -->
+    <changeSet id="004-contrato" author="crm-superauto">
+        <createTable tableName="contrato" remarks="Contrato de proteção de um veículo para um associado (dados do SGA)">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_contrato" nullable="false"/>
+            </column>
+            <column name="associado_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_contrato_associado" references="associado(id)"/>
+            </column>
+            <column name="veiculo_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_contrato_veiculo" references="veiculo(id)"/>
+            </column>
+            <column name="vendedor_id" type="uuid">
+                <constraints foreignKeyName="fk_contrato_vendedor" references="usuario(id)"/>
+            </column>
+            <column name="codigo_sga" type="varchar(30)">
+                <constraints unique="true" uniqueConstraintName="uk_contrato_codigo_sga"/>
+            </column>
+            <column name="situacao" type="varchar(12)" defaultValue="A_CONFERIR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valor_mensalidade" type="numeric(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vendido_em" type="timestamp with time zone"/>
+            <column name="aderido_em" type="timestamp with time zone" remarks="&quot;CADASTRO SGA&quot; da planilha">
+                <constraints nullable="false"/>
+            </column>
+            <column name="encerrado_em" type="timestamp with time zone"/>
+            <column name="origem" type="varchar(12)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="importacao_registro_id" type="bigint"/>
+            <column name="criado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="atualizado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="versao" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- alvo da FK composta de atendimento -->
+        <addUniqueConstraint tableName="contrato" columnNames="id, associado_id" constraintName="uk_contrato_id_associado"/>
+        <sql><![CDATA[
+            ALTER TABLE contrato
+                ADD CONSTRAINT ck_contrato_situacao CHECK (situacao IN ('A_CONFERIR', 'ATIVO', 'SUSPENSO', 'CANCELADO')),
+                ADD CONSTRAINT ck_contrato_mensalidade CHECK (valor_mensalidade >= 0),
+                ADD CONSTRAINT ck_contrato_origem CHECK (origem IN ('MANUAL', 'IMPORTACAO', 'SGA')),
+                ADD CONSTRAINT ck_contrato_origem_importacao CHECK ((origem = 'IMPORTACAO') = (importacao_registro_id IS NOT NULL)),
+                ADD CONSTRAINT ck_contrato_encerramento CHECK ((situacao = 'CANCELADO') = (encerrado_em IS NOT NULL));
+
+            -- Um veículo só pode ter um contrato vigente por vez.
+            CREATE UNIQUE INDEX uk_contrato_veiculo_vigente ON contrato (veiculo_id) WHERE situacao <> 'CANCELADO';
+        ]]></sql>
+        <createIndex tableName="contrato" indexName="ix_contrato_associado">
+            <column name="associado_id"/>
+        </createIndex>
+        <createIndex tableName="contrato" indexName="ix_contrato_vendedor">
+            <column name="vendedor_id"/>
+        </createIndex>
+        <createIndex tableName="contrato" indexName="ix_contrato_situacao">
+            <column name="situacao"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="contrato" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

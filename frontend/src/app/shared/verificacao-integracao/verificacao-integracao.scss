@@ -1,0 +1,144 @@
+:host {
+  display: block;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--crm-texto-secundario);
+}
+
+.integracao__cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.integracao__descricao {
+  margin: 0;
+  color: var(--crm-texto-secundario);
+}
+
+.integracao__bloco {
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 1px solid var(--crm-borda);
+}
+
+.integracao__dados {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 24px;
+  margin: 0;
+
+  dt {
+    color: var(--crm-texto-secundario);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 500;
+    word-break: break-word;
+  }
+}
+
+.integracao__problema {
+  color: var(--crm-texto-secundario);
+}
+
+.tabela-rolagem {
+  overflow-x: auto;
+}
+
+.integracao__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--crm-texto-secundario);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--crm-borda);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 12px;
+    border-bottom: 1px solid var(--crm-borda);
+    vertical-align: middle;
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+
+  code {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}
+
+.integracao__resposta {
+  color: var(--crm-texto-secundario);
+  min-width: 200px;
+}
+
+// No celular cada linha vira um bloco: endpoint, resultado e, abaixo, quem acessa e a resposta.
+@media (max-width: 599.98px) {
+  .integracao__tabela {
+    thead {
+      display: none;
+    }
+
+    tr {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--crm-borda);
+    }
+
+    tr:last-child {
+      border-bottom: 0;
+    }
+
+    td {
+      padding: 0;
+      border: 0;
+    }
+
+    td:nth-child(1) {
+      grid-column: 1;
+      grid-row: 1;
+      align-self: center;
+    }
+
+    td:nth-child(3) {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    td:nth-child(2),
+    td:nth-child(4) {
+      grid-column: 1 / -1;
+      font-size: 13px;
+      color: var(--crm-texto-secundario);
+    }
+  }
+
+  .integracao__resposta {
+    min-width: 0;
+  }
+}

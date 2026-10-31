@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 7. AUDITORIA (alterações e acesso a dados pessoais — LGPD) -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="008-auditoria-evento" author="crm-superauto">
+        <createTable tableName="auditoria_evento" remarks="Alterações e acesso a dados pessoais (LGPD)">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_auditoria_evento" nullable="false"/>
+            </column>
+            <column name="entidade" type="varchar(60)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entidade_id" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operacao" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="usuario_id" type="uuid">
+                <constraints foreignKeyName="fk_auditoria_usuario" references="usuario(id)"/>
+            </column>
+            <column name="ocorrido_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dados_anteriores" type="jsonb"/>
+            <column name="dados_novos" type="jsonb"/>
+        </createTable>
+        <sql><![CDATA[
+            ALTER TABLE auditoria_evento
+                ADD CONSTRAINT ck_auditoria_operacao CHECK (operacao IN ('CRIACAO', 'ALTERACAO', 'EXCLUSAO', 'VISUALIZACAO', 'EXPORTACAO', 'ANONIMIZACAO'));
+        ]]></sql>
+        <createIndex tableName="auditoria_evento" indexName="ix_auditoria_entidade">
+            <column name="entidade"/>
+            <column name="entidade_id"/>
+            <column name="ocorrido_em" descending="true"/>
+        </createIndex>
+        <createIndex tableName="auditoria_evento" indexName="ix_auditoria_usuario">
+            <column name="usuario_id"/>
+            <column name="ocorrido_em" descending="true"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="auditoria_evento" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

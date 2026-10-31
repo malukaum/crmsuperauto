@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 4. RELACIONAMENTO / PÓS-VENDA -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      Estado da régua de cada contrato (1:1). Separado de contrato porque
+      muda por motivos diferentes: contrato acompanha o SGA; acompanhamento
+      acompanha o trabalho da equipe (evita conflito de lock otimista).
+    -->
+    <changeSet id="005-acompanhamento-contrato" author="crm-superauto">
+        <createTable tableName="acompanhamento_contrato" remarks="Estado da régua de pós-venda de cada contrato (1:1)">
+            <column name="contrato_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="pk_acompanhamento_contrato" nullable="false"
+                             foreignKeyName="fk_acompanhamento_contrato" references="contrato(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="etapa_pendente_id" type="smallint" remarks="NULL = régua encerrada">
+                <constraints foreignKeyName="fk_acompanhamento_etapa" references="etapa_relacionamento(id)"/>
+            </column>
+            <column name="retorno_manual_em" type="date" remarks="Prevalece sobre o cálculo"/>
+            <column name="proximo_contato_em" type="date" remarks="Derivado; indexado para as filas"/>
+            <column name="encerrado_em" type="timestamp with time zone"/>
+            <column name="atualizado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="versao" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+            ALTER TABLE acompanhamento_contrato
+                ADD CONSTRAINT ck_acompanhamento_encerrado CHECK ((etapa_pendente_id IS NULL) = (encerrado_em IS NOT NULL));
+
+            CREATE INDEX ix_acompanhamento_proximo_contato ON acompanhamento_contrato (proximo_contato_em)
+                WHERE etapa_pendente_id IS NOT NULL;
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="acompanhamento_contrato" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <!--
+      Histórico de contatos. Append-only: correção = novo registro que aponta
+      para o corrigido. Substitui a aba ATENDIMENTOS.
+    -->
+    <changeSet id="005-atendimento" author="crm-superauto">
+        <createTable tableName="atendimento" remarks="Histórico de contatos (append-only). Substitui a aba ATENDIMENTOS.">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_atendimento" nullable="false"/>
+            </column>
+            <column name="associado_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_atendimento_associado" references="associado(id)"/>
+            </column>
+            <column name="contrato_id" type="bigint" remarks="NULL em contatos sobre a pessoa (ex.: aniversário)"/>
+            <column name="tipo_contato_id" type="smallint">
+                <constraints nullable="false" foreignKeyName="fk_atendimento_tipo" references="tipo_contato(id)"/>
+            </column>
+            <column name="etapa_id" type="smallint" remarks="Etapa da régua trabalhada">
+                <constraints foreignKeyName="fk_atendimento_etapa" references="etapa_relacionamento(id)"/>
+            </column>
+            <column name="resultado" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="descricao" type="varchar(2000)"/>
+            <column name="retorno_agendado_para" type="date"/>
+            <column name="corrige_atendimento_id" type="bigint">
+                <constraints foreignKeyName="fk_atendimento_corrige" references="atendimento(id)"/>
+            </column>
+            <column name="realizado_em" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="registrado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="registrado_por" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_atendimento_usuario" references="usuario(id)"/>
+            </column>
+        </createTable>
+        <!-- FK composta: o contrato informado tem de pertencer ao mesmo associado -->
+        <addForeignKeyConstraint constraintName="fk_atendimento_contrato"
+                                 baseTableName="atendimento" baseColumnNames="contrato_id, associado_id"
+                                 referencedTableName="contrato" referencedColumnNames="id, associado_id"/>
+        <sql><![CDATA[
+            ALTER TABLE atendimento
+                ADD CONSTRAINT ck_atendimento_resultado CHECK (resultado IN ('CONCLUIDO', 'PENDENTE', 'SEM_RESPOSTA', 'REAGENDADO')),
+                ADD CONSTRAINT ck_atendimento_etapa_contrato CHECK (etapa_id IS NULL OR contrato_id IS NOT NULL),
+                ADD CONSTRAINT ck_atendimento_reagendado CHECK (resultado <> 'REAGENDADO' OR retorno_agendado_para IS NOT NULL),
+                ADD CONSTRAINT ck_atendimento_datas CHECK (realizado_em <= registrado_em + interval '5 minutes');
+
+            CREATE INDEX ix_atendimento_contrato_concluido ON atendimento (contrato_id, realizado_em DESC)
+                WHERE resultado = 'CONCLUIDO' AND etapa_id IS NOT NULL;
+        ]]></sql>
+        <createIndex tableName="atendimento" indexName="ix_atendimento_associado">
+            <column name="associado_id"/>
+            <column name="realizado_em" descending="true"/>
+        </createIndex>
+        <createIndex tableName="atendimento" indexName="ix_atendimento_realizado_em">
+            <column name="realizado_em"/>
+        </createIndex>
+        <createIndex tableName="atendimento" indexName="ix_atendimento_usuario">
+            <column name="registrado_por"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="atendimento" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

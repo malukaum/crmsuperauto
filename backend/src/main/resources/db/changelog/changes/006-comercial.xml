@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 5. COMERCIAL -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="006-indicacao" author="crm-superauto">
+        <createTable tableName="indicacao">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_indicacao" nullable="false"/>
+            </column>
+            <column name="indicador_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_indicacao_indicador" references="associado(id)"/>
+            </column>
+            <column name="indicado_nome" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="indicado_telefone" type="varchar(13)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="veiculo_interesse" type="varchar(150)"/>
+            <column name="canal" type="varchar(12)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(14)" defaultValue="RECEBIDA">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consentimento_declarado" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="contrato_convertido_id" type="bigint">
+                <constraints unique="true" uniqueConstraintName="uk_indicacao_contrato"
+                             foreignKeyName="fk_indicacao_contrato" references="contrato(id)"/>
+            </column>
+            <column name="observacao" type="varchar(1000)"/>
+            <column name="registrada_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="registrada_por" type="uuid">
+                <constraints foreignKeyName="fk_indicacao_usuario" references="usuario(id)"/>
+            </column>
+            <column name="atualizado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="versao" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+            ALTER TABLE indicacao
+                ADD CONSTRAINT ck_indicacao_telefone CHECK (indicado_telefone ~ '^55[1-9][0-9]{9,10}$'),
+                ADD CONSTRAINT ck_indicacao_canal CHECK (canal IN ('EQUIPE', 'AREA_CLIENTE')),
+                ADD CONSTRAINT ck_indicacao_status CHECK (status IN ('RECEBIDA', 'EM_NEGOCIACAO', 'CONVERTIDA', 'PERDIDA')),
+                ADD CONSTRAINT ck_indicacao_convertida CHECK ((status = 'CONVERTIDA') = (contrato_convertido_id IS NOT NULL)),
+                ADD CONSTRAINT ck_indicacao_registro_equipe CHECK (canal <> 'EQUIPE' OR registrada_por IS NOT NULL),
+                ADD CONSTRAINT ck_indicacao_consentimento CHECK (consentimento_declarado);
+        ]]></sql>
+        <createIndex tableName="indicacao" indexName="ix_indicacao_indicador">
+            <column name="indicador_id"/>
+        </createIndex>
+        <createIndex tableName="indicacao" indexName="ix_indicacao_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="indicacao" indexName="ix_indicacao_telefone">
+            <column name="indicado_telefone"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="indicacao" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Primeiro acesso à área do cliente: código enviado a um contato já cadastrado. -->
+    <changeSet id="006-convite-acesso" author="crm-superauto">
+        <createTable tableName="convite_acesso"
+                     remarks="Primeiro acesso à área do cliente: código enviado a um contato já cadastrado">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_convite_acesso" nullable="false"/>
+            </column>
+            <column name="associado_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="fk_convite_associado" references="associado(id)" deleteCascade="true"/>
+            </column>
+            <column name="contato_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="fk_convite_contato" references="contato_associado(id)" deleteCascade="true"/>
+            </column>
+            <column name="codigo_hash" type="varchar(100)" remarks="Nunca o código em claro">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expira_em" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="usado_em" type="timestamp with time zone"/>
+            <column name="tentativas" type="smallint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="criado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="criado_por" type="uuid">
+                <constraints foreignKeyName="fk_convite_usuario" references="usuario(id)"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+            ALTER TABLE convite_acesso
+                ADD CONSTRAINT ck_convite_tentativas CHECK (tentativas BETWEEN 0 AND 10),
+                ADD CONSTRAINT ck_convite_validade CHECK (expira_em > criado_em);
+
+            CREATE INDEX ix_convite_associado ON convite_acesso (associado_id) WHERE usado_em IS NULL;
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="convite_acesso" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

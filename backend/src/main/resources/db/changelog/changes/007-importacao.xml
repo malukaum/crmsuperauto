@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 6. IMPORTAÇÃO (substitui a aba BASE HISTORICA) -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="007-importacao" author="crm-superauto">
+        <createTable tableName="importacao" remarks="Importação de planilha. Substitui a aba BASE HISTORICA.">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_importacao" nullable="false"/>
+            </column>
+            <column name="arquivo_nome" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="arquivo_sha256" type="char(64)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_importacao_arquivo"/>
+            </column>
+            <column name="status" type="varchar(12)" defaultValue="PROCESSANDO">
+                <constraints nullable="false"/>
+            </column>
+            <column name="iniciada_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="concluida_em" type="timestamp with time zone"/>
+            <column name="importada_por" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_importacao_usuario" references="usuario(id)"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+            ALTER TABLE importacao
+                ADD CONSTRAINT ck_importacao_status CHECK (status IN ('PROCESSANDO', 'CONCLUIDA', 'FALHOU')),
+                ADD CONSTRAINT ck_importacao_conclusao CHECK ((status = 'PROCESSANDO') = (concluida_em IS NULL));
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="importacao" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="007-importacao-registro" author="crm-superauto">
+        <createTable tableName="importacao_registro">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_importacao_registro" nullable="false"/>
+            </column>
+            <column name="importacao_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="fk_importacao_registro_importacao" references="importacao(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="aba" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="linha" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dados_originais" type="jsonb" remarks="Linha crua da planilha, para auditoria">
+                <constraints nullable="false"/>
+            </column>
+            <column name="situacao" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mensagem" type="varchar(500)"/>
+        </createTable>
+        <addUniqueConstraint tableName="importacao_registro" columnNames="importacao_id, aba, linha"
+                             constraintName="uk_importacao_registro_linha"/>
+        <sql><![CDATA[
+            ALTER TABLE importacao_registro
+                ADD CONSTRAINT ck_importacao_registro_situacao CHECK (situacao IN ('IMPORTADO', 'DUPLICADO', 'REJEITADO')),
+                ADD CONSTRAINT ck_importacao_registro_linha CHECK (linha > 0);
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="importacao_registro" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="007-fk-contrato-importacao-registro" author="crm-superauto">
+        <addForeignKeyConstraint constraintName="fk_contrato_importacao_registro"
+                                 baseTableName="contrato" baseColumnNames="importacao_registro_id"
+                                 referencedTableName="importacao_registro" referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

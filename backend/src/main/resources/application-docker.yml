@@ -1,0 +1,17 @@
+# Execução dentro do docker-compose. Todas as URLs vêm de variáveis de ambiente (ver docker-compose.yml).
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+crm:
+  seguranca:
+    issuer: ${KEYCLOAK_ISSUER}
+    jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
+  cors:
+    origens: ${CORS_ORIGENS}
+
+logging:
+  level:
+    br.com.superauto.crm: INFO

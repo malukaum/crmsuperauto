@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Antiga V1 do Flyway. Em bancos que já a aplicaram, o changeset só é marcado como executado. -->
+    <changeSet id="001-auditoria-acesso" author="crm-superauto">
+        <preConditions onFail="MARK_RAN" onFailMessage="auditoria_acesso já existe (criada pelo Flyway)">
+            <not>
+                <tableExists tableName="auditoria_acesso"/>
+            </not>
+        </preConditions>
+        <createTable tableName="auditoria_acesso">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="auditoria_acesso_pkey" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rota" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data_hora" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="auditoria_acesso" indexName="ix_auditoria_acesso_username_data">
+            <column name="username"/>
+            <column name="data_hora" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

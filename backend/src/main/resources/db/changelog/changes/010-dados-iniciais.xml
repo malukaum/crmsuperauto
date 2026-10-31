@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  9. DADOS INICIAIS
+  municipio: carregado em changeset próprio a partir da tabela oficial do IBGE.
+-->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="010-carga-unidade-federativa" author="crm-superauto">
+        <loadData tableName="unidade_federativa" file="../dados/unidade_federativa.csv"
+                  relativeToChangelogFile="true" encoding="UTF-8" separator=",">
+            <column name="sigla" type="string"/>
+            <column name="nome" type="string"/>
+        </loadData>
+        <rollback>
+            <delete tableName="unidade_federativa"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="010-carga-tipo-veiculo" author="crm-superauto">
+        <insert tableName="tipo_veiculo">
+            <column name="codigo" value="CARRO_UTILITARIO"/>
+            <column name="descricao" value="Carro ou utilitário pequeno"/>
+        </insert>
+        <insert tableName="tipo_veiculo">
+            <column name="codigo" value="CAMINHAO_MICROONIBUS"/>
+            <column name="descricao" value="Caminhão ou micro-ônibus"/>
+        </insert>
+        <insert tableName="tipo_veiculo">
+            <column name="codigo" value="MOTO"/>
+            <column name="descricao" value="Moto"/>
+        </insert>
+        <rollback>
+            <delete tableName="tipo_veiculo">
+                <where>codigo IN ('CARRO_UTILITARIO', 'CAMINHAO_MICROONIBUS', 'MOTO')</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="010-carga-tipo-contato" author="crm-superauto">
+        <insert tableName="tipo_contato">
+            <column name="codigo" value="POS_VENDA"/>
+            <column name="descricao" value="Pós-venda"/>
+        </insert>
+        <insert tableName="tipo_contato">
+            <column name="codigo" value="ANIVERSARIO"/>
+            <column name="descricao" value="Aniversário"/>
+        </insert>
+        <insert tableName="tipo_contato">
+            <column name="codigo" value="SUPORTE"/>
+            <column name="descricao" value="Suporte"/>
+        </insert>
+        <insert tableName="tipo_contato">
+            <column name="codigo" value="INDICACAO"/>
+            <column name="descricao" value="Indicação"/>
+        </insert>
+        <insert tableName="tipo_contato">
+            <column name="codigo" value="REAPROXIMACAO"/>
+            <column name="descricao" value="Reaproximação"/>
+        </insert>
+        <insert tableName="tipo_contato">
+            <column name="codigo" value="COMERCIAL"/>
+            <column name="descricao" value="Comercial"/>
+        </insert>
+        <rollback>
+            <delete tableName="tipo_contato">
+                <where>codigo IN ('POS_VENDA', 'ANIVERSARIO', 'SUPORTE', 'INDICACAO', 'REAPROXIMACAO', 'COMERCIAL')</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <!-- Régua (valores atuais da aba CONFIGURACOES). -->
+    <changeSet id="010-carga-etapa-relacionamento" author="crm-superauto">
+        <sql><![CDATA[
+            INSERT INTO etapa_relacionamento (codigo, nome, ordem, dias_apos_anterior, inicial) VALUES
+             ('D7',         'D+7',        1,  7, true),
+             ('D30',        'D+30',       2, 23, false),
+             ('D60',        'D+60',       3, 30, false),
+             ('D90',        'D+90',       4, 30, false),
+             ('TRIMESTRAL', 'Trimestral', 5, 90, false);
+
+            UPDATE etapa_relacionamento e
+               SET proxima_etapa_id = p.id
+              FROM etapa_relacionamento p
+             WHERE (e.codigo, p.codigo) IN (('D7','D30'), ('D30','D60'), ('D60','D90'), ('D90','TRIMESTRAL'), ('TRIMESTRAL','TRIMESTRAL'));
+        ]]></sql>
+        <rollback>
+            <sql><![CDATA[
+                UPDATE etapa_relacionamento SET proxima_etapa_id = NULL
+                 WHERE codigo IN ('D7', 'D30', 'D60', 'D90', 'TRIMESTRAL');
+                DELETE FROM etapa_relacionamento
+                 WHERE codigo IN ('D7', 'D30', 'D60', 'D90', 'TRIMESTRAL');
+            ]]></sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

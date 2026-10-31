@@ -1,0 +1,5 @@
+# Execução local (mvn spring-boot:run), com Postgres e Keycloak do docker-compose expostos em localhost.
+logging:
+  level:
+    br.com.superauto.crm: DEBUG
+    org.springframework.security: INFO
