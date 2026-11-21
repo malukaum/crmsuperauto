@@ -1,0 +1,89 @@
+<section class="crm-card crm-bloco" aria-label="Assistente de IA">
+  <div class="topo">
+    <h2><mat-icon aria-hidden="true">auto_awesome</mat-icon> Assistente de IA</h2>
+    <button mat-button type="button" (click)="recarregar()" aria-label="Atualizar resumos">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  <div class="sugestoes">
+    <button mat-flat-button class="crm-acao-destaque" type="button" [disabled]="pensando()" (click)="sugerir()">
+      <mat-icon>lightbulb</mat-icon> Sugerir abordagem
+    </button>
+    @if (pensando()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Gerando sugestões" />
+    }
+    @if (aviso(); as a) {
+      <p class="crm-secundario" role="status">{{ a }}</p>
+    }
+    @if (sugestoes(); as s) {
+      <ol class="sugestoes__lista">
+        @for (r of s.recomendacoes; track $index) {
+          <li>
+            <p>{{ r.abordagem }}</p>
+            <span class="crm-secundario">Base: {{ r.base }}</span>
+          </li>
+        }
+      </ol>
+      <p class="crm-secundario marca">Sugestão gerada por {{ s.provedor }} ({{ s.modelo }}). Nada foi enviado ao cliente.</p>
+    }
+  </div>
+
+  <h3>Resumos dos atendimentos</h3>
+  @if (anotacoes().length === 0) {
+    <p class="crm-vazio">Nenhum atendimento anotado ainda. Use "Anotações livres" ao registrar.</p>
+  }
+  <ul class="crm-lista resumos">
+    @for (a of anotacoes(); track a.atendimentoId) {
+      <li>
+        <app-status-chip [tipo]="tipoDoChip(a)">{{ nomeSituacao[a.situacao] }}</app-status-chip>
+        @if (a.resumoCurto) {
+          <p class="resumo">{{ a.resumoCurto }}</p>
+          <dl class="sinais">
+            @if (a.assuntos.length) {
+              <dt>Assuntos</dt>
+              <dd>{{ a.assuntos.join(', ') }}</dd>
+            }
+            @if (a.satisfacao) {
+              <dt>Satisfação</dt>
+              <dd>{{ nomeSatisfacao[a.satisfacao] }}</dd>
+            }
+            @if (a.riscoDeCancelamento) {
+              <dt>Risco</dt>
+              <dd class="risco">Sinal de risco de cancelamento</dd>
+            }
+            @if (a.chanceDeIndicar) {
+              <dt>Chance de indicar</dt>
+              <dd>{{ nomeChance[a.chanceDeIndicar] }}</dd>
+            }
+            @if (a.objecoes.length) {
+              <dt>Objeções</dt>
+              <dd>{{ a.objecoes.join('; ') }}</dd>
+            }
+            @if (a.interesses.length) {
+              <dt>Interesses</dt>
+              <dd>{{ a.interesses.join('; ') }}</dd>
+            }
+            @if (a.proximaAcao) {
+              <dt>Próxima ação</dt>
+              <dd>{{ a.proximaAcao }}</dd>
+            }
+          </dl>
+          <span class="crm-secundario">
+            Gerado por {{ a.provedor }} ({{ a.modelo }}) em {{ a.resumidoEm | date: 'dd/MM/yyyy HH:mm' }}
+          </span>
+        } @else if (a.texto) {
+          <p class="anotado">{{ a.texto }}</p>
+        }
+        @if (a.anexos.length) {
+          <span class="crm-secundario">
+            Anexos: @for (x of a.anexos; track $index) {{{ x.nome }}{{ $last ? '' : ', ' }}}
+          </span>
+        }
+        @if (a.situacao === 'FALHOU' && a.erro) {
+          <span class="crm-secundario">Motivo: {{ a.erro }}</span>
+        }
+      </li>
+    }
+  </ul>
+</section>

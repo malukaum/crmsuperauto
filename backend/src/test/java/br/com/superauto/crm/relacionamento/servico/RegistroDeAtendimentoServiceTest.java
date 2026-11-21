@@ -57,6 +57,7 @@ class RegistroDeAtendimentoServiceTest {
         when(acompanhamentos.buscarParaAlteracao(10L)).thenReturn(Optional.of(acompanhamento));
         when(regua.etapas()).thenReturn(REGUA);
         when(tipos.id(TipoDeRelacionamento.POS_VENDA)).thenReturn((short) 1);
+        when(atendimentos.save(any())).thenAnswer(chamada -> chamada.getArgument(0));
     }
 
     private void contratoNaSituacao(SituacaoNaCarteira situacao) {

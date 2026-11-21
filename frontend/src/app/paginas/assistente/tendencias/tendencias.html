@@ -1,0 +1,100 @@
+<div class="crm-pagina">
+  <h1 class="crm-titulo-pagina">Inteligência · Tendências da carteira</h1>
+  <p class="crm-subtitulo">
+    O que os clientes mais comentam nos atendimentos anotados. Os números saem dos resumos guardados no nosso
+    servidor; a IA só escreve a leitura, sem receber dados de clientes.
+  </p>
+
+  <form class="crm-card filtros" (ngSubmit)="consultar()">
+    <mat-form-field>
+      <mat-label>De</mat-label>
+      <input matInput type="date" name="inicio" [ngModel]="inicio()" (ngModelChange)="inicio.set($event)" />
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Até</mat-label>
+      <input matInput type="date" name="fim" [ngModel]="fim()" (ngModelChange)="fim.set($event)" />
+      @if (periodoInvalido()) {
+        <mat-error>A data final não pode ser anterior à inicial.</mat-error>
+      }
+    </mat-form-field>
+    <button mat-stroked-button type="submit" [disabled]="carregando() || periodoInvalido()">Consultar</button>
+    <span class="crm-secundario">Sem datas: últimos 30 dias.</span>
+  </form>
+
+  @if (carregando()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Carregando" />
+  }
+  @if (erro(); as e) {
+    <p class="crm-erro" role="alert">{{ e }}</p>
+  }
+
+  @if (indicadores(); as t) {
+    <div class="numeros">
+      <div class="crm-card numero">
+        <span class="numero__valor">{{ t.atendimentosResumidos }}</span>
+        <span class="crm-secundario">atendimentos resumidos</span>
+      </div>
+      <div class="crm-card numero numero--risco">
+        <span class="numero__valor">{{ t.comRiscoDeCancelamento }}</span>
+        <span class="crm-secundario">com sinal de risco de cancelamento</span>
+      </div>
+      <div class="crm-card numero numero--indicacao">
+        <span class="numero__valor">{{ t.comChanceAltaDeIndicar }}</span>
+        <span class="crm-secundario">com chance alta de indicar</span>
+      </div>
+    </div>
+
+    @if (t.atendimentosResumidos === 0) {
+      <p class="crm-vazio">Nenhum atendimento resumido no período. Anote os atendimentos para ver as tendências.</p>
+    } @else {
+      <div class="paineis">
+        <section class="crm-card crm-bloco">
+          <h2>Assuntos mais comentados</h2>
+          <ul class="barras">
+            @for (f of assuntos(); track f.rotulo) {
+              <li>
+                <span class="barras__rotulo">{{ f.rotulo }}</span>
+                <span class="barras__trilho"><span class="barras__barra" [style.width.%]="f.percentual"></span></span>
+                <span class="barras__valor">{{ f.quantidade }} · {{ f.percentual }}%</span>
+              </li>
+            }
+          </ul>
+          <p class="crm-secundario">Um atendimento pode tratar de mais de um assunto.</p>
+        </section>
+
+        <section class="crm-card crm-bloco">
+          <h2>Satisfação percebida</h2>
+          <ul class="barras">
+            @for (f of satisfacao(); track f.rotulo) {
+              <li>
+                <span class="barras__rotulo">{{ f.rotulo }}</span>
+                <span class="barras__trilho"><span class="barras__barra" [style.width.%]="f.percentual"></span></span>
+                <span class="barras__valor">{{ f.quantidade }} · {{ f.percentual }}%</span>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+
+      <section class="crm-card crm-bloco leitura">
+        <div class="leitura__topo">
+          <h2><mat-icon aria-hidden="true">auto_awesome</mat-icon> Leitura da IA</h2>
+          <button mat-flat-button class="crm-acao-destaque" type="button" [disabled]="lendo()" (click)="lerComIa()">
+            {{ leitura() ? 'Gerar de novo' : 'Gerar leitura' }}
+          </button>
+        </div>
+        @if (lendo()) {
+          <mat-progress-bar mode="indeterminate" aria-label="Gerando leitura" />
+        }
+        @if (leitura(); as l) {
+          <p class="leitura__texto">{{ l.texto }}</p>
+          @if (l.provedor) {
+            <span class="crm-secundario">Gerado por {{ l.provedor }} ({{ l.modelo }}) a partir só dos números acima.</span>
+          }
+        } @else if (!lendo()) {
+          <p class="crm-secundario">A IA explica em poucas frases o que os números mostram e o que vale fazer.</p>
+        }
+      </section>
+    }
+  }
+</div>

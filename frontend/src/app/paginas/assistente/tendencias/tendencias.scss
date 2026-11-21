@@ -1,0 +1,99 @@
+:host {
+  display: block;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.numero {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+
+  &__valor {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--crm-azul-marca);
+  }
+
+  &--risco .numero__valor {
+    color: var(--crm-laranja-texto);
+  }
+
+  &--indicacao .numero__valor {
+    color: var(--crm-verde);
+  }
+}
+
+.paineis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.barras {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: minmax(110px, 160px) 1fr max-content;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__trilho {
+    height: 10px;
+    border-radius: 5px;
+    background: var(--crm-borda);
+    overflow: hidden;
+  }
+
+  &__barra {
+    display: block;
+    height: 100%;
+    border-radius: 5px;
+    background: var(--crm-azul-marca);
+  }
+
+  &__valor {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.leitura {
+  &__topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  &__texto {
+    white-space: pre-line;
+    line-height: 1.6;
+  }
+}

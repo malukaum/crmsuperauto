@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- IA-05 · Provedores de IA contratados (Claude, Gemini, ChatGPT), um registro por provedor. -->
+    <changeSet id="021-ia-provedor" author="crm-superauto">
+        <createTable tableName="ia_provedor" remarks="Configuração de cada provedor de IA (IA-05)">
+            <column name="provedor" type="varchar(20)">
+                <constraints primaryKey="true" primaryKeyName="pk_ia_provedor" nullable="false"/>
+            </column>
+            <column name="modelo" type="varchar(100)"/>
+            <column name="chave_cifrada" type="text" remarks="Chave de acesso cifrada (AES-GCM); nunca volta para a tela"/>
+            <column name="chave_final" type="varchar(4)" remarks="Últimos caracteres da chave, só para exibir"/>
+            <column name="ativo" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="limite_mensal" type="numeric(10,2)" defaultValueNumeric="20.00" remarks="Limite de gasto do mês, em US$">
+                <constraints nullable="false"/>
+            </column>
+            <column name="preco_entrada" type="numeric(10,4)" remarks="US$ por milhão de tokens de entrada"/>
+            <column name="preco_saida" type="numeric(10,4)" remarks="US$ por milhão de tokens de saída"/>
+            <column name="versao" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="atualizado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+ALTER TABLE ia_provedor
+    ADD CONSTRAINT ck_ia_provedor_provedor CHECK (provedor IN ('CLAUDE', 'GEMINI', 'CHATGPT')),
+    ADD CONSTRAINT ck_ia_provedor_valores CHECK (limite_mensal >= 0 AND (preco_entrada IS NULL OR preco_entrada >= 0)
+                                                 AND (preco_saida IS NULL OR preco_saida >= 0));
+INSERT INTO ia_provedor (provedor, modelo, preco_entrada, preco_saida) VALUES
+    ('CLAUDE', 'claude-opus-5-5', 4.0000, 20.0000),
+    ('GEMINI', NULL, NULL, NULL),
+    ('CHATGPT', NULL, NULL, NULL);
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="ia_provedor"/>
+        </rollback>
+    </changeSet>
+
+    <!-- IA-05 · Qual provedor atende cada tarefa: um principal e um reserva. -->
+    <changeSet id="021-ia-tarefa" author="crm-superauto">
+        <createTable tableName="ia_tarefa" remarks="Provedor principal e reserva de cada tarefa do assistente (IA-05)">
+            <column name="tarefa" type="varchar(20)">
+                <constraints primaryKey="true" primaryKeyName="pk_ia_tarefa" nullable="false"/>
+            </column>
+            <column name="principal" type="varchar(20)">
+                <constraints nullable="false" foreignKeyName="fk_ia_tarefa_principal" references="ia_provedor(provedor)"/>
+            </column>
+            <column name="reserva" type="varchar(20)">
+                <constraints foreignKeyName="fk_ia_tarefa_reserva" references="ia_provedor(provedor)"/>
+            </column>
+            <column name="versao" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+ALTER TABLE ia_tarefa
+    ADD CONSTRAINT ck_ia_tarefa_tarefa CHECK (tarefa IN ('RESUMO', 'TENDENCIAS', 'RECOMENDACOES')),
+    ADD CONSTRAINT ck_ia_tarefa_reserva CHECK (reserva IS NULL OR reserva <> principal);
+INSERT INTO ia_tarefa (tarefa, principal) VALUES ('RESUMO', 'CLAUDE'), ('TENDENCIAS', 'CLAUDE'), ('RECOMENDACOES', 'CLAUDE');
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="ia_tarefa"/>
+        </rollback>
+    </changeSet>
+
+    <!-- IA-01 / IA-02 · Anotação livre de um atendimento e o resumo estruturado gerado pela IA. -->
+    <changeSet id="021-anotacao-atendimento" author="crm-superauto">
+        <createTable tableName="anotacao_atendimento" remarks="Anotações livres do atendimento e o resumo estruturado (IA-01, IA-02)">
+            <column name="atendimento_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="pk_anotacao_atendimento" nullable="false"
+                             foreignKeyName="fk_anotacao_atendimento" references="atendimento(id)"/>
+            </column>
+            <column name="associado_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_anotacao_associado" references="associado(id)"/>
+            </column>
+            <column name="texto" type="varchar(10000)"/>
+            <column name="situacao" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tentativas" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="proxima_tentativa_em" type="timestamp with time zone"/>
+            <column name="resumo_curto" type="varchar(500)"/>
+            <column name="assuntos" type="jsonb"/>
+            <column name="satisfacao" type="varchar(10)"/>
+            <column name="objecoes" type="jsonb"/>
+            <column name="interesses" type="jsonb"/>
+            <column name="risco_cancelamento" type="boolean"/>
+            <column name="chance_indicar" type="varchar(10)"/>
+            <column name="proxima_acao" type="varchar(500)"/>
+            <column name="provedor" type="varchar(20)"/>
+            <column name="modelo" type="varchar(100)"/>
+            <column name="resumido_em" type="timestamp with time zone"/>
+            <column name="erro" type="varchar(500)"/>
+            <column name="registrado_por" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_anotacao_usuario" references="usuario(id)"/>
+            </column>
+            <column name="registrado_em" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="versao" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql><![CDATA[
+ALTER TABLE anotacao_atendimento
+    ADD CONSTRAINT ck_anotacao_situacao CHECK (situacao IN ('AGUARDANDO', 'RESUMIDO', 'FALHOU')),
+    ADD CONSTRAINT ck_anotacao_satisfacao CHECK (satisfacao IS NULL OR satisfacao IN ('POSITIVA', 'NEUTRA', 'NEGATIVA')),
+    ADD CONSTRAINT ck_anotacao_chance CHECK (chance_indicar IS NULL OR chance_indicar IN ('BAIXA', 'MEDIA', 'ALTA'));
+CREATE INDEX ix_anotacao_pendente ON anotacao_atendimento (proxima_tentativa_em) WHERE situacao = 'AGUARDANDO';
+CREATE INDEX ix_anotacao_associado ON anotacao_atendimento (associado_id, registrado_em DESC);
+CREATE INDEX ix_anotacao_resumido_em ON anotacao_atendimento (resumido_em);
+        ]]></sql>
+        <rollback>
+            <dropTable tableName="anotacao_atendimento"/>
+        </rollback>
+    </changeSet>
+
+    <!-- IA-01 / IA-02 · Anexos da anotação: o conteúdo é apagado depois do resumo; ficam tipo, tamanho e hash. -->
+    <changeSet id="021-anexo-atendimento" author="crm-superauto">
+        <createTable tableName="anexo_atendimento" remarks="Anexos da anotação; o conteúdo some depois do resumo (IA-02)">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_anexo_atendimento" nullable="false"/>
+            </column>
+            <column name="atendimento_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_anexo_anotacao" references="anotacao_atendimento(atendimento_id)"/>
+            </column>
+            <column name="nome" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tipo_conteudo" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tamanho" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hash" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="conteudo" type="bytea"/>
+            <column name="descartado_em" type="timestamp with time zone"/>
+        </createTable>
+        <createIndex tableName="anexo_atendimento" indexName="ix_anexo_atendimento">
+            <column name="atendimento_id"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="anexo_atendimento"/>
+        </rollback>
+    </changeSet>
+
+    <!-- IA-05 / IA-06 · Cada chamada à IA: provedor, tarefa, tokens, custo e se foi o reserva. Nunca o conteúdo. -->
+    <changeSet id="021-uso-ia" author="crm-superauto">
+        <createTable tableName="uso_ia" remarks="Registro de cada chamada aos provedores de IA, sem o conteúdo (IA-05, IA-06)">
+            <column name="id" type="bigint" autoIncrement="true" generationType="ALWAYS">
+                <constraints primaryKey="true" primaryKeyName="pk_uso_ia" nullable="false"/>
+            </column>
+            <column name="provedor" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modelo" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tarefa" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="atendimento_id" type="bigint"/>
+            <column name="tokens_entrada" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tokens_saida" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="custo" type="numeric(12,6)"/>
+            <column name="sucesso" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reserva" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="erro" type="varchar(300)"/>
+            <column name="realizado_em" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="uso_ia" indexName="ix_uso_ia_provedor_data">
+            <column name="provedor"/>
+            <column name="realizado_em"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="uso_ia"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

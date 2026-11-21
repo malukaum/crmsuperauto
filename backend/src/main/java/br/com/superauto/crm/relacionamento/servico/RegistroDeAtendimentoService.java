@@ -52,7 +52,8 @@ public class RegistroDeAtendimentoService {
                 previsao.proximoContato().orElse(null));
     }
 
-    public void registrar(Long contratoId, RegistroDeContato registro, AutorDoContato autor) {
+    /** @return o id do atendimento gravado, para anexar anotações a ele (IA-01) */
+    public Long registrar(Long contratoId, RegistroDeContato registro, AutorDoContato autor) {
         var contrato = exigirDisponivel(contratoId, registro, autor);
         var acompanhamento =
                 acompanhamentos
@@ -62,7 +63,7 @@ public class RegistroDeAtendimentoService {
         Short etapa = acompanhamento.etapaEmTrabalho();
         acompanhamento.registrarContato(
                 new RegistroNaRegua(registro.resultado(), registro.retorno()), contexto, autor.id());
-        atendimentos.save(
+        var atendimento = atendimentos.save(
                 Atendimento.registrar(
                         new Atendimento.Novo(
                                 contrato.getAssociadoId(),
@@ -75,6 +76,7 @@ public class RegistroDeAtendimentoService {
                                 contexto.realizadoEm(),
                                 autor.id())));
         acompanhamentos.save(acompanhamento);
+        return atendimento.getId();
     }
 
     public void aniversario(Long contratoId, AutorDoContato autor) {

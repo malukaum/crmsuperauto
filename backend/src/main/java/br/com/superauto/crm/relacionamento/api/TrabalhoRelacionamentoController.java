@@ -83,11 +83,11 @@ public class TrabalhoRelacionamentoController {
 
     @PostMapping("/filas/contratos/{id}/registro")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
-    public void registrar(
+    public AtendimentoGravado registrar(
             @PathVariable Long id,
             @RequestBody @Valid RegistroDeContatoRequest req,
             JwtAuthenticationToken auth) {
-        registros.registrar(id, req.comando(OrigemDoRegistro.FILA), AutorDaRequisicao.de(auth));
+        return new AtendimentoGravado(registros.registrar(id, req.comando(OrigemDoRegistro.FILA), AutorDaRequisicao.de(auth)));
     }
 
     @PostMapping("/aniversariantes/contratos/{id}/registro")

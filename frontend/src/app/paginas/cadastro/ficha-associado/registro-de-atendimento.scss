@@ -14,3 +14,26 @@
 .previa {
   margin: 12px 0 0;
 }
+
+.anexos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  &__lista {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      overflow-wrap: anywhere;
+    }
+  }
+}

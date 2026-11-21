@@ -123,12 +123,12 @@ public class AtendimentosController {
 
     @PostMapping("/contratos/{id}/registro")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
-    public void registrarPosVenda(
+    public AtendimentoGravado registrarPosVenda(
             @PathVariable Long id,
             @RequestBody @Valid RegistroDeContatoRequest req,
             JwtAuthenticationToken auth) {
-        registros.registrar(
-                id, req.comando(OrigemDoRegistro.FICHA), AutorDaRequisicao.de(auth));
+        return new AtendimentoGravado(registros.registrar(
+                id, req.comando(OrigemDoRegistro.FICHA), AutorDaRequisicao.de(auth)));
     }
 
     public record AvulsoRequest(
@@ -153,8 +153,8 @@ public class AtendimentosController {
 
     @PostMapping("/avulsos")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
-    public void registrarAvulso(@RequestBody @Valid AvulsoRequest req, JwtAuthenticationToken auth) {
-        avulsos.registrar(req.comando(), AutorDaRequisicao.de(auth));
+    public AtendimentoGravado registrarAvulso(@RequestBody @Valid AvulsoRequest req, JwtAuthenticationToken auth) {
+        return new AtendimentoGravado(avulsos.registrar(req.comando(), AutorDaRequisicao.de(auth)));
     }
 
     public record CorrecaoRequest(

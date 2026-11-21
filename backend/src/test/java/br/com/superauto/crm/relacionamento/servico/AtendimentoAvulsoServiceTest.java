@@ -45,6 +45,7 @@ class AtendimentoAvulsoServiceTest {
         when(carteira.contratosDoAssociado(7L, Optional.empty())).thenReturn(List.of(
                 ContratoNaFilaDeTeste.contrato(10L, 7L, SituacaoNaCarteira.CANCELADO, UUID.randomUUID())));
         when(tipos.id(any())).thenReturn((short) 3);
+        when(atendimentos.save(any())).thenAnswer(chamada -> chamada.getArgument(0));
     }
 
     private static RegistroAvulso avulso(TipoDeRelacionamento tipo, Optional<Long> contrato) {

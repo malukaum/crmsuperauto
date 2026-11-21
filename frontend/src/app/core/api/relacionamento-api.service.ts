@@ -5,6 +5,11 @@ import { FormatoExportacao, SituacaoContrato, parametros } from './carteira-api.
 import { environment } from '../../../environments/environment';
 import { PaginaApi, PaginaSolicitada } from './pagina';
 
+/** O id do atendimento gravado, para anexar anotações a ele (IA-01). */
+export interface AtendimentoGravado {
+  id: number;
+}
+
 export interface LinhaTrabalho {
   contratoId: number;
   associadoId: number;
@@ -166,15 +171,15 @@ export class RelacionamentoApi {
       registro,
     );
   }
-  registrarPelaFicha(contratoId: number, registro: RegistroContato): Observable<void> {
-    return this.http.post<void>(
+  registrarPelaFicha(contratoId: number, registro: RegistroContato): Observable<AtendimentoGravado> {
+    return this.http.post<AtendimentoGravado>(
       `${this.base}/interno/atendimentos/contratos/${contratoId}/registro`,
       registro,
     );
   }
   /** ATD-02 · Nunca mexe na régua. */
-  registrarAvulso(registro: RegistroAvulso): Observable<void> {
-    return this.http.post<void>(`${this.base}/interno/atendimentos/avulsos`, registro);
+  registrarAvulso(registro: RegistroAvulso): Observable<AtendimentoGravado> {
+    return this.http.post<AtendimentoGravado>(`${this.base}/interno/atendimentos/avulsos`, registro);
   }
   /** ATD-04 · Grava um novo registro que aponta para o original. */
   corrigir(atendimentoId: number, correcao: CorrecaoAtendimento): Observable<void> {
@@ -210,8 +215,8 @@ export class RelacionamentoApi {
       registro,
     );
   }
-  registrar(id: number, registro: RegistroContato): Observable<void> {
-    return this.http.post<void>(`${this.base}/interno/filas/contratos/${id}/registro`, registro);
+  registrar(id: number, registro: RegistroContato): Observable<AtendimentoGravado> {
+    return this.http.post<AtendimentoGravado>(`${this.base}/interno/filas/contratos/${id}/registro`, registro);
   }
   /** ATD-03 · Uma mensagem por pessoa no ano: a segunda é recusada (409). */
   registrarAniversario(id: number): Observable<void> {

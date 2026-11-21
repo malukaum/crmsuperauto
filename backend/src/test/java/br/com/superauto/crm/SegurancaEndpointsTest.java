@@ -1,5 +1,6 @@
 package br.com.superauto.crm;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -20,6 +21,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import br.com.superauto.crm.assistente.api.AnotacoesController;
+import br.com.superauto.crm.assistente.api.ConfiguracaoIaController;
+import br.com.superauto.crm.assistente.api.RecomendacoesController;
+import br.com.superauto.crm.assistente.api.TendenciasController;
+import br.com.superauto.crm.assistente.entidade.SituacaoDoResumo;
+import br.com.superauto.crm.assistente.servico.AnotacaoService;
+import br.com.superauto.crm.assistente.servico.ConfiguracaoDeIaService;
+import br.com.superauto.crm.assistente.servico.RecomendacoesService;
+import br.com.superauto.crm.assistente.servico.ResumoDaAnotacao;
+import br.com.superauto.crm.assistente.servico.TendenciasService;
 import br.com.superauto.crm.acesso.api.EquipeController;
 import br.com.superauto.crm.acesso.api.MeController;
 import br.com.superauto.crm.acesso.api.PingController;
@@ -98,7 +109,8 @@ import org.springframework.web.context.WebApplicationContext;
         UsuariosEquipeController.class, EquipeController.class, ReferenciasController.class, CarteiraController.class,
         AssociadosController.class, ContratosController.class, GestaoContratosController.class,
         GestaoAssociadosController.class, TrabalhoRelacionamentoController.class, ConfiguracaoReguaController.class,
-        AtendimentosController.class, ReguaDoContratoController.class})
+        AtendimentosController.class, ReguaDoContratoController.class, AnotacoesController.class,
+        TendenciasController.class, RecomendacoesController.class, ConfiguracaoIaController.class})
 @Import({SecurityConfig.class, ClockConfig.class})
 @EnableConfigurationProperties(CrmProperties.class)
 class SegurancaEndpointsTest {
@@ -110,6 +122,10 @@ class SegurancaEndpointsTest {
     @MockitoBean private CorrecaoDeAtendimentoService correcaoDeAtendimento;
     @MockitoBean private ConsultaHistoricoService consultaHistorico;
     @MockitoBean private AjusteDaReguaService ajusteDaRegua;
+    @MockitoBean private AnotacaoService anotacoes;
+    @MockitoBean private TendenciasService tendencias;
+    @MockitoBean private RecomendacoesService recomendacoes;
+    @MockitoBean private ConfiguracaoDeIaService configuracaoIa;
 
     private static final String ANONIMO = "anonimo";
     private static final MediaType PROBLEM_JSON = MediaType.APPLICATION_PROBLEM_JSON;
@@ -158,6 +174,9 @@ class SegurancaEndpointsTest {
         when(consultaTrabalho.contatos(any(), any())).thenReturn(Page.empty());
         when(consultaTrabalho.aniversarios(anyInt(), any(), any())).thenReturn(Page.empty());
         when(consultaHistorico.listar(any(), any(), any())).thenReturn(Page.empty());
+        when(anotacoes.doAtendimento(any(), any())).thenReturn(Optional.of(new ResumoDaAnotacao(5L,
+                SituacaoDoResumo.AGUARDANDO, "texto", List.of(), null, List.of(), null, List.of(), List.of(), false,
+                null, null, null, null, null, null)));
     }
 
     static Stream<Arguments> matriz() {
@@ -387,6 +406,41 @@ class SegurancaEndpointsTest {
     void matrizDosAtendimentos(String metodo, String endpoint, String corpo, String papel, int esperado)
             throws Exception {
         var req = request(HttpMethod.valueOf(metodo), endpoint).contentType(MediaType.APPLICATION_JSON).content(corpo);
+        if (!ANONIMO.equals(papel)) req.with(tokenCom(papel, UUID.randomUUID()));
+        mvc.perform(req).andExpect(status().is(esperado));
+    }
+
+    static Stream<Arguments> endpointsAssistente() {
+        var equipe = List.of("gerencial", "vendedor", "atendente");
+        var gerencialEVendedor = List.of("gerencial", "vendedor");
+        var gerencial = List.of("gerencial");
+        String provedor = "{\"versao\":0,\"ativo\":false,\"limiteMensal\":20}";
+        String rota = "{\"versao\":0,\"principal\":\"CLAUDE\"}";
+        // IA-01 a IA-05: anotar e sugerir para toda a equipe; tendências para gerencial e vendedor; configuração só gerencial
+        var endpoints = List.of(
+                new Object[] {"MULTIPART", "/api/interno/atendimentos/5/anotacao", "", equipe},
+                new Object[] {"GET", "/api/interno/atendimentos/5/anotacao", "", equipe},
+                new Object[] {"GET", "/api/interno/associados/7/anotacoes", "", equipe},
+                new Object[] {"POST", "/api/interno/associados/7/recomendacoes", "", equipe},
+                new Object[] {"GET", "/api/interno/assistente/tendencias", "", gerencialEVendedor},
+                new Object[] {"POST", "/api/interno/assistente/tendencias/leitura", "", gerencialEVendedor},
+                new Object[] {"GET", "/api/gestao/ia/provedores", "", gerencial},
+                new Object[] {"PUT", "/api/gestao/ia/provedores/GEMINI", provedor, gerencial},
+                new Object[] {"POST", "/api/gestao/ia/provedores/GEMINI/teste", "{}", gerencial},
+                new Object[] {"GET", "/api/gestao/ia/tarefas", "", gerencial},
+                new Object[] {"PUT", "/api/gestao/ia/tarefas/RESUMO", rota, gerencial},
+                new Object[] {"GET", "/api/gestao/ia/uso", "", gerencial});
+        return endpoints.stream().flatMap(e -> Stream.of(ANONIMO, "gerencial", "vendedor", "atendente", "cliente")
+                .map(papel -> Arguments.of(e[0], e[1], e[2], papel,
+                        ANONIMO.equals(papel) ? 401 : ((List<?>) e[3]).contains(papel) ? 200 : 403)));
+    }
+
+    @ParameterizedTest(name = "IA: {3} em {0} {1} -> {4}")
+    @MethodSource("endpointsAssistente")
+    void matrizDoAssistente(String metodo, String endpoint, String corpo, String papel, int esperado) throws Exception {
+        var req = "MULTIPART".equals(metodo)
+                ? multipart(endpoint).param("texto", "Cliente quer indicar o irmão")
+                : request(HttpMethod.valueOf(metodo), endpoint).contentType(MediaType.APPLICATION_JSON).content(corpo);
         if (!ANONIMO.equals(papel)) req.with(tokenCom(papel, UUID.randomUUID()));
         mvc.perform(req).andExpect(status().is(esperado));
     }

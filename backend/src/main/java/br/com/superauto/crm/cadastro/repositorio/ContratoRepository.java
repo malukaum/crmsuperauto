@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Lock;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import br.com.superauto.crm.cadastro.entidade.Contrato;
@@ -36,6 +37,10 @@ public interface ContratoRepository extends JpaRepository<Contrato, Long> {
     boolean existsByCodigoSgaAndIdNot(String codigoSga, Long id);
 
     List<Contrato> findByAssociadoId(Long associadoId);
+
+    /** IA-03 · Os associados que têm algum contrato do vendedor. */
+    @Query("select distinct c.associadoId from Contrato c where c.vendedorId = :vendedorId")
+    Set<Long> associadosDoVendedor(UUID vendedorId);
 
     /** RG-03: o vendedor só enxerga a pessoa se tiver algum contrato dela. */
     boolean existsByAssociadoIdAndVendedorId(Long associadoId, UUID vendedorId);

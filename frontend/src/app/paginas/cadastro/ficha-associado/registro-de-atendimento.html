@@ -81,6 +81,50 @@
         (ngModelChange)="descricao.set($event)"
       ></textarea>
     </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Anotações livres para a IA (opcional)</mat-label>
+      <textarea
+        matInput
+        rows="4"
+        [attr.maxlength]="regras.maximoDeCaracteres"
+        [disabled]="gravando()"
+        [ngModel]="anotacoes()"
+        (ngModelChange)="anotacoes.set($event)"
+      ></textarea>
+      <mat-hint>Tudo o que foi conversado. Nome, CPF, placa e telefone saem antes de ir para a IA.</mat-hint>
+      <mat-hint align="end">{{ anotacoes().length }}/{{ regras.maximoDeCaracteres }}</mat-hint>
+    </mat-form-field>
+  </div>
+
+  <div class="anexos">
+    <input
+      #seletor
+      type="file"
+      multiple
+      hidden
+      [accept]="regras.extensoesAceitas"
+      (change)="escolherAnexos(seletor.files); seletor.value = ''"
+    />
+    <button mat-stroked-button type="button" [disabled]="gravando()" (click)="seletor.click()">
+      <mat-icon>attach_file</mat-icon> Anexar arquivos
+    </button>
+    <span class="crm-secundario">PDF, JPG, PNG ou texto · até 5 de 10 MB</span>
+    @if (anexos().length > 0) {
+      <ul class="anexos__lista">
+        @for (a of anexos(); track a) {
+          <li>
+            <span>{{ a.name }}</span>
+            <button mat-icon-button type="button" [disabled]="gravando()" (click)="removerAnexo(a)" [attr.aria-label]="'Remover ' + a.name">
+              <mat-icon>close</mat-icon>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    @if (problemaDosAnexos(); as p) {
+      <p class="crm-erro" role="alert">{{ p }}</p>
+    }
   </div>
 
   @if (posVenda()) {

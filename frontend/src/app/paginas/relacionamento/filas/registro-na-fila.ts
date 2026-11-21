@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { EMPTY, Subject, catchError, switchMap } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, switchMap } from 'rxjs';
 import {
   RelacionamentoApi,
   LinhaTrabalho,
@@ -108,7 +108,7 @@ export class RegistroNaFila {
     if (this.gravando() || (!this.aniversario() && !this.previsao())) return;
     this.definirOcupacao(true);
     this.erro.set('');
-    const pedido = this.aniversario()
+    const pedido: Observable<unknown> = this.aniversario()
       ? this.api.registrarAniversario(this.linha().contratoId)
       : this.api.registrar(this.linha().contratoId, this.registro());
     pedido.pipe(takeUntilDestroyed(this.destroy)).subscribe({

@@ -1,6 +1,6 @@
 # Histórias de usuário
 
-São 38 histórias em 9 módulos, cada uma com suas regras de negócio e critérios de aceite. As regras vêm da planilha, da macro de atendimento e das decisões do modelo de dados. Regras novas, sugeridas para o sistema web, estão marcadas com **(proposta)** e precisam da sua validação.
+São 44 histórias em 10 módulos, cada uma com suas regras de negócio e critérios de aceite. As regras vêm da planilha, da macro de atendimento e das decisões do modelo de dados. Regras novas, sugeridas para o sistema web, estão marcadas com **(proposta)** e precisam da sua validação.
 
 **Como ler:** cada história tem o formato *Como / quero / para*, as **Regras** de negócio e os **Critérios de aceite** (*Dado / quando / então*), que viram testes. As regras gerais (RG) valem para todas e não se repetem. O modelo de dados está em [`../modelo-de-dados`](../modelo-de-dados/README.md).
 
@@ -17,6 +17,7 @@ São 38 histórias em 9 módulos, cada uma com suas regras de negócio e critér
 | Importação da planilha (IMP) | [07-importacao.md](07-importacao.md) | 2 |
 | Área do cliente (CLI) | [08-area-do-cliente.md](08-area-do-cliente.md) | 5 |
 | Auditoria (AUD) e fora do escopo | [09-auditoria-e-escopo.md](09-auditoria-e-escopo.md) | 1 |
+| Assistente de IA (IA) | [10-assistente-ia.md](10-assistente-ia.md) | 6 |
 
 ## Mapa das histórias
 
@@ -62,6 +63,12 @@ O MVP tem 25 histórias: com elas a equipe já trabalha sem a planilha. A fase i
 | [CLI-04](08-area-do-cliente.md#cli-04--indicar-um-amigo) | Indicar um amigo | Cliente | Área do cliente · sem. 8 |
 | [CLI-05](08-area-do-cliente.md#cli-05--acompanhar-minhas-indicações) | Acompanhar minhas indicações | Cliente | Área do cliente · sem. 8 |
 | [AUD-01](09-auditoria-e-escopo.md#aud-01--consultar-a-trilha-de-auditoria) | Consultar a trilha de auditoria | Gerencial | Gestão · sem. 9 |
+| [IA-01](10-assistente-ia.md#ia-01--anotar-o-atendimento-com-texto-livre-e-anexos) | Anotar o atendimento com texto livre e anexos | Gerencial, vendedor, atendente | Protótipo |
+| [IA-02](10-assistente-ia.md#ia-02--gerar-e-guardar-o-resumo-estruturado) | Gerar e guardar o resumo estruturado | Sistema | Protótipo |
+| [IA-03](10-assistente-ia.md#ia-03--ver-tendências-da-carteira) | Ver tendências da carteira | Gerencial, vendedor | Protótipo |
+| [IA-04](10-assistente-ia.md#ia-04--receber-recomendações-de-abordagem) | Receber recomendações de abordagem | Gerencial, vendedor, atendente | Protótipo |
+| [IA-05](10-assistente-ia.md#ia-05--configurar-os-provedores-de-ia) | Configurar os provedores de IA (Claude, Gemini, ChatGPT) | Gerencial | Protótipo |
+| [IA-06](10-assistente-ia.md#ia-06--proteger-os-dados-pessoais-lgpd) | Proteger os dados pessoais (LGPD) | Sistema | Protótipo |
 
 ## Regras gerais
 

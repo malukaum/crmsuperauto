@@ -1,0 +1,145 @@
+<div class="crm-pagina">
+  <h1 class="crm-titulo-pagina">Assistente de IA</h1>
+  <p class="crm-subtitulo">
+    Escolha quais provedores atendem cada tarefa. Antes de qualquer envio, nome, CPF, placa, telefone e e-mail viram
+    marcadores; a chave fica cifrada no servidor e nunca volta para a tela.
+  </p>
+  <nav class="atalhos">
+    <a mat-button routerLink="/configuracoes/regua">Prazos da régua</a>
+    <a mat-button routerLink="/configuracoes/usuarios">Usuários da equipe</a>
+  </nav>
+
+  @if (erro(); as e) {
+    <p class="crm-erro" role="alert">{{ e }}</p>
+  }
+  @if (sucesso(); as s) {
+    <p role="status" class="sucesso">{{ s }}</p>
+  }
+
+  <h2 class="secao">Provedores</h2>
+  <div class="provedores">
+    @for (p of provedores(); track p.original.provedor) {
+      <form class="crm-card provedor" (ngSubmit)="salvarProvedor(p)">
+        <div class="provedor__topo">
+          <h3>{{ p.original.nome }}</h3>
+          <mat-slide-toggle
+            [name]="'ativo-' + p.original.provedor"
+            [(ngModel)]="p.ajuste.ativo"
+            [disabled]="ocupado() || (!p.ajuste.ativo && !podeLigar(p))"
+          >
+            {{ p.ajuste.ativo ? 'Ligado' : 'Desligado' }}
+          </mat-slide-toggle>
+        </div>
+
+        <mat-form-field>
+          <mat-label>Modelo</mat-label>
+          <input matInput [name]="'modelo-' + p.original.provedor" maxlength="100" [(ngModel)]="p.ajuste.modelo" />
+          <mat-hint>O identificador do modelo no provedor (ex.: claude-opus-5-5).</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Chave de acesso</mat-label>
+          <input
+            matInput
+            type="password"
+            autocomplete="off"
+            maxlength="500"
+            [name]="'chave-' + p.original.provedor"
+            [(ngModel)]="p.ajuste.chave"
+            [placeholder]="p.original.comChave ? '•••• ' + p.original.chaveFinal : ''"
+          />
+          <mat-hint>
+            {{ p.original.comChave ? 'Guardada (termina em ' + p.original.chaveFinal + '). Vazio mantém a atual.' : 'Nenhuma chave guardada.' }}
+          </mat-hint>
+        </mat-form-field>
+
+        <div class="linha">
+          <mat-form-field>
+            <mat-label>Limite mensal (US$)</mat-label>
+            <input matInput type="number" min="0" step="1" required [name]="'limite-' + p.original.provedor" [(ngModel)]="p.ajuste.limiteMensal" />
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>US$ por milhão · entrada</mat-label>
+            <input matInput type="number" min="0" step="0.01" [name]="'entrada-' + p.original.provedor" [(ngModel)]="p.ajuste.precoEntrada" />
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>US$ por milhão · saída</mat-label>
+            <input matInput type="number" min="0" step="0.01" [name]="'saida-' + p.original.provedor" [(ngModel)]="p.ajuste.precoSaida" />
+          </mat-form-field>
+        </div>
+
+        <p class="crm-secundario">
+          Gasto estimado no mês: {{ p.original.gastoDoMes | currency: 'USD' : 'symbol' : '1.2-4' : 'pt-BR' }}
+          de {{ p.original.limiteMensal | currency: 'USD' : 'symbol' : '1.2-2' : 'pt-BR' }}
+        </p>
+
+        @if (p.teste) {
+          <p role="status" [class.ok]="p.testeOk === true" [class.falha]="p.testeOk === false">{{ p.teste }}</p>
+        }
+
+        <div class="crm-acoes">
+          <button mat-stroked-button type="button" [disabled]="ocupado()" (click)="testar(p)">Testar conexão</button>
+          <button mat-flat-button class="crm-acao-destaque" type="submit" [disabled]="ocupado() || (p.ajuste.ativo && !podeLigar(p))">
+            Salvar
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+
+  <h2 class="secao">Tarefas</h2>
+  <section class="crm-card tarefas">
+    @for (r of rotas(); track r.tarefa) {
+      <form class="tarefa" (ngSubmit)="salvarRota(r)">
+        <strong>{{ r.nome }}</strong>
+        <mat-form-field>
+          <mat-label>Principal</mat-label>
+          <mat-select [name]="'principal-' + r.tarefa" [(ngModel)]="r.principal">
+            @for (p of provedores(); track p.original.provedor) {
+              <mat-option [value]="p.original.provedor">{{ p.original.nome }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Reserva (se o principal falhar)</mat-label>
+          <mat-select [name]="'reserva-' + r.tarefa" [(ngModel)]="r.reserva">
+            <mat-option [value]="null">Sem reserva</mat-option>
+            @for (p of provedores(); track p.original.provedor) {
+              <mat-option [value]="p.original.provedor" [disabled]="p.original.provedor === r.principal">{{ p.original.nome }}</mat-option>
+            }
+          </mat-select>
+          @if (!reservaValida(r)) {
+            <mat-hint class="falha">O reserva precisa ser outro provedor.</mat-hint>
+          }
+        </mat-form-field>
+        <button mat-stroked-button type="submit" [disabled]="ocupado() || !reservaValida(r)">Salvar</button>
+      </form>
+    }
+  </section>
+
+  <h2 class="secao">Uso do mês</h2>
+  <section class="crm-card">
+    <table class="uso">
+      <thead>
+        <tr>
+          <th scope="col">Provedor</th>
+          <th scope="col">Chamadas</th>
+          <th scope="col">Falhas</th>
+          <th scope="col">Como reserva</th>
+          <th scope="col">Custo estimado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of provedores(); track p.original.provedor) {
+          <tr>
+            <td>{{ p.original.nome }}</td>
+            <td>{{ usoDe(p.original.provedor)?.chamadas ?? 0 }}</td>
+            <td>{{ usoDe(p.original.provedor)?.falhas ?? 0 }}</td>
+            <td>{{ usoDe(p.original.provedor)?.comoReserva ?? 0 }}</td>
+            <td>{{ (usoDe(p.original.provedor)?.custo ?? 0) | currency: 'USD' : 'symbol' : '1.2-4' : 'pt-BR' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</div>

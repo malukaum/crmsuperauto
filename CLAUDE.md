@@ -38,6 +38,7 @@ Termo novo ou ambíguo: alinhe com o usuário e registre na história antes de c
 | Auditoria | `auditoria` | AUD, RG-08 | `EventoAuditoria` | Só inserção |
 | Inteligência | `inteligencia` | INT | — | Só modelos de leitura (consultas e visões) |
 | Área do cliente | `areacliente` | CLI | — | Só camada de aplicação, compondo os outros contextos para o papel cliente |
+| Assistente de IA | `assistente` | IA | `AnotacaoDoAtendimento` (com `AnexoDoAtendimento`), `ConfiguracaoDoProvedor`, `RotaDaTarefa`, `UsoDeIa` | Provedores contratados (Claude, Gemini, ChatGPT) atrás da porta `ClienteDeIa`; pseudonimização antes de todo envio |
 | Referência | `referencia` | — | `UnidadeFederativa`, `Municipio`, `TipoVeiculo`, `TipoContato`, `EtapaRelacionamento` | Núcleo compartilhado (*shared kernel*), quase estático |
 | Compartilhado | `compartilhado` | — | — | Núcleo compartilhado de objetos de valor usados por vários contextos (`Email`; depois `Telefone`, `Documento`) |
 

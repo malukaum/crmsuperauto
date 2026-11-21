@@ -392,6 +392,124 @@ Visão geral, decisões e regras: [Modelo de dados](README.md).
 - `ix_auditoria_entidade`: `btree (entidade, entidade_id, ocorrido_em DESC)`
 - `ix_auditoria_usuario`: `btree (usuario_id, ocorrido_em DESC)`
 
+### `ia_provedor`
+
+**Módulo:** Assistente de IA. Configuração de cada provedor contratado (IA-05). Um registro por provedor; a empresa configura os próprios modelos e chaves.
+
+| Coluna | Tipo | Nulo | Padrão | Chave e descrição |
+| --- | --- | --- | --- | --- |
+| `provedor` | `character varying(20)` | não |  | PK; CLAUDE, GEMINI ou CHATGPT. |
+| `modelo` | `character varying(100)` | sim |  | Identificador do modelo no provedor. |
+| `chave_cifrada` | `text` | sim |  | Chave de acesso cifrada (AES-GCM, chave-mestra fora do banco); nunca volta para a tela. |
+| `chave_final` | `character varying(4)` | sim |  | Últimos caracteres da chave, só para exibir. |
+| `ativo` | `boolean` | não | false | Ligar exige modelo e chave. |
+| `limite_mensal` | `numeric(10,2)` | não | 20.00 | Limite de gasto do mês, em US$; atingido, o provedor deixa de ser chamado. |
+| `preco_entrada` | `numeric(10,4)` | sim |  | US$ por milhão de tokens de entrada (custo estimado). |
+| `preco_saida` | `numeric(10,4)` | sim |  | US$ por milhão de tokens de saída. |
+| `versao` | `integer` | não | 0 | RG-06 |
+| `atualizado_em` | `timestamp with time zone` | não | now() |  |
+
+**Regras de integridade**
+
+- `ck_ia_provedor_provedor`: `CHECK (provedor IN ('CLAUDE', 'GEMINI', 'CHATGPT'))`
+- `ck_ia_provedor_valores`: limite e preços não negativos.
+
+### `ia_tarefa`
+
+**Módulo:** Assistente de IA. Provedor principal e reserva de cada tarefa (IA-05).
+
+| Coluna | Tipo | Nulo | Padrão | Chave e descrição |
+| --- | --- | --- | --- | --- |
+| `tarefa` | `character varying(20)` | não |  | PK; RESUMO, TENDENCIAS ou RECOMENDACOES. |
+| `principal` | `character varying(20)` | não |  | FK → `ia_provedor` |
+| `reserva` | `character varying(20)` | sim |  | FK → `ia_provedor`; assume quando o principal falha ou atinge o limite. |
+| `versao` | `integer` | não | 0 | RG-06 |
+
+**Regras de integridade**
+
+- `ck_ia_tarefa_tarefa`: `CHECK (tarefa IN ('RESUMO', 'TENDENCIAS', 'RECOMENDACOES'))`
+- `ck_ia_tarefa_reserva`: `CHECK (reserva IS NULL OR reserva <> principal)`
+
+### `anotacao_atendimento`
+
+**Módulo:** Assistente de IA. Anotações livres de um atendimento e o resumo estruturado gerado pela IA (IA-01, IA-02). No máximo uma por atendimento.
+
+| Coluna | Tipo | Nulo | Padrão | Chave e descrição |
+| --- | --- | --- | --- | --- |
+| `atendimento_id` | `bigint` | não |  | PK; FK → `atendimento` |
+| `associado_id` | `bigint` | não |  | FK → `associado` |
+| `texto` | `character varying(10000)` | sim |  | Anotações livres; apagadas na anonimização. |
+| `situacao` | `character varying(15)` | não |  | AGUARDANDO, RESUMIDO ou FALHOU (desistiu após 5 tentativas). |
+| `tentativas` | `integer` | não | 0 | Falhas contadas; sem provedor disponível a espera não conta. |
+| `proxima_tentativa_em` | `timestamp with time zone` | sim |  | Espera crescente: 1, 5, 15 e 60 min. |
+| `resumo_curto` | `character varying(500)` | sim |  | Resumo estruturado (IA-02), já com os marcadores restaurados. |
+| `assuntos` | `jsonb` | sim |  | Lista fechada (GUINCHO, MENSALIDADE...); mantida na anonimização. |
+| `satisfacao` | `character varying(10)` | sim |  | POSITIVA, NEUTRA ou NEGATIVA; mantida na anonimização. |
+| `objecoes` | `jsonb` | sim |  | Até 5 itens. |
+| `interesses` | `jsonb` | sim |  | Até 5 itens. |
+| `risco_cancelamento` | `boolean` | sim |  | Mantido na anonimização. |
+| `chance_indicar` | `character varying(10)` | sim |  | BAIXA, MEDIA ou ALTA; mantida na anonimização. |
+| `proxima_acao` | `character varying(500)` | sim |  |  |
+| `provedor` | `character varying(20)` | sim |  | Quem gerou o resumo. |
+| `modelo` | `character varying(100)` | sim |  |  |
+| `resumido_em` | `timestamp with time zone` | sim |  | Base do período das tendências (IA-03). |
+| `erro` | `character varying(500)` | sim |  | Motivo da última falha. |
+| `registrado_por` | `uuid` | não |  | FK → `usuario` |
+| `registrado_em` | `timestamp with time zone` | não | now() |  |
+| `versao` | `integer` | não | 0 | RG-06 |
+
+**Regras de integridade**
+
+- `ck_anotacao_situacao`, `ck_anotacao_satisfacao`, `ck_anotacao_chance`: valores dos enums acima.
+
+**Índices adicionais**
+
+- `ix_anotacao_pendente`: `btree (proxima_tentativa_em) WHERE situacao = 'AGUARDANDO'`
+- `ix_anotacao_associado`: `btree (associado_id, registrado_em DESC)`
+- `ix_anotacao_resumido_em`: `btree (resumido_em)`
+
+### `anexo_atendimento`
+
+**Módulo:** Assistente de IA. Anexos da anotação (PDF, JPG, PNG, texto; até 5 de 10 MB). O conteúdo é apagado depois do resumo ou da desistência; ficam nome, tipo, tamanho e hash.
+
+| Coluna | Tipo | Nulo | Padrão | Chave e descrição |
+| --- | --- | --- | --- | --- |
+| `id` | `bigint` | não | identity | PK |
+| `atendimento_id` | `bigint` | não |  | FK → `anotacao_atendimento` |
+| `nome` | `character varying(255)` | não |  |  |
+| `tipo_conteudo` | `character varying(100)` | não |  |  |
+| `tamanho` | `bigint` | não |  | Em bytes. |
+| `hash` | `character varying(64)` | não |  | SHA-256 do conteúdo. |
+| `conteudo` | `bytea` | sim |  | Vazio depois do resumo. |
+| `descartado_em` | `timestamp with time zone` | sim |  |  |
+
+**Índices adicionais**
+
+- `ix_anexo_atendimento`: `btree (atendimento_id)`
+
+### `uso_ia`
+
+**Módulo:** Assistente de IA. Cada chamada a um provedor, com tokens e custo estimado, sem o conteúdo (IA-05, IA-06). Somente inserção.
+
+| Coluna | Tipo | Nulo | Padrão | Chave e descrição |
+| --- | --- | --- | --- | --- |
+| `id` | `bigint` | não | identity | PK |
+| `provedor` | `character varying(20)` | não |  |  |
+| `modelo` | `character varying(100)` | não |  |  |
+| `tarefa` | `character varying(20)` | não |  | RESUMO, TENDENCIAS ou RECOMENDACOES. |
+| `atendimento_id` | `bigint` | sim |  | Só no resumo. |
+| `tokens_entrada` | `bigint` | não | 0 |  |
+| `tokens_saida` | `bigint` | não | 0 |  |
+| `custo` | `numeric(12,6)` | sim |  | US$, pelos preços do provedor. |
+| `sucesso` | `boolean` | não |  |  |
+| `reserva` | `boolean` | não |  | O reserva atendeu a tarefa. |
+| `erro` | `character varying(300)` | sim |  |  |
+| `realizado_em` | `timestamp with time zone` | não |  |  |
+
+**Índices adicionais**
+
+- `ix_uso_ia_provedor_data`: `btree (provedor, realizado_em)`
+
 ## Visões e funções
 
 | Objeto | O que entrega |

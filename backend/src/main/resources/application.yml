@@ -33,9 +33,19 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  servlet:
+    multipart:
+      # IA-01: até 5 anexos de até 10 MB por atendimento.
+      max-file-size: 10MB
+      max-request-size: 55MB
 
 crm:
   fuso-horario: America/Sao_Paulo
+  ia:
+    # IA-05: cifra as chaves dos provedores no banco. Em produção, defina CRM_IA_CHAVE_MESTRA e guarde-a bem:
+    # trocar a chave-mestra torna ilegíveis as chaves já gravadas (será preciso informá-las de novo).
+    chave-mestra: ${CRM_IA_CHAVE_MESTRA:chave-mestra-somente-para-desenvolvimento}
+    intervalo-do-processamento: PT20S
   seguranca:
     issuer: ${KEYCLOAK_ISSUER:http://localhost:8180/realms/crm}
     jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/crm/protocol/openid-connect/certs}

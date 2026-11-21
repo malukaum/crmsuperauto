@@ -258,6 +258,7 @@
             (registrado)="aoRegistrarAtendimento($event)"
             (desatualizado)="aoDesatualizar($event)"
           />
+          <app-assistente-da-ficha [associadoId]="f.id" [versaoDaFicha]="recarga()" />
         </aside>
       }
     </div>

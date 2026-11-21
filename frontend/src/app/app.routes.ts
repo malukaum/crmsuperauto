@@ -119,7 +119,13 @@ export const routes: Routes = [
       },
       emConstrucao('indicacoes', 'Indicações'),
       // Gestão: o guard repete a regra do menu (ACE-02); a API recusa com 403 de qualquer forma.
-      emConstrucao('inteligencia', 'Inteligência', GERENCIAL_OU_VENDEDOR),
+      {
+        path: 'inteligencia',
+        loadComponent: () => import('./paginas/assistente/tendencias/tendencias').then((m) => m.Tendencias),
+        title: 'Inteligência' + SUFIXO,
+        canActivate: [papelGuard],
+        data: { papeis: [...GERENCIAL_OU_VENDEDOR] },
+      },
       emConstrucao('importacao', 'Importação', ['gerencial']),
       emConstrucao('auditoria', 'Auditoria', ['gerencial']),
       {
@@ -145,6 +151,12 @@ export const routes: Routes = [
                 (m) => m.UsuariosEquipe,
               ),
             title: 'Usuários da equipe' + SUFIXO,
+          },
+          {
+            path: 'ia',
+            loadComponent: () =>
+              import('./paginas/assistente/configuracao-ia/configuracao-ia').then((m) => m.ConfiguracaoIa),
+            title: 'Assistente de IA' + SUFIXO,
           },
         ],
       },

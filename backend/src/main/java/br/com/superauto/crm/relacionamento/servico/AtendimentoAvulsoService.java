@@ -27,8 +27,9 @@ public class AtendimentoAvulsoService {
     private final TiposDeContato tipos;
     private final Clock relogio;
 
+    /** @return o id do atendimento gravado, para anexar anotações a ele (IA-01) */
     @Transactional
-    public void registrar(RegistroAvulso registro, AutorDoContato autor) {
+    public Long registrar(RegistroAvulso registro, AutorDoContato autor) {
         registro.tipo().exigirAvulso();
         var contratos = carteira.contratosDoAssociado(registro.associadoId(), autor.vendedor());
         registro.contratoId()
@@ -38,7 +39,7 @@ public class AtendimentoAvulsoService {
                             throw NegocioException.naoEncontrado("Contrato não encontrado.");
                         });
         var momento = MomentoDoAtendimento.de(registro.realizadoEm(), ZonedDateTime.now(relogio));
-        atendimentos.save(
+        return atendimentos.save(
                 Atendimento.registrar(
                         new Atendimento.Novo(
                                 registro.associadoId(),
@@ -49,6 +50,7 @@ public class AtendimentoAvulsoService {
                                 registro.descricao(),
                                 registro.retorno().orElse(null),
                                 momento.valor(),
-                                autor.id())));
+                                autor.id())))
+                .getId();
     }
 }

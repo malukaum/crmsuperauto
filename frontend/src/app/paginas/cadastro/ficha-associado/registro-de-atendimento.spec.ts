@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ContratoDaFicha, FichaAssociado } from '../../../core/api/associados-api.service';
 import { WritableSignal } from '@angular/core';
 import { RelacionamentoApi, ResultadoContato, TipoAvulso } from '../../../core/api/relacionamento-api.service';
+import { AssistenteApi } from '../../../core/api/assistente-api.service';
 import { RegistroDeAtendimento } from './registro-de-atendimento';
 
 /** O que o teste usa do formulário: a mesma interação que o template faz. */
@@ -13,7 +14,9 @@ interface FormularioEmTeste {
   podeConfirmar(): boolean;
   resultado: WritableSignal<ResultadoContato>;
   retorno: WritableSignal<string>;
+  anotacoes: WritableSignal<string>;
   escolherTipo(tipo: 'POS_VENDA' | TipoAvulso): void;
+  escolherAnexos(lista: File[]): void;
   prever(): void;
   registrar(): void;
 }
@@ -52,16 +55,20 @@ async function preparar() {
   const api = {
     preverPelaFicha: vi.fn().mockReturnValue(of({ etapaConcluida: 'D+7', proximaEtapa: 'D+30', proximoContato: '2026-04-17' })),
     registrarPelaFicha: vi.fn().mockReturnValue(of(undefined)),
-    registrarAvulso: vi.fn().mockReturnValue(of(undefined)),
+    registrarAvulso: vi.fn().mockReturnValue(of({ id: 55 })),
   };
+  const assistente = { anotar: vi.fn().mockReturnValue(of({ atendimentoId: 55, situacao: 'AGUARDANDO' })) };
   await TestBed.configureTestingModule({
     imports: [RegistroDeAtendimento],
-    providers: [{ provide: RelacionamentoApi, useValue: api }],
+    providers: [
+      { provide: RelacionamentoApi, useValue: api },
+      { provide: AssistenteApi, useValue: assistente },
+    ],
   }).compileComponents();
   const fixture = TestBed.createComponent(RegistroDeAtendimento);
   fixture.componentRef.setInput('ficha', ficha);
   fixture.detectChanges();
-  return { api, componente: fixture.componentInstance as unknown as FormularioEmTeste };
+  return { api, assistente, componente: fixture.componentInstance as unknown as FormularioEmTeste };
 }
 
 describe('RegistroDeAtendimento · ficha', () => {
@@ -97,5 +104,27 @@ describe('RegistroDeAtendimento · ficha', () => {
     expect(componente.podeConfirmar()).toBe(false);
     componente.retorno.set('2026-11-05');
     expect(componente.podeConfirmar()).toBe(true);
+  });
+
+  it('IA-01 · as anotações vão para o atendimento recém-gravado, depois do registro', async () => {
+    const { assistente, componente } = await preparar();
+    componente.escolherTipo('SUPORTE');
+    componente.anotacoes.set('Cliente quer indicar o irmão');
+    componente.registrar();
+    expect(assistente.anotar).toHaveBeenCalledWith(55, 'Cliente quer indicar o irmão', []);
+  });
+
+  it('IA-01 · sem anotação nem anexo, nada vai para a IA', async () => {
+    const { assistente, componente } = await preparar();
+    componente.escolherTipo('SUPORTE');
+    componente.registrar();
+    expect(assistente.anotar).not.toHaveBeenCalled();
+  });
+
+  it('IA-01 · anexo de tipo não aceito impede o registro, como o servidor recusaria', async () => {
+    const { componente } = await preparar();
+    componente.escolherTipo('SUPORTE');
+    componente.escolherAnexos([new File(['x'], 'planilha.xlsx', { type: 'application/vnd.ms-excel' })]);
+    expect(componente.podeConfirmar()).toBe(false);
   });
 });

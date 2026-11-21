@@ -46,6 +46,7 @@ import { ContatoDialog, DadosContatoDialog } from './contato-dialog';
 import { ContratoDialog } from './contrato-dialog';
 import { CorrigirAtendimentoDialog } from './corrigir-atendimento-dialog';
 import { DadosPessoaisDialog } from './dados-pessoais-dialog';
+import { AssistenteDaFicha } from '../../assistente/assistente-da-ficha/assistente-da-ficha';
 import { RegistroDeAtendimento } from './registro-de-atendimento';
 
 const SO_GERENCIAL: readonly Papel[] = ['gerencial'];
@@ -66,6 +67,7 @@ const SO_GERENCIAL: readonly Papel[] = ['gerencial'];
     MatMenuModule,
     MatProgressBarModule,
     MatTooltipModule,
+    AssistenteDaFicha,
     AvisoMensalidade,
     RegistroDeAtendimento,
     StatusChip,
@@ -101,7 +103,7 @@ export class FichaAssociado {
   protected readonly ficha = signal<Ficha | null>(null);
   /** Documento completo depois de "mostrar" (RG-04); cada exibição fica na auditoria. */
   protected readonly documentoCompleto = signal<string | null>(null);
-  private readonly recarga = signal(0);
+  protected readonly recarga = signal(0);
 
   /** O WhatsApp principal, usado no botão de conversa (FIL-05). */
   protected readonly whatsapp = computed(() =>

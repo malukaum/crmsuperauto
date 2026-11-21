@@ -45,6 +45,7 @@
     <include file="changes/018-atendimentos.xml" relativeToChangelogFile="true"/>
     <include file="changes/019-fila-pelo-relogio.xml" relativeToChangelogFile="true"/>
     <include file="changes/020-aniversario-uma-por-ano.xml" relativeToChangelogFile="true"/>
+    <include file="changes/021-assistente-ia.xml" relativeToChangelogFile="true"/>
 
     <!-- Visões: uma por arquivo, editadas no lugar (ver convenções acima) -->
     <include file="changes/visoes/vw_ultimo_contato_regua.xml" relativeToChangelogFile="true"/>

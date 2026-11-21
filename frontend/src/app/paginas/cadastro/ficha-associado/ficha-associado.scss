@@ -17,9 +17,10 @@
   }
 }
 
+// Registro e assistente lado a lado com a ficha; sem "sticky", porque juntos passam da altura da tela.
 .lateral {
-  position: sticky;
-  top: 16px;
+  display: grid;
+  gap: 16px;
 }
 
 .dados-contrato {
