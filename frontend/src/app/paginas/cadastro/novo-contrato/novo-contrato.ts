@@ -75,6 +75,8 @@ export class NovoContrato {
   );
 
   protected readonly documento = this.fb.control('', [Validators.required, Validators.pattern(/^[0-9A-Za-z./\-\s]{11,18}$/)]);
+  /** O grupo liga o <form> ao Angular; sem ele, "Continuar" faz o envio nativo e recarrega a página. */
+  protected readonly identificacao = this.fb.group({ documento: this.documento });
 
   protected readonly form = this.fb.group({
     nome: ['', [Validators.required, Validators.maxLength(200)]],

@@ -31,13 +31,13 @@
           </mat-slide-toggle>
         </div>
 
-        <mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label>Modelo</mat-label>
           <input matInput [name]="'modelo-' + p.original.provedor" maxlength="100" [(ngModel)]="p.ajuste.modelo" />
-          <mat-hint>O identificador do modelo no provedor (ex.: claude-opus-5-5).</mat-hint>
+          <mat-hint>Nome do modelo no provedor (ex.: claude-opus-5-5).</mat-hint>
         </mat-form-field>
 
-        <mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label>Chave de acesso</mat-label>
           <input
             matInput
@@ -53,20 +53,22 @@
           </mat-hint>
         </mat-form-field>
 
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Limite de gasto por mês (US$)</mat-label>
+          <input matInput type="number" min="0" step="1" required [name]="'limite-' + p.original.provedor" [(ngModel)]="p.ajuste.limiteMensal" />
+        </mat-form-field>
+
         <div class="linha">
-          <mat-form-field>
-            <mat-label>Limite mensal (US$)</mat-label>
-            <input matInput type="number" min="0" step="1" required [name]="'limite-' + p.original.provedor" [(ngModel)]="p.ajuste.limiteMensal" />
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>US$ por milhão · entrada</mat-label>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>Preço de entrada</mat-label>
             <input matInput type="number" min="0" step="0.01" [name]="'entrada-' + p.original.provedor" [(ngModel)]="p.ajuste.precoEntrada" />
           </mat-form-field>
-          <mat-form-field>
-            <mat-label>US$ por milhão · saída</mat-label>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>Preço de saída</mat-label>
             <input matInput type="number" min="0" step="0.01" [name]="'saida-' + p.original.provedor" [(ngModel)]="p.ajuste.precoSaida" />
           </mat-form-field>
         </div>
+        <p class="crm-secundario">Preços em US$ por milhão de tokens, só para estimar o custo do mês.</p>
 
         <p class="crm-secundario">
           Gasto estimado no mês: {{ p.original.gastoDoMes | currency: 'USD' : 'symbol' : '1.2-4' : 'pt-BR' }}
@@ -74,7 +76,7 @@
         </p>
 
         @if (p.teste) {
-          <p role="status" [class.ok]="p.testeOk === true" [class.falha]="p.testeOk === false">{{ p.teste }}</p>
+          <p role="status" class="teste" [class.ok]="p.testeOk === true" [class.falha]="p.testeOk === false">{{ p.teste }}</p>
         }
 
         <div class="crm-acoes">

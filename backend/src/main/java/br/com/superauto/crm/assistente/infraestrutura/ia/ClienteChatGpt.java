@@ -5,6 +5,7 @@ import br.com.superauto.crm.assistente.repositorio.ClienteDeIa;
 
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.errors.OpenAIServiceException;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import com.openai.models.completions.CompletionUsage;
@@ -43,6 +44,8 @@ public class ClienteChatGpt implements ClienteDeIa {
                     resposta.usage().map(CompletionUsage::completionTokens).orElse(0L));
         } catch (FalhaNoProvedor e) {
             throw e;
+        } catch (OpenAIServiceException e) {
+            throw new FalhaNoProvedor(MotivoDaFalha.de("ChatGPT", e.statusCode(), e.getMessage()), e);
         } catch (RuntimeException e) {
             throw new FalhaNoProvedor("ChatGPT indisponível: " + e.getMessage(), e);
         } finally {

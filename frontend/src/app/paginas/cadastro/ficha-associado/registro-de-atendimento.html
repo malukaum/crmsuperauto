@@ -10,7 +10,7 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ posVenda() ? 'Contrato' : 'Contrato (opcional)' }}</mat-label>
       <mat-select
         [disabled]="gravando()"
@@ -44,7 +44,7 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ exigeRetorno() ? 'Data combinada' : 'Retorno manual (opcional)' }}</mat-label>
       <input
         matInput
@@ -59,7 +59,7 @@
       }
     </mat-form-field>
 
-    <mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
       <mat-label>Data e hora do contato (opcional)</mat-label>
       <input
         matInput
@@ -82,8 +82,8 @@
       ></textarea>
     </mat-form-field>
 
-    <mat-form-field>
-      <mat-label>Anotações livres para a IA (opcional)</mat-label>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Anotações para a IA (opcional)</mat-label>
       <textarea
         matInput
         rows="4"
@@ -92,7 +92,7 @@
         [ngModel]="anotacoes()"
         (ngModelChange)="anotacoes.set($event)"
       ></textarea>
-      <mat-hint>Tudo o que foi conversado. Nome, CPF, placa e telefone saem antes de ir para a IA.</mat-hint>
+      <mat-hint>Nome, CPF, placa e telefone saem antes do envio.</mat-hint>
       <mat-hint align="end">{{ anotacoes().length }}/{{ regras.maximoDeCaracteres }}</mat-hint>
     </mat-form-field>
   </div>

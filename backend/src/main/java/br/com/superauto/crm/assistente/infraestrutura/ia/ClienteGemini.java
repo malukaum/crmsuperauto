@@ -4,6 +4,7 @@ import br.com.superauto.crm.assistente.entidade.ProvedorDeIa;
 import br.com.superauto.crm.assistente.repositorio.ClienteDeIa;
 
 import com.google.genai.Client;
+import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
 import com.google.genai.types.FinishReason;
 import com.google.genai.types.GenerateContentConfig;
@@ -45,6 +46,8 @@ public class ClienteGemini implements ClienteDeIa {
                     uso.flatMap(GenerateContentResponseUsageMetadata::candidatesTokenCount).orElse(0));
         } catch (FalhaNoProvedor e) {
             throw e;
+        } catch (ApiException e) {
+            throw new FalhaNoProvedor(MotivoDaFalha.de("Gemini", e.code(), e.message()), e);
         } catch (RuntimeException e) {
             throw new FalhaNoProvedor("Gemini indisponível: " + e.getMessage(), e);
         } finally {

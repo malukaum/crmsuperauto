@@ -6,7 +6,7 @@
   </p>
 
   @if (etapa() === 'documento') {
-    <form class="crm-card crm-bloco documento" (ngSubmit)="continuar()">
+    <form class="crm-card crm-bloco documento" [formGroup]="identificacao" (ngSubmit)="continuar()">
       <h2>Quem é o cliente?</h2>
       <p class="crm-ajuda">Comece pelo CPF ou CNPJ. Se a pessoa já estiver na carteira, os dados dela são carregados.</p>
       <mat-form-field>

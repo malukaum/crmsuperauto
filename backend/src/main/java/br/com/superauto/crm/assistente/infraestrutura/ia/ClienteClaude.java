@@ -5,6 +5,7 @@ import br.com.superauto.crm.assistente.repositorio.ClienteDeIa;
 
 import com.anthropic.client.AnthropicClient;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
+import com.anthropic.errors.AnthropicServiceException;
 import com.anthropic.models.messages.Message;
 import com.anthropic.models.messages.MessageCreateParams;
 import com.anthropic.models.messages.StopReason;
@@ -42,6 +43,8 @@ public class ClienteClaude implements ClienteDeIa {
             return new RespostaDaIa(texto, resposta.usage().inputTokens(), resposta.usage().outputTokens());
         } catch (FalhaNoProvedor e) {
             throw e;
+        } catch (AnthropicServiceException e) {
+            throw new FalhaNoProvedor(MotivoDaFalha.de("Claude", e.statusCode(), e.getMessage()), e);
         } catch (RuntimeException e) {
             throw new FalhaNoProvedor("Claude indisponível: " + e.getMessage(), e);
         } finally {
