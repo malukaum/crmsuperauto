@@ -1,12 +1,12 @@
-package br.com.superauto.crm.cadastro.api;
+package br.com.superauto.crm.exportacao;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
-import br.com.superauto.crm.cadastro.servico.LinhaExportada;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -18,15 +18,15 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 /**
- * Exportação da carteira (CAR-07) em Excel (.xlsx). Mensalidade sai como número em reais e as datas como datas,
- * para a planilha somar e ordenar; o cabeçalho fica congelado e com filtro. Texto entra sempre como texto, nunca
+ * Exportação em Excel (.xlsx). Valores em reais saem como número e as datas como datas, para a planilha somar e
+ * ordenar; o cabeçalho fica congelado e com filtro. Texto entra sempre como texto, nunca
  * como fórmula.
  */
 final class ExportacaoExcel {
 
-    private static final String ABA = "Carteira";
     private static final String FORMATO_REAIS = "\"R$\" #,##0.00";
     private static final String FORMATO_DATA = "dd/mm/yyyy";
+    private static final String FORMATO_DATA_E_HORA = "dd/mm/yyyy hh:mm";
     /** Linhas mantidas em memória pelo modo streaming; as demais vão para disco temporário. */
     private static final int LINHAS_EM_MEMORIA = 200;
     private static final int LARGURA_MINIMA = 10;
@@ -36,14 +36,14 @@ final class ExportacaoExcel {
     private ExportacaoExcel() {
     }
 
-    static byte[] gerar(List<LinhaExportada> linhas) {
+    static byte[] gerar(Planilha conteudo) {
         var planilha = new SXSSFWorkbook(LINHAS_EM_MEMORIA);
         try (planilha; var saida = new ByteArrayOutputStream()) {
-            new Escrita(planilha).escrever(linhas);
+            new Escrita(planilha, conteudo.aba()).escrever(conteudo);
             planilha.write(saida);
             return saida.toByteArray();
         } catch (IOException e) {
-            throw new UncheckedIOException("Não foi possível gerar a planilha da carteira.", e);
+            throw new UncheckedIOException("Não foi possível gerar a planilha.", e);
         }
     }
 
@@ -54,28 +54,29 @@ final class ExportacaoExcel {
         private final CellStyle cabecalho;
         private final CellStyle reais;
         private final CellStyle data;
+        private final CellStyle dataEHora;
 
-        Escrita(Workbook planilha) {
-            this.aba = planilha.createSheet(ABA);
+        Escrita(Workbook planilha, String nomeDaAba) {
+            this.aba = planilha.createSheet(nomeDaAba);
             this.cabecalho = estiloCabecalho(planilha);
             this.reais = estiloNumerico(planilha, FORMATO_REAIS);
             this.data = estiloNumerico(planilha, FORMATO_DATA);
+            this.dataEHora = estiloNumerico(planilha, FORMATO_DATA_E_HORA);
         }
 
-        void escrever(List<LinhaExportada> linhas) {
-            escreverCabecalho();
+        void escrever(Planilha conteudo) {
+            escreverCabecalho(conteudo.cabecalho());
             int numero = 1;
-            for (LinhaExportada linha : linhas) {
-                escreverLinha(aba.createRow(numero++), ColunasExportacao.valores(linha));
+            for (List<Object> linha : conteudo.linhas()) {
+                escreverLinha(aba.createRow(numero++), linha);
             }
-            int ultimaColuna = ColunasExportacao.CABECALHO.size() - 1;
+            int ultimaColuna = conteudo.cabecalho().size() - 1;
             aba.createFreezePane(0, 1);
-            aba.setAutoFilter(new CellRangeAddress(0, Math.max(linhas.size(), 1), 0, ultimaColuna));
+            aba.setAutoFilter(new CellRangeAddress(0, Math.max(conteudo.linhas().size(), 1), 0, ultimaColuna));
         }
 
-        private void escreverCabecalho() {
+        private void escreverCabecalho(List<String> titulos) {
             Row linha = aba.createRow(0);
-            List<String> titulos = ColunasExportacao.CABECALHO;
             for (int coluna = 0; coluna < titulos.size(); coluna++) {
                 Cell celula = linha.createCell(coluna);
                 celula.setCellValue(titulos.get(coluna));
@@ -94,7 +95,7 @@ final class ExportacaoExcel {
         private void preencher(Cell celula, Object valor) {
             switch (valor) {
                 case null -> celula.setBlank();
-                case ColunasExportacao.Reais r -> {
+                case ValorEmReais r -> {
                     celula.setCellValue(r.valor().doubleValue());
                     celula.setCellStyle(reais);
                 }
@@ -102,7 +103,12 @@ final class ExportacaoExcel {
                     celula.setCellValue(d);
                     celula.setCellStyle(data);
                 }
+                case LocalDateTime d -> {
+                    celula.setCellValue(d);
+                    celula.setCellStyle(dataEHora);
+                }
                 case Integer n -> celula.setCellValue(n);
+                case Long n -> celula.setCellValue(n);
                 default -> celula.setCellValue(String.valueOf(valor));
             }
         }

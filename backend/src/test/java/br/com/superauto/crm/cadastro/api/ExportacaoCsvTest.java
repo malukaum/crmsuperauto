@@ -10,6 +10,7 @@ import java.util.List;
 import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
 import br.com.superauto.crm.cadastro.servico.LinhaExportada;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
+import br.com.superauto.crm.exportacao.FormatoExportacao;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ class ExportacaoCsvTest {
                 "Onix", "Carro", "Formiga", "MG", new BigDecimal("1234.56"), SituacaoContrato.A_CONFERIR, "D+7",
                 LocalDate.of(2026, 3, 20), Fila.ATRASADO, 225, "Vendedor Um");
 
-        String csv = new String(ExportacaoCsv.gerar(List.of(linha)), StandardCharsets.UTF_8);
+        String csv = new String(FormatoExportacao.CSV.gerar(ColunasExportacao.planilha(List.of(linha))), StandardCharsets.UTF_8);
 
         assertThat(csv).startsWith("﻿\"Cliente\";");
         assertThat(csv).contains("\"José \"\"Zé\"\" Silva\";\"***.***.247-**\";\"(37) 9 9869-2950\";\"Não\"");
@@ -36,6 +37,6 @@ class ExportacaoCsvTest {
         var linha = new LinhaExportada("=HYPERLINK(\"x\")", "", "", false, "HAA7216", "Onix", "Carro", null, null,
                 BigDecimal.ONE, SituacaoContrato.ATIVO, "", null, Fila.SEM_DATA, 0, "");
 
-        assertThat(new String(ExportacaoCsv.gerar(List.of(linha)), StandardCharsets.UTF_8)).contains("\"'=HYPERLINK");
+        assertThat(new String(FormatoExportacao.CSV.gerar(ColunasExportacao.planilha(List.of(linha))), StandardCharsets.UTF_8)).contains("\"'=HYPERLINK");
     }
 }

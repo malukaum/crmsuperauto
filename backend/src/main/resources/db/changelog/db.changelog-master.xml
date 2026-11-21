@@ -42,4 +42,5 @@
 
     <include file="changes/016-filas.xml" relativeToChangelogFile="true"/>
     <include file="changes/017-relacionamento-historico-completo.xml" relativeToChangelogFile="true"/>
+    <include file="changes/018-atendimentos.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

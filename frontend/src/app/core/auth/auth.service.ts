@@ -6,6 +6,7 @@ import { InatividadeService } from './inatividade.service';
 import { EQUIPE_INTERNA, NOME_PAPEL, Papel, ehPapel } from './papel';
 
 interface ClaimsToken {
+  sub?: string;
   preferred_username?: string;
   name?: string;
   given_name?: string;
@@ -30,6 +31,8 @@ export class AuthService {
   readonly logado = computed(() => this.accessToken() !== null);
   private readonly claims = computed<ClaimsToken>(() => decodificarJwt(this.accessToken()));
 
+  /** O `sub` do Keycloak, que é também o id do usuário no CRM. */
+  readonly id = computed(() => this.claims().sub ?? '');
   readonly username = computed(() => this.claims().preferred_username ?? '');
   readonly nome = computed(() => this.claims().name ?? this.claims().given_name ?? this.username());
   readonly email = computed(() => this.claims().email ?? '');

@@ -101,3 +101,9 @@ As filas substituem as abas CENTRAL DO DIA, ATRASADOS e ANIVERSARIANTES. Nos doi
 
 - Dado o D+7 concluído em 25/03/2026, quando mudo o prazo do D+30 de 23 para 25 dias, então o próximo contato passa de 17/04 para 19/04/2026.
 - Dado um contrato com retorno manual em 05/11/2026, quando mudo qualquer prazo, então a data continua 05/11/2026.
+
+### Decisões de implementação
+
+| História | Decisão |
+| --- | --- |
+| FIL-02 · FIL-03 | Os contadores do menu usam a mesma consulta das filas e o "hoje" de São Paulo do servidor (RG-01), para o número ao lado do menu nunca divergir da lista (21/11/2026). |

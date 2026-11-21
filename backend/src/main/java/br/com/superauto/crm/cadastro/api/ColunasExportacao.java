@@ -1,6 +1,5 @@
 package br.com.superauto.crm.cadastro.api;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +7,8 @@ import java.util.Map;
 import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
 import br.com.superauto.crm.cadastro.servico.LinhaExportada;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
+import br.com.superauto.crm.exportacao.Planilha;
+import br.com.superauto.crm.exportacao.ValorEmReais;
 
 /**
  * As colunas do arquivo exportado da carteira (CAR-07), iguais em todos os formatos. Os valores saem tipados
@@ -15,10 +16,7 @@ import br.com.superauto.crm.compartilhado.entidade.Fila;
  */
 final class ColunasExportacao {
 
-    /** Valor em reais (mensalidade contratada). */
-    record Reais(BigDecimal valor) {
-    }
-
+    private static final String ABA = "Carteira";
     private static final String SIM = "Sim";
     private static final String NAO = "Não";
 
@@ -44,13 +42,14 @@ final class ColunasExportacao {
     private ColunasExportacao() {
     }
 
-    /**
-     * Os valores de uma linha, na ordem do {@link #CABECALHO}: {@code String}, {@link Reais}, {@code LocalDate},
-     * {@code Integer} ou {@code null} (célula vazia).
-     */
+    static Planilha planilha(List<LinhaExportada> linhas) {
+        return new Planilha(ABA, CABECALHO, linhas.stream().map(ColunasExportacao::valores).toList());
+    }
+
+    /** Os valores de uma linha, na ordem do {@link #CABECALHO}. */
     static List<Object> valores(LinhaExportada l) {
         return Arrays.asList(l.associado(), l.documento(), l.whatsapp(), aceitaContato(l), l.placa(), l.modelo(),
-                l.tipoVeiculo(), l.cidade(), l.uf(), new Reais(l.mensalidade()), SITUACOES.get(l.situacao()),
+                l.tipoVeiculo(), l.cidade(), l.uf(), new ValorEmReais(l.mensalidade()), SITUACOES.get(l.situacao()),
                 l.etapaPendente(), l.proximoContato(), FILAS.get(l.fila()), l.diasAtraso(), l.vendedor());
     }
 

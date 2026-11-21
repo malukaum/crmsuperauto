@@ -14,6 +14,7 @@ import { catchError, combineLatest, filter, of, switchMap, tap } from 'rxjs';
 
 import {
   AssociadosApi,
+  AtendimentoDoHistorico,
   ContatoDaFicha,
   ContratoDaFicha,
   FichaAssociado as Ficha,
@@ -38,15 +39,21 @@ import {
   linkWhatsapp,
 } from '../../../shared/formatos/formatos';
 import { StatusChip } from '../../../shared/status-chip/status-chip';
+import { AjusteReguaDialog } from './ajuste-regua-dialog';
 import { AnonimizarDialog } from './anonimizar-dialog';
 import { ClassificacaoDialog } from './classificacao-dialog';
 import { ContatoDialog, DadosContatoDialog } from './contato-dialog';
 import { ContratoDialog } from './contrato-dialog';
+import { CorrigirAtendimentoDialog } from './corrigir-atendimento-dialog';
 import { DadosPessoaisDialog } from './dados-pessoais-dialog';
+import { RegistroDeAtendimento } from './registro-de-atendimento';
 
 const SO_GERENCIAL: readonly Papel[] = ['gerencial'];
 
-/** CAR-03 · Ver a ficha do cliente: dados, contatos, contratos com a régua, histórico e indicações. */
+/**
+ * CAR-03 · Ver a ficha do cliente: dados, contatos, contratos com a régua, histórico e indicações. Também registra
+ * atendimentos (ATD-01, ATD-02), corrige (ATD-04) e, para o gerencial, ajusta a régua.
+ */
 @Component({
   selector: 'app-ficha-associado',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +67,7 @@ const SO_GERENCIAL: readonly Papel[] = ['gerencial'];
     MatProgressBarModule,
     MatTooltipModule,
     AvisoMensalidade,
+    RegistroDeAtendimento,
     StatusChip,
     TemPapelDirective,
   ],
@@ -192,6 +200,28 @@ export class FichaAssociado {
 
   protected anonimizar(): void {
     this.abrir(AnonimizarDialog, this.ficha(), 'Cliente anonimizado.');
+  }
+
+  /** ATD-04 · O autor corrige até o fim do dia seguinte (o backend confere o prazo); o gerencial, sempre. */
+  protected podeCorrigir(atendimento: AtendimentoDoHistorico): boolean {
+    return !atendimento.corrigido && (this.gerencial() || atendimento.registradoPorId === this.auth.id());
+  }
+
+  protected corrigirAtendimento(atendimento: AtendimentoDoHistorico): void {
+    this.abrir(CorrigirAtendimentoDialog, atendimento, 'Correção registrada.');
+  }
+
+  protected ajustarRegua(contrato: ContratoDaFicha): void {
+    this.abrir(AjusteReguaDialog, contrato, 'Régua ajustada.');
+  }
+
+  protected aoRegistrarAtendimento(mensagem: string): void {
+    this.atualizar(mensagem);
+  }
+
+  protected aoDesatualizar(mensagem: string): void {
+    this.recarga.update((n) => n + 1);
+    this.avisar(mensagem);
   }
 
 

@@ -28,11 +28,16 @@ import br.com.superauto.crm.relacionamento.repositorio.FiltroDaFila;
 import br.com.superauto.crm.relacionamento.repositorio.ReguaDePosVenda;
 import br.com.superauto.crm.relacionamento.servico.AutorDoContato;
 import br.com.superauto.crm.relacionamento.servico.ConfiguracaoReguaService;
+import br.com.superauto.crm.relacionamento.entidade.PeriodoDoHistorico;
+import br.com.superauto.crm.relacionamento.repositorio.FiltroDoHistorico;
+import br.com.superauto.crm.relacionamento.servico.ConsultaHistoricoService;
 import br.com.superauto.crm.relacionamento.servico.ConsultaTrabalhoService;
+import br.com.superauto.crm.relacionamento.servico.LinhaDoHistorico;
+import br.com.superauto.crm.relacionamento.servico.OrigemDoRegistro;
 import br.com.superauto.crm.relacionamento.servico.ContadoresFilasService;
 import br.com.superauto.crm.relacionamento.servico.LinhaDeTrabalho;
 import br.com.superauto.crm.relacionamento.servico.RegistroDeContato;
-import br.com.superauto.crm.relacionamento.servico.RegistroNaFilaService;
+import br.com.superauto.crm.relacionamento.servico.RegistroDeAtendimentoService;
 
 import jakarta.persistence.EntityManager;
 
@@ -77,7 +82,8 @@ class FilasPostgresTest {
     @Autowired EntityManager em;
     @Autowired ReguaDePosVenda regua;
     @Autowired ConsultaTrabalhoService consulta;
-    @Autowired RegistroNaFilaService registros;
+    @Autowired ConsultaHistoricoService historico;
+    @Autowired RegistroDeAtendimentoService registros;
     @Autowired ConfiguracaoReguaService configuracao;
     @Autowired AcompanhamentoContratoRepository acompanhamentos;
     @Autowired ContadoresFilasService contadores;
@@ -145,9 +151,26 @@ class FilasPostgresTest {
                 atrasados, new FiltroDaFila(null, null, null, null), Optional.of(vendedor));
     }
 
+    private List<LinhaDoHistorico> historicoDoMes() {
+        var semFiltros =
+                new FiltroDoHistorico(
+                        Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+        return historico.listar(
+                PeriodoDoHistorico.de(Optional.empty(), Optional.empty(), HOJE), semFiltros, Optional.of(vendedor));
+    }
+
+    private static RegistroDeContato registroNaFila(ResultadoContato resultado, LocalDate retorno) {
+        return new RegistroDeContato(
+                0,
+                resultado,
+                Optional.ofNullable(retorno),
+                "Teste de contato",
+                Optional.empty(),
+                OrigemDoRegistro.FILA);
+    }
+
     private void registrar(Contrato c, ResultadoContato resultado, LocalDate retorno) {
-        registros.registrar(
-                c.getId(), new RegistroDeContato(0, resultado, retorno, "Teste de contato"), autor);
+        registros.registrar(c.getId(), registroNaFila(resultado, retorno), autor);
         em.flush();
         em.clear();
     }
@@ -163,9 +186,9 @@ class FilasPostgresTest {
         registrar(contrato, ResultadoContato.CONCLUIDO, null);
         assertThat(fila(false)).isEmpty();
         assertThat(contadores.contar(Optional.of(vendedor)).contatosHoje()).isZero();
-        assertThat(consulta.atendimentosMes(Optional.of(vendedor)))
+        assertThat(historicoDoMes())
                 .singleElement()
-                .satisfies(a -> assertThat(a.resultado()).isEqualTo("CONCLUIDO"));
+                .satisfies(a -> assertThat(a.resultado()).isEqualTo(ResultadoContato.CONCLUIDO));
         assertThat(acompanhamentos.findById(contrato.getId()).orElseThrow().getProximoContatoEm())
                 .contains(HOJE.plusDays(23));
     }
@@ -240,7 +263,7 @@ class FilasPostgresTest {
     @DisplayName("RG-03 e RG-06: outro vendedor e versão desatualizada não gravam")
     void escopoEVersao() {
         var contrato = contrato(HOJE.minusDays(7), SituacaoContrato.ATIVO);
-        var registro = new RegistroDeContato(0, ResultadoContato.PENDENTE, null, null);
+        var registro = registroNaFila(ResultadoContato.PENDENTE, null);
         var outro = new AutorDoContato(UUID.randomUUID(), Optional.of(UUID.randomUUID()));
         assertThatThrownBy(() -> registros.registrar(contrato.getId(), registro, outro))
                 .isInstanceOf(NegocioException.class);
@@ -318,9 +341,9 @@ class FilasPostgresTest {
         assertThat(painel.aniversariantesHoje()).isZero();
         assertThat(painel.atendimentosMes()).isEqualTo(1);
         assertThat(painel.situacoes()).containsEntry("CANCELADO", 1L);
-        assertThat(consulta.atendimentosMes(Optional.of(vendedor)))
+        assertThat(historicoDoMes())
                 .singleElement()
-                .satisfies(a -> assertThat(a.nome()).startsWith("Cliente anonimizado"));
+                .satisfies(a -> assertThat(a.associado()).startsWith("Cliente anonimizado"));
     }
 
     @Test

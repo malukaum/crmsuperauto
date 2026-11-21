@@ -1,0 +1,136 @@
+<div class="crm-pagina">
+  <header class="crm-cabecalho">
+    <div>
+      <h1 class="crm-titulo-pagina">Histórico de atendimentos</h1>
+      <p class="crm-subtitulo">Todos os contatos, do mais recente para o mais antigo. Sem datas, mostra o mês corrente.</p>
+    </div>
+    <div class="crm-cabecalho__acoes" *temPapel="gerencialOuVendedor">
+      <button mat-stroked-button type="button" [disabled]="exportando()" (click)="exportar('XLSX')">
+        <mat-icon>download</mat-icon>
+        Excel
+      </button>
+      <button mat-stroked-button type="button" [disabled]="exportando()" (click)="exportar('CSV')">
+        <mat-icon>download</mat-icon>
+        CSV
+      </button>
+    </div>
+  </header>
+
+  <form class="crm-filtros" (ngSubmit)="filtrar()">
+    <mat-form-field>
+      <mat-label>Buscar cliente ou placa</mat-label>
+      <input matInput name="busca" [ngModel]="filtro().busca" (ngModelChange)="alterar('busca', $event)" />
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>De</mat-label>
+      <input matInput type="date" name="inicio" [ngModel]="filtro().inicio" (ngModelChange)="alterar('inicio', $event || null)" />
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Até</mat-label>
+      <input matInput type="date" name="fim" [ngModel]="filtro().fim" (ngModelChange)="alterar('fim', $event || null)" />
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Tipo</mat-label>
+      <mat-select name="tipo" [ngModel]="filtro().tipo" (ngModelChange)="alterar('tipo', $event)">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (t of tipos; track t) {
+          <mat-option [value]="t">{{ nomeTipo[t] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Resultado</mat-label>
+      <mat-select name="resultado" [ngModel]="filtro().resultado" (ngModelChange)="alterar('resultado', $event)">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (r of resultados; track r) {
+          <mat-option [value]="r">{{ nomeResultado[r] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Usuário</mat-label>
+      <mat-select name="usuario" [ngModel]="filtro().usuario" (ngModelChange)="alterar('usuario', $event)">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (a of autores(); track a.id) {
+          <mat-option [value]="a.id">{{ a.nome }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <app-campo-cidade [cidade]="cidade()" (escolhida)="escolherCidade($event)" />
+    <div class="crm-acoes">
+      <button mat-flat-button class="crm-acao-destaque" type="submit" [disabled]="carregando()">Filtrar</button>
+      <button mat-button type="button" [disabled]="carregando()" (click)="limpar()">Limpar</button>
+    </div>
+  </form>
+
+  @if (erro()) {
+    <p role="alert" class="crm-erro">
+      {{ erro() }} <button mat-button type="button" (click)="filtrar()">Tentar novamente</button>
+    </p>
+  }
+
+  @if (carregando()) {
+    <p role="status">Carregando histórico…</p>
+  } @else {
+    <p>{{ linhas().length }} atendimento(s)</p>
+    <div class="crm-card crm-card--lista crm-tabela-rolagem">
+      <table class="crm-tabela">
+        <thead>
+          <tr>
+            <th>Data e hora</th>
+            <th>Placa</th>
+            <th>Cliente</th>
+            <th>Tipo / etapa</th>
+            <th>Resultado</th>
+            <th>Descrição</th>
+            <th>Próxima ação</th>
+            <th>Retorno</th>
+            <th>Usuário</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (linha of visiveis(); track linha.id) {
+            <tr [class.corrigido]="linha.corrigido">
+              <td>{{ linha.realizadoEm | date: 'dd/MM/yyyy HH:mm' : 'America/Sao_Paulo' }}</td>
+              <td>{{ linha.placa || '—' }}</td>
+              <td>
+                <a [routerLink]="['/carteira/associados', linha.associadoId]">{{ linha.associado }}</a>
+                @if (linha.cidade) {
+                  <span class="crm-secundario">{{ linha.cidade }}</span>
+                }
+              </td>
+              <td>
+                {{ linha.tipo }}
+                @if (linha.etapa) {
+                  <span class="crm-secundario">{{ linha.etapa }}</span>
+                }
+              </td>
+              <td>
+                {{ nomeResultado[linha.resultado] }}
+                @if (marcaDeCorrecao(linha); as marca) {
+                  <app-status-chip [tipo]="marca === 'corrigido' ? 'neutro' : 'hoje'">{{ marca }}</app-status-chip>
+                }
+              </td>
+              <td class="descricao">{{ linha.descricao || '—' }}</td>
+              <td>{{ linha.proximaAcao }}</td>
+              <td>{{ formatarData(linha.retornoAgendadoPara) || '—' }}</td>
+              <td>{{ linha.registradoPor }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9">Nenhum atendimento com os filtros escolhidos.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <mat-paginator
+      [length]="linhas().length"
+      [pageSize]="tamanho()"
+      [pageIndex]="pagina()"
+      [pageSizeOptions]="[25, 50, 100]"
+      (page)="paginar($event)"
+      aria-label="Página do histórico"
+    />
+  }
+</div>

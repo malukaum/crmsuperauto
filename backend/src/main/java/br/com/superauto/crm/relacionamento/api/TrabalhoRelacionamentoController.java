@@ -1,23 +1,17 @@
 package br.com.superauto.crm.relacionamento.api;
 
 import br.com.superauto.crm.relacionamento.entidade.FilaDeContatos;
-import br.com.superauto.crm.relacionamento.entidade.ResultadoContato;
 import br.com.superauto.crm.relacionamento.repositorio.FiltroDaFila;
-import br.com.superauto.crm.relacionamento.servico.AutorDoContato;
 import br.com.superauto.crm.relacionamento.servico.ConsultaTrabalhoService;
-import br.com.superauto.crm.relacionamento.servico.ContatoDoMes;
 import br.com.superauto.crm.relacionamento.servico.LinhaDeTrabalho;
 import br.com.superauto.crm.relacionamento.servico.PreviaDoContato;
-import br.com.superauto.crm.relacionamento.servico.RegistroDeContato;
-import br.com.superauto.crm.relacionamento.servico.RegistroNaFilaService;
+import br.com.superauto.crm.relacionamento.servico.OrigemDoRegistro;
+import br.com.superauto.crm.relacionamento.servico.RegistroDeAtendimentoService;
 import br.com.superauto.crm.relacionamento.servico.ResumoDoPainel;
 import br.com.superauto.crm.seguranca.Papeis;
 import br.com.superauto.crm.seguranca.UsuarioAtual;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,21 +26,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
 import java.util.List;
 
+/** FIL-01 a FIL-04 · Painel, filas e registro direto pelas filas (ATD-01, ATD-03). */
 @RestController
 @RequestMapping("/api/interno")
 @RequiredArgsConstructor
 public class TrabalhoRelacionamentoController {
     private final ConsultaTrabalhoService consulta;
-    private final RegistroNaFilaService registros;
-
-    @GetMapping("/atendimentos")
-    @PreAuthorize(Papeis.EQUIPE_INTERNA)
-    public List<ContatoDoMes> atendimentos(JwtAuthenticationToken auth) {
-        return consulta.atendimentosMes(UsuarioAtual.vendedorRestrito(auth));
-    }
+    private final RegistroDeAtendimentoService registros;
 
     @GetMapping("/painel")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
@@ -79,35 +67,22 @@ public class TrabalhoRelacionamentoController {
         return consulta.aniversarios(dias, UsuarioAtual.vendedorRestrito(auth));
     }
 
-    public record RegistroRequest(
-            @NotNull(message = "Informe a versão do acompanhamento.")
-                    @Min(value = 0, message = "A versão não pode ser negativa.")
-                    Integer versao,
-            @NotNull(message = "Informe o resultado do contato.") ResultadoContato resultado,
-            LocalDate retorno,
-            @Size(max = 2000, message = "O resumo deve ter até 2.000 caracteres.")
-                    String descricao) {
-        RegistroDeContato comando() {
-            return new RegistroDeContato(versao, resultado, retorno, descricao);
-        }
-    }
-
     @PostMapping("/filas/contratos/{id}/previa")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
     public PreviaDoContato prever(
             @PathVariable Long id,
-            @RequestBody @Valid RegistroRequest req,
+            @RequestBody @Valid RegistroDeContatoRequest req,
             JwtAuthenticationToken auth) {
-        return registros.prever(id, req.comando(), autor(auth));
+        return registros.prever(id, req.comando(OrigemDoRegistro.FILA), AutorDaRequisicao.de(auth));
     }
 
     @PostMapping("/filas/contratos/{id}/registro")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
     public void registrar(
             @PathVariable Long id,
-            @RequestBody @Valid RegistroRequest req,
+            @RequestBody @Valid RegistroDeContatoRequest req,
             JwtAuthenticationToken auth) {
-        registros.registrar(id, req.comando(), autor(auth));
+        registros.registrar(id, req.comando(OrigemDoRegistro.FILA), AutorDaRequisicao.de(auth));
     }
 
     public record AniversarioRequest(boolean confirmarRepeticao) {}
@@ -118,10 +93,6 @@ public class TrabalhoRelacionamentoController {
             @PathVariable Long id,
             @RequestBody AniversarioRequest req,
             JwtAuthenticationToken auth) {
-        registros.aniversario(id, req.confirmarRepeticao(), autor(auth));
-    }
-
-    private static AutorDoContato autor(JwtAuthenticationToken auth) {
-        return new AutorDoContato(UsuarioAtual.exigirId(auth), UsuarioAtual.vendedorRestrito(auth));
+        registros.aniversario(id, req.confirmarRepeticao(), AutorDaRequisicao.de(auth));
     }
 }

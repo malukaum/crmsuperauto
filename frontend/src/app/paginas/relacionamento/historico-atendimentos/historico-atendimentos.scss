@@ -1,0 +1,9 @@
+.descricao {
+  max-width: 320px;
+  white-space: pre-line;
+}
+
+tr.corrigido td {
+  color: var(--crm-texto-secundario);
+  text-decoration: line-through;
+}

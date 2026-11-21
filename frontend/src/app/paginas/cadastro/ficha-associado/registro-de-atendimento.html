@@ -1,0 +1,113 @@
+<section class="crm-card crm-bloco" aria-label="Registrar atendimento">
+  <h2>Registrar atendimento</h2>
+  <div class="campos">
+    <mat-form-field>
+      <mat-label>Tipo</mat-label>
+      <mat-select [disabled]="gravando()" [ngModel]="tipo()" (ngModelChange)="escolherTipo($event)">
+        @for (t of tipos; track t) {
+          <mat-option [value]="t">{{ nomeTipo[t] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>{{ posVenda() ? 'Contrato' : 'Contrato (opcional)' }}</mat-label>
+      <mat-select
+        [disabled]="gravando()"
+        [ngModel]="contratoId()"
+        (ngModelChange)="contratoId.set($event); invalidarPrevia()"
+      >
+        @if (!posVenda()) {
+          <mat-option [value]="null">Sobre a pessoa</mat-option>
+        }
+        @for (c of contratos(); track c.id) {
+          <mat-option [value]="c.id">
+            {{ c.placa }} · {{ nomeSituacao[c.situacao] }}{{ c.etapaPendente ? ' · ' + c.etapaPendente : '' }}
+          </mat-option>
+        }
+      </mat-select>
+      @if (posVenda() && contratos().length === 0) {
+        <mat-hint>Nenhum contrato com régua de pós-venda ativa.</mat-hint>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Resultado</mat-label>
+      <mat-select
+        [disabled]="gravando()"
+        [ngModel]="resultado()"
+        (ngModelChange)="resultado.set($event); invalidarPrevia()"
+      >
+        @for (r of resultados; track r) {
+          <mat-option [value]="r">{{ nomeResultado[r] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>{{ exigeRetorno() ? 'Data combinada' : 'Retorno manual (opcional)' }}</mat-label>
+      <input
+        matInput
+        type="date"
+        [disabled]="gravando()"
+        [required]="exigeRetorno()"
+        [ngModel]="retorno()"
+        (ngModelChange)="retorno.set($event); invalidarPrevia()"
+      />
+      @if (!posVenda()) {
+        <mat-hint>Só informativo: o avulso não mexe na régua.</mat-hint>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Data e hora do contato (opcional)</mat-label>
+      <input
+        matInput
+        type="datetime-local"
+        [disabled]="gravando()"
+        [ngModel]="realizadoEm()"
+        (ngModelChange)="realizadoEm.set($event); invalidarPrevia()"
+      />
+      <mat-hint>Vazio = agora. Até 7 dias atrás.</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Resumo (opcional)</mat-label>
+      <textarea
+        matInput
+        maxlength="2000"
+        [disabled]="gravando()"
+        [ngModel]="descricao()"
+        (ngModelChange)="descricao.set($event)"
+      ></textarea>
+    </mat-form-field>
+  </div>
+
+  @if (posVenda()) {
+    <button mat-stroked-button type="button" [disabled]="gravando()" (click)="prever()">
+      Visualizar próximo contato
+    </button>
+    @if (previsao(); as p) {
+      <p role="status" class="previa">
+        {{ p.etapaConcluida ? 'Etapa ' + p.etapaConcluida + ' concluída. ' : 'Etapa atual mantida. ' }}Próxima
+        etapa: {{ p.proximaEtapa }}. Próximo contato: {{ formatarData(p.proximoContato) }}.
+      </p>
+    }
+  }
+
+  @if (erro(); as e) {
+    <p class="crm-erro" role="alert">{{ e }}</p>
+  }
+
+  <div class="crm-acoes">
+    <button
+      mat-flat-button
+      class="crm-acao-destaque"
+      type="button"
+      [disabled]="!podeConfirmar()"
+      (click)="registrar()"
+    >
+      Confirmar registro
+    </button>
+  </div>
+</section>

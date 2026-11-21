@@ -11,6 +11,11 @@ public enum SituacaoNaCarteira {
         return this == A_CONFERIR || this == ATIVO;
     }
 
+    /** ATD-01: contrato suspenso pode ser registrado pela ficha, como na macro; cancelado não. */
+    public boolean aceitaPosVenda() {
+        return this != CANCELADO;
+    }
+
     public boolean pertenceACarteira() {
         return this != CANCELADO;
     }

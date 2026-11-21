@@ -32,11 +32,16 @@ public record FichaAssociado(Long id, String nome, String documento, boolean pes
                                  boolean aceitaContato) {
     }
 
-    /** Um contrato da pessoa, com a fila e a régua (etapa pendente destacada e datas previstas). */
+    /**
+     * Um contrato da pessoa, com a fila e a régua (etapa pendente destacada e datas previstas).
+     *
+     * @param versaoRegua a versão do acompanhamento (RG-06); vazia quando o contrato não tem régua
+     */
     public record ContratoDaFicha(Long id, int versao, String placa, String modelo, Short tipoVeiculoId,
                                   String tipoVeiculo, BigDecimal mensalidade, SituacaoContrato situacao,
                                   String codigoSga, LocalDate aderidoEm, LocalDate vendidoEm, LocalDate encerradoEm,
                                   UUID vendedorId, String vendedorNome, Fila fila, int diasAtraso,
-                                  String etapaPendente, LocalDate proximoContato, List<EtapaPrevista> regua) {
+                                  String etapaPendente, LocalDate proximoContato, List<EtapaPrevista> regua,
+                                  Integer versaoRegua) {
     }
 }

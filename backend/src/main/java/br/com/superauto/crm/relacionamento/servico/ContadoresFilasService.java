@@ -1,38 +1,41 @@
 package br.com.superauto.crm.relacionamento.servico;
 
-import java.util.Optional;
-import java.util.UUID;
+import br.com.superauto.crm.relacionamento.repositorio.ConsultaFilas;
+import br.com.superauto.crm.relacionamento.repositorio.FiltroDaFila;
 
-import br.com.superauto.crm.compartilhado.entidade.Fila;
-import br.com.superauto.crm.relacionamento.repositorio.PosicaoFilaRepository;
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.UUID;
+
 /**
- * Quantidades exibidas ao lado de "Contatos de hoje" e "Atrasados" no menu (ACE-02).
- * Vêm da visão das filas, que já exclui contratos suspensos e cancelados e usa o "hoje" de São Paulo.
- * O vendedor só conta os contratos em que é o vendedor (RG-03).
+ * Quantidades exibidas ao lado de "Contatos de hoje" e "Atrasados" no menu (ACE-02, FIL-02).
+ * Usam o mesmo critério das filas e o "hoje" do relógio de São Paulo (RG-01), para o contador
+ * nunca divergir da lista. O vendedor só conta os contratos em que é o vendedor (RG-03).
  */
 @Service
+@RequiredArgsConstructor
 public class ContadoresFilasService {
+    private final ConsultaFilas filas;
+    private final Clock relogio;
 
-    private final PosicaoFilaRepository filas;
-
-    public ContadoresFilasService(PosicaoFilaRepository filas) {
-        this.filas = filas;
-    }
-
-    public record Contadores(long contatosHoje, long atrasados) {
-    }
+    public record Contadores(long contatosHoje, long atrasados) {}
 
     /** @param vendedor preenchido só quando quem pergunta é vendedor (escopo da carteira dele) */
     @Transactional(readOnly = true)
     public Contadores contar(Optional<UUID> vendedor) {
-        return new Contadores(contar(Fila.HOJE, vendedor), contar(Fila.ATRASADO, vendedor));
+        var hoje = LocalDate.now(relogio);
+        return new Contadores(
+                contar(false, hoje, vendedor), contar(true, hoje, vendedor));
     }
 
-    private long contar(Fila fila, Optional<UUID> vendedor) {
-        return vendedor.map(v -> filas.countByFilaAndVendedorId(fila, v)).orElseGet(() -> filas.countByFila(fila));
+    private long contar(boolean atrasados, LocalDate hoje, Optional<UUID> vendedor) {
+        return filas.contarContatos(
+                new ConsultaFilas.Contatos(atrasados, hoje, FiltroDaFila.SEM_FILTROS, vendedor));
     }
 }

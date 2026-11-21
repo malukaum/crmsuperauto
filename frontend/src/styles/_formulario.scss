@@ -33,3 +33,17 @@
   gap: 8px;
   margin-top: 8px;
 }
+
+// Barra de filtros das listas (filas FIL-02/03, histórico ATD-05): campos lado a lado que quebram linha.
+.crm-filtros {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-block: 20px;
+
+  mat-form-field,
+  app-campo-cidade {
+    flex: 1 1 200px;
+  }
+}

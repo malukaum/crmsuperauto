@@ -43,14 +43,20 @@ import br.com.superauto.crm.config.SecurityConfig;
 import br.com.superauto.crm.erro.NegocioException;
 import br.com.superauto.crm.referencia.api.ReferenciasController;
 import br.com.superauto.crm.referencia.servico.ConsultaReferenciasService;
+import br.com.superauto.crm.relacionamento.api.AtendimentosController;
 import br.com.superauto.crm.relacionamento.api.ConfiguracaoReguaController;
+import br.com.superauto.crm.relacionamento.api.ReguaDoContratoController;
+import br.com.superauto.crm.relacionamento.servico.AjusteDaReguaService;
+import br.com.superauto.crm.relacionamento.servico.AtendimentoAvulsoService;
+import br.com.superauto.crm.relacionamento.servico.ConsultaHistoricoService;
+import br.com.superauto.crm.relacionamento.servico.CorrecaoDeAtendimentoService;
 import br.com.superauto.crm.relacionamento.api.ContadoresFilasController;
 import br.com.superauto.crm.relacionamento.api.TrabalhoRelacionamentoController;
 import br.com.superauto.crm.relacionamento.servico.ConfiguracaoReguaService;
 import br.com.superauto.crm.relacionamento.servico.ConsultaTrabalhoService;
 import br.com.superauto.crm.relacionamento.servico.ContadoresFilasService;
 import br.com.superauto.crm.relacionamento.servico.ContadoresFilasService.Contadores;
-import br.com.superauto.crm.relacionamento.servico.RegistroNaFilaService;
+import br.com.superauto.crm.relacionamento.servico.RegistroDeAtendimentoService;
 import br.com.superauto.crm.seguranca.KeycloakRealmRoleConverter;
 import java.util.List;
 import java.util.Map;
@@ -85,14 +91,19 @@ import org.springframework.web.context.WebApplicationContext;
 @WebMvcTest(controllers = {MeController.class, PingController.class, ContadoresFilasController.class,
         UsuariosEquipeController.class, EquipeController.class, ReferenciasController.class, CarteiraController.class,
         AssociadosController.class, ContratosController.class, GestaoContratosController.class,
-        GestaoAssociadosController.class, TrabalhoRelacionamentoController.class, ConfiguracaoReguaController.class})
+        GestaoAssociadosController.class, TrabalhoRelacionamentoController.class, ConfiguracaoReguaController.class,
+        AtendimentosController.class, ReguaDoContratoController.class})
 @Import({SecurityConfig.class, ClockConfig.class})
 @EnableConfigurationProperties(CrmProperties.class)
 class SegurancaEndpointsTest {
 
     @MockitoBean private ConsultaTrabalhoService consultaTrabalho;
-    @MockitoBean private RegistroNaFilaService registroNaFila;
+    @MockitoBean private RegistroDeAtendimentoService registroNaFila;
     @MockitoBean private ConfiguracaoReguaService configuracaoRegua;
+    @MockitoBean private AtendimentoAvulsoService atendimentoAvulso;
+    @MockitoBean private CorrecaoDeAtendimentoService correcaoDeAtendimento;
+    @MockitoBean private ConsultaHistoricoService consultaHistorico;
+    @MockitoBean private AjusteDaReguaService ajusteDaRegua;
 
     private static final String ANONIMO = "anonimo";
     private static final MediaType PROBLEM_JSON = MediaType.APPLICATION_PROBLEM_JSON;
@@ -339,6 +350,57 @@ class SegurancaEndpointsTest {
                         .content(corpo);
         if (!ANONIMO.equals(papel)) req.with(tokenCom(papel, UUID.randomUUID()));
         mvc.perform(req).andExpect(status().is(esperado));
+    }
+
+    static Stream<Arguments> endpointsAtendimentos() {
+        var equipe = List.of("gerencial", "vendedor", "atendente");
+        String posVenda = "{\"versao\":0,\"resultado\":\"CONCLUIDO\"}";
+        String avulso = "{\"associadoId\":7,\"tipo\":\"SUPORTE\",\"resultado\":\"CONCLUIDO\"}";
+        String correcao = "{\"resultado\":\"SEM_RESPOSTA\"}";
+        String ajuste = "{\"versao\":0,\"etapaId\":2}";
+        // ATD-01 a ATD-05: toda a equipe; exportação só gerencial e vendedor (CAR-07); ajuste da régua só gerencial
+        var endpoints = List.of(
+                new Object[] {"GET", "/api/interno/atendimentos", "", equipe},
+                new Object[] {"GET", "/api/interno/atendimentos/autores", "", equipe},
+                new Object[] {"GET", "/api/interno/atendimentos/exportacao", "", List.of("gerencial", "vendedor")},
+                new Object[] {"POST", "/api/interno/atendimentos/contratos/1/previa", posVenda, equipe},
+                new Object[] {"POST", "/api/interno/atendimentos/contratos/1/registro", posVenda, equipe},
+                new Object[] {"POST", "/api/interno/atendimentos/avulsos", avulso, equipe},
+                new Object[] {"POST", "/api/interno/atendimentos/5/correcao", correcao, equipe},
+                new Object[] {"PUT", "/api/gestao/regua/contratos/1", ajuste, List.of("gerencial")});
+        return endpoints.stream().flatMap(e -> Stream.of(ANONIMO, "gerencial", "vendedor", "atendente", "cliente")
+                .map(papel -> Arguments.of(e[0], e[1], e[2], papel,
+                        ANONIMO.equals(papel) ? 401 : ((List<?>) e[3]).contains(papel) ? 200 : 403)));
+    }
+
+    @ParameterizedTest(name = "ATD: {3} em {0} {1} -> {4}")
+    @MethodSource("endpointsAtendimentos")
+    void matrizDosAtendimentos(String metodo, String endpoint, String corpo, String papel, int esperado)
+            throws Exception {
+        var req = request(HttpMethod.valueOf(metodo), endpoint).contentType(MediaType.APPLICATION_JSON).content(corpo);
+        if (!ANONIMO.equals(papel)) req.with(tokenCom(papel, UUID.randomUUID()));
+        mvc.perform(req).andExpect(status().is(esperado));
+    }
+
+    @Test
+    @DisplayName("ATD-05 / RG-03: o histórico recebe o escopo do vendedor; gerencial vê todos")
+    void historicoNoEscopoDoVendedor() throws Exception {
+        UUID vendedor = UUID.randomUUID();
+        mvc.perform(get("/api/interno/atendimentos").with(tokenCom("vendedor", vendedor))).andExpect(status().isOk());
+        mvc.perform(get("/api/interno/atendimentos").with(tokenCom("gerencial", UUID.randomUUID())))
+                .andExpect(status().isOk());
+        verify(consultaHistorico).listar(any(), any(), eq(Optional.of(vendedor)));
+        verify(consultaHistorico).listar(any(), any(), eq(Optional.empty()));
+    }
+
+    @Test
+    @DisplayName("ATD-02: atendimento avulso sem tipo é recusado com mensagem em português")
+    void avulsoSemTipo() throws Exception {
+        mvc.perform(post("/api/interno/atendimentos/avulsos").with(tokenCom("atendente", UUID.randomUUID()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"associadoId\":7,\"resultado\":\"CONCLUIDO\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.tipo").value("Informe o tipo do atendimento."));
     }
 
     @Test

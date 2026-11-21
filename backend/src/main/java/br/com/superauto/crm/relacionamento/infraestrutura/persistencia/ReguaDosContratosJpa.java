@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import br.com.superauto.crm.cadastro.repositorio.EtapaPrevista;
+import br.com.superauto.crm.cadastro.repositorio.ReguaDoContrato;
 import br.com.superauto.crm.cadastro.repositorio.EtapaPrevista.SituacaoEtapa;
 import br.com.superauto.crm.cadastro.repositorio.ReguaDosContratos;
 import br.com.superauto.crm.relacionamento.entidade.AcompanhamentoContrato;
@@ -30,7 +31,7 @@ public class ReguaDosContratosJpa implements ReguaDosContratos {
     }
 
     @Override
-    public Map<Long, List<EtapaPrevista>> previsoes(Collection<Long> contratoIds) {
+    public Map<Long, ReguaDoContrato> previsoes(Collection<Long> contratoIds) {
         if (contratoIds.isEmpty()) {
             return Map.of();
         }
@@ -39,9 +40,10 @@ public class ReguaDosContratosJpa implements ReguaDosContratos {
                 .collect(Collectors.toUnmodifiableMap(AcompanhamentoContrato::getId, a -> prever(etapas, a)));
     }
 
-    private static List<EtapaPrevista> prever(List<EtapaRegua> etapas, AcompanhamentoContrato acompanhamento) {
-        return PrevisaoRegua.prever(etapas, acompanhamento.getEtapaPendenteId(), acompanhamento.getProximoContatoEm())
-                .stream().map(ReguaDosContratosJpa::traduzir).toList();
+    private static ReguaDoContrato prever(List<EtapaRegua> etapas, AcompanhamentoContrato acompanhamento) {
+        return new ReguaDoContrato(acompanhamento.getVersao(), PrevisaoRegua.prever(etapas,
+                        acompanhamento.getEtapaPendenteId(), acompanhamento.getProximoContatoEm())
+                .stream().map(ReguaDosContratosJpa::traduzir).toList());
     }
 
     private static EtapaPrevista traduzir(EtapaNaRegua etapa) {

@@ -1,20 +1,19 @@
-package br.com.superauto.crm.cadastro.api;
+package br.com.superauto.crm.exportacao;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import br.com.superauto.crm.cadastro.servico.LinhaExportada;
-
 /**
- * Exportação da carteira (CAR-07) em CSV com os formatos da RG-02. Usa ";" e o BOM do UTF-8 para o Excel em
- * português abrir as colunas e os acentos certos sem importação manual.
+ * Exportação em CSV com os formatos da RG-02. Usa ";" e o BOM do UTF-8 para o Excel em português abrir as colunas e
+ * os acentos certos sem importação manual.
  */
 final class ExportacaoCsv {
 
@@ -23,13 +22,14 @@ final class ExportacaoCsv {
     private static final byte[] BOM_UTF8 = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
     private static final Locale PORTUGUES_DO_BRASIL = Locale.of("pt", "BR");
     private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATA_E_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private ExportacaoCsv() {
     }
 
-    static byte[] gerar(List<LinhaExportada> linhas) {
-        Stream<List<?>> cabecalho = Stream.of(ColunasExportacao.CABECALHO);
-        String conteudo = Stream.concat(cabecalho, linhas.stream().map(ColunasExportacao::valores))
+    static byte[] gerar(Planilha planilha) {
+        Stream<List<?>> cabecalho = Stream.of(planilha.cabecalho());
+        String conteudo = Stream.concat(cabecalho, planilha.linhas().stream())
                 .map(ExportacaoCsv::linha)
                 .collect(Collectors.joining(FIM_DE_LINHA, "", FIM_DE_LINHA));
         var saida = new ByteArrayOutputStream();
@@ -45,8 +45,9 @@ final class ExportacaoCsv {
     private static String texto(Object valor) {
         return switch (valor) {
             case null -> "";
-            case ColunasExportacao.Reais reais -> NumberFormat.getCurrencyInstance(PORTUGUES_DO_BRASIL).format(reais.valor());
+            case ValorEmReais reais -> NumberFormat.getCurrencyInstance(PORTUGUES_DO_BRASIL).format(reais.valor());
             case LocalDate data -> DATA.format(data);
+            case LocalDateTime dataEHora -> DATA_E_HORA.format(dataEHora);
             default -> String.valueOf(valor);
         };
     }

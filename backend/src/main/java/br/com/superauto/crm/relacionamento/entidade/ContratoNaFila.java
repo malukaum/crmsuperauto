@@ -116,6 +116,13 @@ public class ContratoNaFila {
                     "fila-mudou", "A fila mudou. Recarregue para ver a situação atual.");
     }
 
+    /** ATD-01 · Pela ficha, só o contrato cancelado recusa o pós-venda. */
+    public void exigirPosVendaPelaFicha() {
+        if (!situacao.aceitaPosVenda())
+            throw NegocioException.invalido(
+                    "contrato-cancelado", "Contrato cancelado. O atendimento não será gravado.");
+    }
+
     public void exigirAniversarioDisponivel() {
         if (!permiteContato() || nascimento == null)
             throw NegocioException.invalido(

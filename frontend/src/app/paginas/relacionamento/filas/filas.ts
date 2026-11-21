@@ -47,7 +47,6 @@ import { RegistroNaFila } from './registro-na-fila';
     RegistroNaFila,
   ],
   templateUrl: './filas.html',
-  styleUrl: './filas.scss',
 })
 export class Filas {
   private readonly api = inject(RelacionamentoApi);

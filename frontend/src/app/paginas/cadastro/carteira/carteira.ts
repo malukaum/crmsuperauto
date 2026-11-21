@@ -52,6 +52,7 @@ import {
 } from '../../../shared/formatos/formatos';
 import { StatusChip } from '../../../shared/status-chip/status-chip';
 import { EstadoCarteira, comFiltro, comOrdem, estadoDaUrl, urlDoEstado } from './filtro-da-url';
+import { baixar } from '../../../shared/arquivo/baixar';
 
 const ESPERA_DIGITACAO_MS = 350;
 const SO_GERENCIAL: readonly Papel[] = ['gerencial'];
@@ -276,13 +277,4 @@ export class Carteira {
   private avisar(mensagem: string): void {
     this.snack.open(mensagem, 'OK', { duration: 6000 });
   }
-}
-
-function baixar(arquivo: Blob, nome: string): void {
-  const url = URL.createObjectURL(arquivo);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = nome;
-  link.click();
-  URL.revokeObjectURL(url);
 }

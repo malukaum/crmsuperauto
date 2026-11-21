@@ -46,6 +46,8 @@ export interface ContratoDaFicha {
   etapaPendente: string | null;
   proximoContato: string | null;
   regua: EtapaPrevista[];
+  /** Versão do acompanhamento (RG-06); nula quando o contrato não tem régua. */
+  versaoRegua: number | null;
 }
 
 export interface AtendimentoDoHistorico {
@@ -62,6 +64,8 @@ export interface AtendimentoDoHistorico {
   /** Já existe um registro de correção para este atendimento (ATD-04). */
   corrigido: boolean;
   corrigeAtendimentoId: number | null;
+  /** Para oferecer a correção ao autor (ATD-04). */
+  registradoPorId: string;
 }
 
 export interface IndicacaoFeita {

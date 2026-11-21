@@ -3,9 +3,12 @@ package br.com.superauto.crm.relacionamento.entidade;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -17,7 +20,7 @@ import org.hibernate.annotations.Immutable;
 
 /**
  * Modelo de leitura do histórico de atendimentos (CAR-03, ATD-05): uma linha da visão
- * {@code vw_historico_atendimento}, com os nomes de tipo, etapa e autor.
+ * {@code vw_historico_atendimento}, com os nomes de tipo, etapa, autor, associado e cidade.
  */
 @Entity
 @Immutable
@@ -41,7 +44,8 @@ public class LinhaHistoricoAtendimento {
 
     private String etapa;
 
-    private String resultado;
+    @Enumerated(EnumType.STRING)
+    private ResultadoContato resultado;
 
     private String descricao;
 
@@ -58,6 +62,29 @@ public class LinhaHistoricoAtendimento {
     private Long corrigeAtendimentoId;
 
     private boolean corrigido;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_codigo")
+    private TipoDeRelacionamento tipoCodigo;
+
+    @Column(name = "registrado_por_id")
+    private UUID registradoPorId;
+
+    @Column(name = "associado_nome")
+    private String associadoNome;
+
+    @Column(name = "municipio_id")
+    private Integer municipioId;
+
+    private String cidade;
+
+    public ProximaAcao proximaAcao() {
+        return ProximaAcao.de(tipoCodigo, resultado);
+    }
+
+    public Optional<String> getCidade() {
+        return Optional.ofNullable(cidade);
+    }
 
     public Optional<Long> getContratoId() {
         return Optional.ofNullable(contratoId);

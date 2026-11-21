@@ -20,6 +20,7 @@ import br.com.superauto.crm.cadastro.repositorio.EtapaPrevista.SituacaoEtapa;
 import br.com.superauto.crm.cadastro.repositorio.HistoricoDeAtendimentos;
 import br.com.superauto.crm.cadastro.repositorio.IndicacoesDoAssociado;
 import br.com.superauto.crm.cadastro.repositorio.ReferenciasDoCadastro;
+import br.com.superauto.crm.cadastro.repositorio.ReguaDoContrato;
 import br.com.superauto.crm.cadastro.repositorio.ReguaDosContratos;
 import br.com.superauto.crm.compartilhado.entidade.Documento;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
@@ -63,7 +64,7 @@ class ConsultaAssociadoServiceTest {
         var linhas = List.of(linha(100L, "HAA7216", vendedor1), linha(101L, "BRA2E19", vendedor2));
         when(carteira.doAssociado(7L)).thenReturn(linhas);
         when(reguas.previsoes(any())).thenAnswer(i -> Map.of(
-                100L, List.of(pendente()), 101L, List.of(pendente())));
+                100L, new ReguaDoContrato(0, List.of(pendente())), 101L, new ReguaDoContrato(0, List.of(pendente()))));
         when(historico.doAssociado(7L)).thenReturn(List.of(atendimento(1L, 100L), atendimento(2L, 101L), aniversario(3L)));
         when(indicacoes.feitasPor(7L)).thenReturn(List.of());
     }
@@ -118,11 +119,13 @@ class ConsultaAssociadoServiceTest {
 
     private static AtendimentoDoHistorico atendimento(Long id, Long contratoId) {
         return new AtendimentoDoHistorico(id, Optional.of(contratoId), Optional.empty(), "Pós-venda", Optional.empty(),
-                "CONCLUIDO", Optional.empty(), Optional.empty(), OffsetDateTime.now(), "Fulano", false, Optional.empty());
+                "CONCLUIDO", Optional.empty(), Optional.empty(), OffsetDateTime.now(), "Fulano", false, Optional.empty(),
+                UUID.randomUUID());
     }
 
     private static AtendimentoDoHistorico aniversario(Long id) {
         return new AtendimentoDoHistorico(id, Optional.empty(), Optional.empty(), "Aniversário", Optional.empty(),
-                "CONCLUIDO", Optional.empty(), Optional.empty(), OffsetDateTime.now(), "Fulano", false, Optional.empty());
+                "CONCLUIDO", Optional.empty(), Optional.empty(), OffsetDateTime.now(), "Fulano", false, Optional.empty(),
+                UUID.randomUUID());
     }
 }

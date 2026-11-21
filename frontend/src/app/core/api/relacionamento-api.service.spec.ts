@@ -49,4 +49,44 @@ describe('RelacionamentoApi · contrato das filas', () => {
     });
     pedido.flush(null);
   });
+  it('ATD-05 · histórico envia só os filtros preenchidos; sem datas o backend usa o mês corrente', () => {
+    api
+      .historico({
+        inicio: null,
+        fim: null,
+        tipo: 'SUPORTE',
+        resultado: null,
+        usuario: null,
+        cidade: 2535,
+        busca: 'haa7216',
+      })
+      .subscribe();
+    const pedido = http.expectOne((pedido) => pedido.url === '/api/interno/atendimentos');
+    expect(pedido.request.params.get('tipo')).toBe('SUPORTE');
+    expect(pedido.request.params.get('cidade')).toBe('2535');
+    expect(pedido.request.params.get('busca')).toBe('haa7216');
+    expect(pedido.request.params.has('inicio')).toBe(false);
+    pedido.flush([]);
+  });
+  it('ATD-04 · a correção é um novo registro apontando para o original', () => {
+    api.corrigir(55, { resultado: 'SEM_RESPOSTA', retorno: null, descricao: 'Não atendeu' }).subscribe();
+    const pedido = http.expectOne('/api/interno/atendimentos/55/correcao');
+    expect(pedido.request.method).toBe('POST');
+    expect(pedido.request.body.resultado).toBe('SEM_RESPOSTA');
+    pedido.flush(null);
+  });
+  it('ATD-01 · pela ficha usa a rota da ficha, que aceita contrato suspenso', () => {
+    api
+      .registrarPelaFicha(10, {
+        versao: 2,
+        resultado: 'CONCLUIDO',
+        retorno: null,
+        descricao: '',
+        realizadoEm: '2026-10-30T15:00',
+      })
+      .subscribe();
+    const pedido = http.expectOne('/api/interno/atendimentos/contratos/10/registro');
+    expect(pedido.request.body.realizadoEm).toBe('2026-10-30T15:00');
+    pedido.flush(null);
+  });
 });

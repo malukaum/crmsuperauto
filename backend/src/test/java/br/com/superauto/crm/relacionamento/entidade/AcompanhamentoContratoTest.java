@@ -171,4 +171,72 @@ class AcompanhamentoContratoTest {
                 ResultadoContato.PENDENTE, Optional.empty(), em(LocalDate.of(2026, 6, 2), 0));
         assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 8, 30));
     }
+
+    @Test
+    @DisplayName("ATD-01: Concluído lançado em 27/03 com data de 25/03 conta o prazo a partir de 25/03")
+    void concluidoRetroativo() {
+        var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
+        var lancadoDepois =
+                new AcompanhamentoContrato.ContextoContato(
+                        0,
+                        LocalDate.of(2026, 3, 27),
+                        LocalDate.of(2026, 3, 25).atTime(15, 0).atOffset(ZoneOffset.ofHours(-3)),
+                        REGUA);
+
+        acompanhamento.registrar(ResultadoContato.CONCLUIDO, Optional.empty(), lancadoDepois);
+
+        assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 4, 17));
+    }
+
+    private static AcompanhamentoContrato.ContextoDoAjuste ajusteEm(LocalDate hoje, LocalDate base) {
+        return new AcompanhamentoContrato.ContextoDoAjuste(hoje, base, REGUA);
+    }
+
+    @Test
+    @DisplayName("ATD-04: o gerencial volta a régua para D+7 e o próximo contato é a base + 7 dias")
+    void ajusteSemRetorno() {
+        var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
+        acompanhamento.registrar(
+                ResultadoContato.CONCLUIDO, Optional.empty(), em(LocalDate.of(2026, 3, 25), 0));
+
+        acompanhamento.ajustarPelaGerencia(
+                new AjusteDaRegua(0, D7.id(), Optional.empty()),
+                ajusteEm(LocalDate.of(2026, 3, 26), LocalDate.of(2026, 3, 13)),
+                java.util.UUID.randomUUID());
+
+        assertThat(acompanhamento.getEtapaPendenteId()).contains(D7.id());
+        assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 3, 20));
+        assertThat(acompanhamento.getRetornoManualEm()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ATD-04: o retorno manual do ajuste prevalece sobre o cálculo da etapa")
+    void ajusteComRetorno() {
+        var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
+
+        acompanhamento.ajustarPelaGerencia(
+                new AjusteDaRegua(0, D30.id(), Optional.of(LocalDate.of(2026, 4, 2))),
+                ajusteEm(LocalDate.of(2026, 3, 26), LocalDate.of(2026, 3, 13)),
+                java.util.UUID.randomUUID());
+
+        assertThat(acompanhamento.getEtapaPendenteId()).contains(D30.id());
+        assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 4, 2));
+        assertThat(acompanhamento.getRetornoManualEm()).contains(LocalDate.of(2026, 4, 2));
+    }
+
+    @Test
+    @DisplayName("ATD-04: o ajuste recusa retorno no passado e versão desatualizada")
+    void ajusteInvalido() {
+        var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
+        var contexto = ajusteEm(LocalDate.of(2026, 3, 26), LocalDate.of(2026, 3, 13));
+        var autor = java.util.UUID.randomUUID();
+
+        Assertions.assertThatThrownBy(() -> acompanhamento.ajustarPelaGerencia(
+                        new AjusteDaRegua(0, D7.id(), Optional.of(LocalDate.of(2026, 3, 25))), contexto, autor))
+                .isInstanceOf(NegocioException.class)
+                .hasMessage("O retorno não pode ser anterior a hoje.");
+        Assertions.assertThatThrownBy(() -> acompanhamento.ajustarPelaGerencia(
+                        new AjusteDaRegua(3, D7.id(), Optional.empty()), contexto, autor))
+                .isInstanceOf(NegocioException.class);
+    }
 }

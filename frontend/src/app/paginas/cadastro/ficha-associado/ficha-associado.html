@@ -168,6 +168,11 @@
                     <button mat-icon-button type="button" (click)="alterarContrato(k)" aria-label="Alterar contrato" matTooltip="Alterar contrato">
                       <mat-icon>edit</mat-icon>
                     </button>
+                    @if (k.versaoRegua !== null && k.etapaPendente) {
+                      <button mat-icon-button type="button" (click)="ajustarRegua(k)" aria-label="Ajustar régua" matTooltip="Ajustar régua">
+                        <mat-icon>tune</mat-icon>
+                      </button>
+                    }
                   }
                 </div>
               </div>
@@ -212,6 +217,9 @@
                   @if (a.corrigeAtendimentoId) {
                     <app-status-chip tipo="hoje">correção</app-status-chip>
                   }
+                  @if (!f.anonimizado && podeCorrigir(a)) {
+                    <button mat-button type="button" class="corrigir" (click)="corrigirAtendimento(a)">Corrigir</button>
+                  }
                 </div>
                 @if (a.descricao) {
                   <p>{{ a.descricao }}</p>
@@ -243,12 +251,15 @@
         </section>
       </div>
 
-      <aside class="lateral">
-        <section class="crm-card crm-bloco">
-          <h2>Registrar atendimento</h2>
-          <p class="crm-vazio">O formulário de atendimento chega com a história ATD-01.</p>
-        </section>
-      </aside>
+      @if (!f.anonimizado) {
+        <aside class="lateral">
+          <app-registro-de-atendimento
+            [ficha]="f"
+            (registrado)="aoRegistrarAtendimento($event)"
+            (desatualizado)="aoDesatualizar($event)"
+          />
+        </aside>
+      }
     </div>
   }
 </div>

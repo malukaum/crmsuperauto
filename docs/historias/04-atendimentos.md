@@ -91,3 +91,18 @@ O registro de atendimento substitui a macro `RegistrarAtendimento` e a aba ATEND
 **Critérios de aceite**
 
 - Dado o atendimento importado de 21/10/2026 ("TESTE"), quando abro o histórico de outubro, então ele aparece com o autor "Importação da planilha".
+
+### Decisões de implementação
+
+Pontos que as histórias não diziam e foram decididos na implementação (21/11/2026). Revise os marcados como proposta junto com as regras **(proposta)** acima.
+
+| História | Decisão |
+| --- | --- |
+| ATD-01 | O formulário fica ao lado da ficha. Pela ficha, o pós-venda oferece só contratos com régua ativa e não cancelados; com um único contrato, ele já vem escolhido. Pela fila, um contrato que saiu dela (suspenso, por exemplo) continua recebendo "A fila mudou". |
+| ATD-01 | A data e hora informada (até 7 dias atrás) vale também para o cálculo: no Concluído, o próximo contato é o dia do atendimento + o prazo da nova etapa. Sem data, é agora. Data no futuro é recusada. |
+| ATD-02 | Contato avulso pode ficar sem contrato ("Sobre a pessoa") ou ligado a qualquer contrato do cliente, inclusive cancelado. O vendedor só registra para clientes que têm contrato dele. A data de retorno do avulso é só informativa. |
+| ATD-04 | A correção mantém contrato, tipo, etapa e a data do contato do original; muda resultado, data de retorno e resumo. Um atendimento tem no máximo uma correção; para corrigir de novo, corrige-se a correção. O botão "Corrigir" aparece para o gerencial e para o autor; o prazo do autor (fim do dia seguinte ao registro) é conferido no servidor. |
+| ATD-04 | O último contato concluído da régua (base do recálculo da FIL-06) ignora os atendimentos já corrigidos. O ajuste da régua pelo gerencial fica no contrato da ficha: escolhe a etapa pendente e, opcionalmente, um retorno manual; sem retorno, o próximo contato é a base da régua + o prazo da etapa. O ajuste vai para a auditoria. |
+| ATD-05 | A tela "Atendimentos" do menu passou a ser o histórico completo. Sem datas, mostra o mês corrente; cada consulta cobre no máximo um ano. A busca procura no nome do cliente (sem acento) e na placa (a partir de 3 caracteres). O filtro de usuário lista quem registrou atendimentos visíveis, inclusive "Importação da planilha". |
+| ATD-05 | A próxima ação segue a macro só no pós-venda (Concluído → "Retorno automático"; Sem resposta e Reagendado → "Nova tentativa"; Pendente → "Sem alteração no retorno"). Aniversário e avulsos não mexem na régua e mostram sempre "Sem alteração no retorno". |
+| ATD-05 · CAR-07 | A exportação sai em Excel (.xlsx) ou CSV, só para gerencial e vendedor (o vendedor, só a sua carteira), com o filtro usado e a quantidade de linhas na auditoria. Uma coluna marca os registros corrigidos e as correções. |

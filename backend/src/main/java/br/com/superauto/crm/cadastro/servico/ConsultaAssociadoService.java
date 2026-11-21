@@ -15,11 +15,11 @@ import br.com.superauto.crm.cadastro.entidade.LinhaCarteira;
 import br.com.superauto.crm.cadastro.repositorio.AssociadoRepository;
 import br.com.superauto.crm.cadastro.repositorio.AtendimentoDoHistorico;
 import br.com.superauto.crm.cadastro.repositorio.ConsultaCarteira;
-import br.com.superauto.crm.cadastro.repositorio.EtapaPrevista;
 import br.com.superauto.crm.cadastro.repositorio.HistoricoDeAtendimentos;
 import br.com.superauto.crm.cadastro.repositorio.IndicacoesDoAssociado;
 import br.com.superauto.crm.cadastro.repositorio.Localidade;
 import br.com.superauto.crm.cadastro.repositorio.ReferenciasDoCadastro;
+import br.com.superauto.crm.cadastro.repositorio.ReguaDoContrato;
 import br.com.superauto.crm.cadastro.repositorio.ReguaDosContratos;
 import br.com.superauto.crm.cadastro.servico.FichaAssociado.ContatoDaFicha;
 import br.com.superauto.crm.cadastro.servico.FichaAssociado.ContratoDaFicha;
@@ -86,7 +86,7 @@ public class ConsultaAssociadoService {
     }
 
     private FichaAssociado montar(Associado associado, List<LinhaCarteira> contratos,
-                                  Map<Long, List<EtapaPrevista>> previsoes, List<AtendimentoDoHistorico> atendimentos) {
+                                  Map<Long, ReguaDoContrato> reguas, List<AtendimentoDoHistorico> atendimentos) {
         Optional<Localidade> local = localidade(associado);
         var classificacao = associado.classificacao();
         return new FichaAssociado(associado.getId(), associado.getNome(),
@@ -96,7 +96,7 @@ public class ConsultaAssociadoService {
                 local.map(Localidade::cidade).orElse(null), local.map(Localidade::uf).orElse(null),
                 classificacao.perfil(), classificacao.potencial(), associado.anonimizado(), associado.getVersao(),
                 associado.getContatos().stream().map(ConsultaAssociadoService::contato).toList(),
-                contratos.stream().map(linha -> contrato(linha, previsoes.getOrDefault(linha.getContratoId(), List.of()))).toList(),
+                contratos.stream().map(linha -> contrato(linha, Optional.ofNullable(reguas.get(linha.getContratoId())))).toList(),
                 atendimentos, indicacoes.feitasPor(associado.getId()));
     }
 
@@ -106,14 +106,15 @@ public class ConsultaAssociadoService {
                 contato.isAceitaContato());
     }
 
-    private ContratoDaFicha contrato(LinhaCarteira linha, List<EtapaPrevista> regua) {
+    private ContratoDaFicha contrato(LinhaCarteira linha, Optional<ReguaDoContrato> regua) {
         return new ContratoDaFicha(linha.getContratoId(), linha.getContratoVersao(), linha.getPlaca().valor(),
                 linha.getModelo(), linha.getTipoVeiculoId(), linha.getTipoVeiculo(), linha.getMensalidade().valor(),
                 linha.getSituacao(), linha.getCodigoSga().orElse(null), dia(linha.getAderidoEm()),
                 linha.getVendidoEm().map(this::dia).orElse(null), linha.getEncerradoEm().map(this::dia).orElse(null),
                 linha.getVendedorId().orElse(null), linha.getVendedorNome().orElse(null), linha.getFila(),
                 linha.getDiasAtraso(), linha.getEtapaPendente().orElse(null),
-                linha.getProximoContatoEm().orElse(null), regua);
+                linha.getProximoContatoEm().orElse(null), regua.map(ReguaDoContrato::etapas).orElse(List.of()),
+                regua.map(ReguaDoContrato::versao).orElse(null));
     }
 
     private Optional<Localidade> localidade(Associado associado) {

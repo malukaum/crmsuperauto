@@ -1,7 +1,6 @@
 package br.com.superauto.crm.cadastro.repositorio;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -11,5 +10,5 @@ import java.util.Map;
 public interface ReguaDosContratos {
 
     /** Contrato sem acompanhamento não aparece no mapa. */
-    Map<Long, List<EtapaPrevista>> previsoes(Collection<Long> contratoIds);
+    Map<Long, ReguaDoContrato> previsoes(Collection<Long> contratoIds);
 }

@@ -28,7 +28,8 @@ public class HistoricoDeAtendimentosJpa implements HistoricoDeAtendimentos {
 
     private static AtendimentoDoHistorico traduzir(LinhaHistoricoAtendimento linha) {
         return new AtendimentoDoHistorico(linha.getId(), linha.getContratoId(), linha.getPlaca(), linha.getTipo(),
-                linha.getEtapa(), linha.getResultado(), linha.getDescricao(), linha.getRetornoAgendadoPara(),
-                linha.getRealizadoEm(), linha.getRegistradoPor(), linha.isCorrigido(), linha.getCorrigeAtendimentoId());
+                linha.getEtapa(), linha.getResultado().name(), linha.getDescricao(), linha.getRetornoAgendadoPara(),
+                linha.getRealizadoEm(), linha.getRegistradoPor(), linha.isCorrigido(), linha.getCorrigeAtendimentoId(),
+                linha.getRegistradoPorId());
     }
 }

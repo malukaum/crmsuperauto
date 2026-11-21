@@ -11,6 +11,7 @@ import java.util.List;
 import br.com.superauto.crm.cadastro.entidade.SituacaoContrato;
 import br.com.superauto.crm.cadastro.servico.LinhaExportada;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
+import br.com.superauto.crm.exportacao.FormatoExportacao;
 
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -72,7 +73,7 @@ class ExportacaoExcelTest {
     }
 
     private static Sheet ler(List<LinhaExportada> linhas) throws IOException {
-        try (var planilha = new XSSFWorkbook(new ByteArrayInputStream(ExportacaoExcel.gerar(linhas)))) {
+        try (var planilha = new XSSFWorkbook(new ByteArrayInputStream(FormatoExportacao.XLSX.gerar(ColunasExportacao.planilha(linhas))))) {
             return planilha.getSheetAt(0);
         }
     }

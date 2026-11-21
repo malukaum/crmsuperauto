@@ -50,7 +50,7 @@ public class AuditoriaDeRelacionamento {
                 EventoAuditoria.criacao(
                         ItemAuditado.de("atendimento", evento.atendimentoId()),
                         evento.dados().autor(),
-                        atendimento(evento.dados())));
+                        atendimento(evento)));
     }
 
     private static Map<String, Object> agenda(EstadoDoAcompanhamento estado) {
@@ -61,7 +61,8 @@ public class AuditoriaDeRelacionamento {
         return dados;
     }
 
-    private static Map<String, Object> atendimento(Atendimento.Novo contato) {
+    private static Map<String, Object> atendimento(AtendimentoRegistrado evento) {
+        Atendimento.Novo contato = evento.dados();
         Map<String, Object> dados = new LinkedHashMap<>();
         dados.put("associadoId", contato.associadoId());
         dados.put("contratoId", contato.contratoId());
@@ -74,6 +75,7 @@ public class AuditoriaDeRelacionamento {
                 contato.retorno() == null ? null : contato.retorno().toString());
         dados.put("realizadoEm", contato.agora().toString());
         dados.put("registradoPor", contato.autor().toString());
+        dados.put("corrigeAtendimentoId", evento.corrigeAtendimentoId().orElse(null));
         return dados;
     }
 }

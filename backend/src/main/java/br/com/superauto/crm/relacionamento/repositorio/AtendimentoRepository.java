@@ -7,13 +7,19 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /** Histórico preservado: o repositório do agregado não expõe exclusão (RG-07). */
 public interface AtendimentoRepository extends Repository<Atendimento, Long> {
     Atendimento save(Atendimento atendimento);
 
+    Optional<Atendimento> findById(Long id);
+
     List<Atendimento> findByAssociadoId(Long associadoId);
+
+    /** ATD-04: um atendimento tem no máximo uma correção (também garantido por índice único). */
+    boolean existsByCorrigeAtendimentoId(Long atendimentoId);
 
     @Query(
             """

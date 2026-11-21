@@ -110,10 +110,10 @@ export const routes: Routes = [
       {
         path: 'atendimentos',
         loadComponent: () =>
-          import('./paginas/relacionamento/atendimentos-mes/atendimentos-mes').then(
-            (m) => m.AtendimentosMes,
+          import('./paginas/relacionamento/historico-atendimentos/historico-atendimentos').then(
+            (m) => m.HistoricoAtendimentos,
           ),
-        title: 'Atendimentos do mês' + SUFIXO,
+        title: 'Histórico de atendimentos' + SUFIXO,
         canActivate: [papelGuard],
         data: { papeis: [...EQUIPE_INTERNA] },
       },

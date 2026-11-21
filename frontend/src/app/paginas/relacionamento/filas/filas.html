@@ -21,7 +21,7 @@
       }
     </nav>
   } @else {
-    <form class="filtros" (ngSubmit)="carregar()">
+    <form class="crm-filtros" (ngSubmit)="carregar()">
       <mat-form-field
         ><mat-label>Buscar nome, placa, documento ou telefone</mat-label
         ><input matInput name="busca" [ngModel]="busca()" (ngModelChange)="busca.set($event)"

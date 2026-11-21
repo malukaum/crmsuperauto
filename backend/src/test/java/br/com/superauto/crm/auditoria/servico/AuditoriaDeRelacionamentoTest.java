@@ -14,6 +14,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 class AuditoriaDeRelacionamentoTest {
@@ -48,7 +49,8 @@ class AuditoriaDeRelacionamentoTest {
                                 null,
                                 null,
                                 OffsetDateTime.parse("2026-10-31T12:00:00-03:00"),
-                                UUID.randomUUID())));
+                                UUID.randomUUID()),
+                        Optional.empty()));
         var evento = ArgumentCaptor.forClass(EventoAuditoria.class);
         verify(registro).registrar(evento.capture());
         assertThat(evento.getValue().getOperacao()).isEqualTo(OperacaoAuditoria.CRIACAO);

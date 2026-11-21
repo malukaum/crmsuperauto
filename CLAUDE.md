@@ -124,7 +124,7 @@ Fonte da verdade do schema: **Liquibase** (`backend/src/main/resources/db/change
 - `docs/historias/` — histórias (ACE, CAR, FIL, ATD, IND, INT, IMP, CLI, AUD) e as **regras gerais RG-01…RG-14**. Toda funcionalidade nasce de uma história, e a história é a fonte da linguagem ubíqua.
 - `docs/modelo-de-dados/` — modelo e dicionário de dados.
 - `backend/src/main/java/br/com/superauto/crm/<contexto>/{entidade,repositorio,servico,infraestrutura,api}` — um pacote por contexto delimitado (tabela acima).
-- Pacotes técnicos transversais, fora dos contextos: `erro/` (exceções e `GlobalExceptionHandler`), `seguranca/` (papéis e leitura do token), `config/`.
+- Pacotes técnicos transversais, fora dos contextos: `erro/` (exceções e `GlobalExceptionHandler`), `seguranca/` (papéis e leitura do token), `config/`, `exportacao/` (geração de .xlsx/.csv a partir de uma `Planilha`, usada pelas camadas `api`).
 - `frontend/src/app/core/api/` — clientes HTTP. `paginas/<contexto>/` — telas, agrupadas pelo mesmo contexto do backend. `shared/` — componentes reutilizáveis. `layout/` — casca interna e do cliente.
 
 ## Estado atual × alvo
@@ -142,9 +142,7 @@ Backend e frontend estão no formato alvo. Referências vivas de cada padrão:
 | Porta do consumidor implementada pelo dono do dado | `acesso/repositorio/ContratosDoVendedor` ← `cadastro/infraestrutura/persistencia/ContratosDoVendedorJpa` |
 | Camada anticorrupção | `acesso/infraestrutura/keycloak` (`KeycloakAdminClient`, `TokenDeServicoKeycloak`, `ErrosKeycloak`) |
 | Reação a eventos de outro contexto | `auditoria/servico/AuditoriaDeContratos`, `AuditoriaDeUsuarios` |
-| Modelo de leitura | `relacionamento/entidade/PosicaoFila` (`@Immutable` sobre `vw_fila_contato`) |
-
-Pendência conhecida: `Placa`, `Telefone` e `Documento` nascem junto com o mapeamento de `Associado` e `Veiculo` (CAR-02).
+| Modelo de leitura | `relacionamento/entidade/ContratoNaFila` (`@Immutable` sobre `vw_trabalho_relacionamento`) |
 
 ## Persistência: Hibernate, sem SQL nativo
 

@@ -13,14 +13,13 @@ import br.com.superauto.crm.cadastro.servico.Ordenacao;
 import br.com.superauto.crm.cadastro.servico.PaginaCarteira;
 import br.com.superauto.crm.cadastro.servico.PaginaSolicitada;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
+import br.com.superauto.crm.exportacao.FormatoExportacao;
 import br.com.superauto.crm.seguranca.Papeis;
 import br.com.superauto.crm.seguranca.UsuarioAtual;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -88,11 +87,7 @@ public class CarteiraController {
                                            JwtAuthenticationToken auth) {
         var exportador = new Exportador(UsuarioAtual.exigirId(auth), AutorDoToken.escopo(auth),
                 UsuarioAtual.temPapel(auth, Papeis.GERENCIAL));
-        byte[] arquivo = formato.gerar(exportacao.exportar(req.filtro(), req.ordenacao(), exportador));
-        String nome = "carteira-" + LocalDate.now(relogio) + "." + formato.extensao();
-        return ResponseEntity.ok()
-                .contentType(formato.tipo())
-                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(nome).build().toString())
-                .body(arquivo);
+        var linhas = exportacao.exportar(req.filtro(), req.ordenacao(), exportador);
+        return formato.anexo(ColunasExportacao.planilha(linhas), "carteira-" + LocalDate.now(relogio));
     }
 }

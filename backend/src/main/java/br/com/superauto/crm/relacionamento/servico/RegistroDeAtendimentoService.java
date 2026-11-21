@@ -6,6 +6,7 @@ import br.com.superauto.crm.relacionamento.entidade.Atendimento;
 import br.com.superauto.crm.relacionamento.entidade.ContratoNaFila;
 import br.com.superauto.crm.relacionamento.entidade.EtapaRegua;
 import br.com.superauto.crm.relacionamento.entidade.MensagemDeAniversario;
+import br.com.superauto.crm.relacionamento.entidade.MomentoDoAtendimento;
 import br.com.superauto.crm.relacionamento.entidade.RegistroNaRegua;
 import br.com.superauto.crm.relacionamento.entidade.ResultadoContato;
 import br.com.superauto.crm.relacionamento.entidade.TipoDeRelacionamento;
@@ -14,7 +15,6 @@ import br.com.superauto.crm.relacionamento.repositorio.AtendimentoRepository;
 import br.com.superauto.crm.relacionamento.repositorio.PeriodoDeAtendimentos;
 import br.com.superauto.crm.relacionamento.repositorio.ReguaDePosVenda;
 import br.com.superauto.crm.relacionamento.repositorio.TiposDeContato;
-import br.com.superauto.crm.relacionamento.repositorio.TrabalhoRelacionamentoRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,17 +22,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.time.OffsetDateTime;
-import java.util.Optional;
+import java.time.ZonedDateTime;
 
 /**
- * FIL-02 a FIL-04: grava histórico e agenda atomicamente; as raízes publicam os eventos de domínio.
+ * ATD-01 e ATD-03 (pelas filas FIL-02 a FIL-04 e pela ficha): grava histórico e régua juntos; as raízes publicam os
+ * eventos de domínio para a auditoria.
  */
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class RegistroNaFilaService {
-    private final TrabalhoRelacionamentoRepository trabalho;
+public class RegistroDeAtendimentoService {
+    private final CarteiraVisivel carteira;
     private final AcompanhamentoContratoRepository acompanhamentos;
     private final AtendimentoRepository atendimentos;
     private final ReguaDePosVenda regua;
@@ -40,21 +40,15 @@ public class RegistroNaFilaService {
     private final Clock relogio;
 
     @Transactional(readOnly = true)
-    public PreviaDoContato prever(
-            Long contratoId, RegistroDeContato registro, AutorDoContato autor) {
-        var contrato = exigirDisponivel(contratoId, autor);
-        var acompanhamento = exigirAcompanhamento(contratoId);
+    public PreviaDoContato prever(Long contratoId, RegistroDeContato registro, AutorDoContato autor) {
+        var contrato = exigirDisponivel(contratoId, registro, autor);
         var contexto = contexto(registro);
         var previsao =
-                acompanhamento.prever(
-                        registro.resultado(), Optional.ofNullable(registro.retorno()), contexto);
+                exigirAcompanhamento(contratoId)
+                        .prever(registro.resultado(), registro.retorno(), contexto);
         String proxima =
                 contexto.etapas().stream()
-                        .filter(
-                                e ->
-                                        previsao.getEtapaPendenteId()
-                                                .filter(e.id()::equals)
-                                                .isPresent())
+                        .filter(e -> previsao.getEtapaPendenteId().filter(e.id()::equals).isPresent())
                         .map(EtapaRegua::nome)
                         .findFirst()
                         .orElseThrow();
@@ -65,20 +59,16 @@ public class RegistroNaFilaService {
     }
 
     public void registrar(Long contratoId, RegistroDeContato registro, AutorDoContato autor) {
-        var contrato = exigirDisponivel(contratoId, autor);
+        var contrato = exigirDisponivel(contratoId, registro, autor);
         var acompanhamento = exigirAcompanhamento(contratoId);
         var contexto = contexto(registro);
         Short etapa =
                 acompanhamento
                         .getEtapaPendenteId()
                         .orElseThrow(
-                                () ->
-                                        NegocioException.conflito(
-                                                "regua-encerrada", "A régua está encerrada."));
+                                () -> NegocioException.conflito("regua-encerrada", "A régua está encerrada."));
         acompanhamento.registrarContato(
-                new RegistroNaRegua(registro.resultado(), Optional.ofNullable(registro.retorno())),
-                contexto,
-                autor.id());
+                new RegistroNaRegua(registro.resultado(), registro.retorno()), contexto, autor.id());
         atendimentos.save(
                 Atendimento.registrar(
                         new Atendimento.Novo(
@@ -88,25 +78,25 @@ public class RegistroNaFilaService {
                                 etapa,
                                 registro.resultado(),
                                 registro.descricao(),
-                                registro.retorno(),
-                                contexto.agora(),
+                                registro.retorno().orElse(null),
+                                contexto.realizadoEm(),
                                 autor.id())));
         acompanhamentos.save(acompanhamento);
     }
 
     public void aniversario(Long contratoId, boolean confirmarRepeticao, AutorDoContato autor) {
-        var contrato = exigirVisivel(contratoId, autor);
+        var contrato = carteira.contrato(contratoId, autor.vendedor());
         contrato.exigirAniversarioDisponivel();
-        var agora = OffsetDateTime.now(relogio);
-        var inicio = agora.toLocalDate().withDayOfYear(1).atStartOfDay(relogio.getZone());
+        var agora = ZonedDateTime.now(relogio);
+        var inicioDoAno = agora.toLocalDate().withDayOfYear(1).atStartOfDay(relogio.getZone());
         var tipo = tipos.id(TipoDeRelacionamento.ANIVERSARIO);
         boolean jaRegistrada =
                 atendimentos
                         .aniversariosRegistrados(
                                 tipo,
                                 new PeriodoDeAtendimentos(
-                                        inicio.toOffsetDateTime(),
-                                        inicio.plusYears(1).toOffsetDateTime(),
+                                        inicioDoAno.toOffsetDateTime(),
+                                        inicioDoAno.plusYears(1).toOffsetDateTime(),
                                         autor.vendedor()))
                         .contains(contrato.getAssociadoId());
         new MensagemDeAniversario(jaRegistrada, confirmarRepeticao).exigirConfirmacao();
@@ -120,36 +110,26 @@ public class RegistroNaFilaService {
                                 ResultadoContato.CONCLUIDO,
                                 null,
                                 null,
-                                agora,
+                                agora.toOffsetDateTime(),
                                 autor.id())));
     }
 
     private AcompanhamentoContrato.ContextoContato contexto(RegistroDeContato registro) {
-        var agora = OffsetDateTime.now(relogio);
+        var agora = ZonedDateTime.now(relogio);
+        var momento = MomentoDoAtendimento.de(registro.realizadoEm(), agora);
         return new AcompanhamentoContrato.ContextoContato(
-                registro.versao(), agora.toLocalDate(), agora, regua.etapas());
+                registro.versao(), agora.toLocalDate(), momento.valor(), regua.etapas());
     }
 
     private AcompanhamentoContrato exigirAcompanhamento(Long id) {
         return acompanhamentos
                 .findById(id)
-                .orElseThrow(
-                        () -> NegocioException.naoEncontrado("Acompanhamento não encontrado."));
+                .orElseThrow(() -> NegocioException.naoEncontrado("Acompanhamento não encontrado."));
     }
 
-    private ContratoNaFila exigirDisponivel(Long id, AutorDoContato autor) {
-        var contrato = exigirVisivel(id, autor);
-        contrato.exigirPosVendaDisponivel();
+    private ContratoNaFila exigirDisponivel(Long id, RegistroDeContato registro, AutorDoContato autor) {
+        var contrato = carteira.contrato(id, autor.vendedor());
+        registro.origem().exigirDisponivel(contrato);
         return contrato;
-    }
-
-    private ContratoNaFila exigirVisivel(Long id, AutorDoContato autor) {
-        return trabalho.findById(id)
-                .filter(
-                        c ->
-                                autor.vendedor().isEmpty()
-                                        || autor.vendedor()
-                                                .equals(Optional.ofNullable(c.getVendedorId())))
-                .orElseThrow(() -> NegocioException.naoEncontrado("Contrato não encontrado."));
     }
 }
