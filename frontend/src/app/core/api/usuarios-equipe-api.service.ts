@@ -37,7 +37,6 @@ export interface UsuarioCriado {
 /** ProblemDetail com os extras que a gestão de usuários devolve. */
 export interface ProblemaUsuarios extends Problema {
   codigo?: string;
-  contratosVigentes?: number;
   campos?: Record<string, string>;
 }
 

@@ -54,6 +54,7 @@ class RegistroDeAtendimentoServiceTest {
     void preparar() {
         acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
         when(acompanhamentos.findById(10L)).thenReturn(Optional.of(acompanhamento));
+        when(acompanhamentos.buscarParaAlteracao(10L)).thenReturn(Optional.of(acompanhamento));
         when(regua.etapas()).thenReturn(REGUA);
         when(tipos.id(TipoDeRelacionamento.POS_VENDA)).thenReturn((short) 1);
     }
@@ -80,6 +81,17 @@ class RegistroDeAtendimentoServiceTest {
     }
 
     @Test
+    @DisplayName("RG-06: o registro trava o acompanhamento, e registros simultâneos do contrato entram em fila")
+    void registroComTrava() {
+        contratoNaSituacao(SituacaoNaCarteira.ATIVO);
+
+        servico.registrar(10L, concluido(OrigemDoRegistro.FILA), AUTOR);
+
+        verify(acompanhamentos).buscarParaAlteracao(10L);
+        verify(acompanhamentos, never()).findById(10L);
+    }
+
+    @Test
     @DisplayName("ATD-01: contrato cancelado recusa com \"Contrato cancelado. O atendimento não será gravado.\"")
     void canceladoRecusa() {
         contratoNaSituacao(SituacaoNaCarteira.CANCELADO);
@@ -99,5 +111,20 @@ class RegistroDeAtendimentoServiceTest {
                 .isInstanceOf(NegocioException.class)
                 .extracting("codigo")
                 .isEqualTo("fila-mudou");
+    }
+
+    @Test
+    @DisplayName("ATD-03: se outra pessoa já registrou a mensagem do ano, a nova é recusada e nada é gravado")
+    void segundaMensagemDeAniversario() {
+        var aniversariante = ContratoNaFilaDeTeste.aniversariante(10L, 7L, "HAA7216", LocalDate.of(1992, 3, 25));
+        when(carteira.contrato(10L, Optional.empty())).thenReturn(aniversariante);
+        when(tipos.id(TipoDeRelacionamento.ANIVERSARIO)).thenReturn((short) 2);
+        when(atendimentos.existsByAssociadoIdAndAnoAniversario(7L, 2026)).thenReturn(true);
+
+        assertThatThrownBy(() -> servico.aniversario(10L, AUTOR))
+                .isInstanceOf(NegocioException.class)
+                .extracting("codigo")
+                .isEqualTo("aniversario-ja-registrado");
+        verify(atendimentos, never()).save(any());
     }
 }

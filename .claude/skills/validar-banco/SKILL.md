@@ -1,6 +1,6 @@
 ---
 name: validar-banco
-description: Valida entidades JPA, consultas e escrita do Hibernate contra o PostgreSQL local (docker) com um teste de integração temporário que não deixa dados para trás. Use depois de criar ou alterar entidade, repositório, consulta JPQL ou changeset Liquibase.
+description: Conferência manual e opcional de entidades JPA, consultas e escrita do Hibernate contra o PostgreSQL local (docker), com um teste temporário que é apagado ao fim e nunca fica na suíte do projeto (a suíte só tem testes de regra, sem containers). Use só quando pedirem para conferir o mapeamento no banco.
 ---
 
 # Validar mapeamentos contra o Postgres local

@@ -15,7 +15,7 @@ A carteira substitui a aba CARTEIRA. A lista tem uma linha por contrato (placa),
 - A busca segue a [RG-05](README.md#regras-gerais): "HAA-7216", "haa7216" e "103.034" funcionam.
 - O rodapé mostra a quantidade de contratos e a soma das mensalidades do filtro, com o aviso da [RG-09](README.md#regras-gerais).
 - Ordenação padrão por nome, alterável em qualquer coluna. Páginas de 10, 25 ou 50 linhas.
-- Ao voltar da ficha, a lista mantém filtros, ordenação e página **(proposta)**.
+- Ao voltar da ficha, a lista mantém filtros, ordenação e página.
 
 **Critérios de aceite**
 
@@ -30,9 +30,9 @@ A carteira substitui a aba CARTEIRA. A lista tem uma linha por contrato (placa),
 
 - O cadastro começa pelo CPF/CNPJ. Se a pessoa já existe, os dados dela são carregados e só o novo veículo e contrato são informados.
 - Obrigatórios: nome, CPF/CNPJ, WhatsApp, cidade/UF, placa, modelo, tipo de veículo, mensalidade e data de adesão (cadastro no SGA). Opcionais: e-mail, nascimento (só pessoa física), código do SGA e data da venda.
-- CPF/CNPJ com dígitos verificadores válidos **(proposta)**. O CNPJ alfanumérico é aceito.
+- CPF/CNPJ com dígitos verificadores válidos. O CNPJ alfanumérico é aceito.
 - Placa no padrão antigo ou Mercosul. Se a placa já tem contrato que não está cancelado, o cadastro é recusado com link para a ficha existente.
-- A data de adesão não pode ser futura **(proposta)**. Mensalidade maior ou igual a zero.
+- A data de adesão não pode ser futura. Mensalidade maior ou igual a zero.
 - Todo contrato nasce "A conferir". O vendedor do contrato é quem cadastra; o gerencial escolhe o vendedor.
 - Ao salvar, o contrato entra na régua com etapa D+7 pendente e próximo contato = adesão + 7 dias ([RG-14](README.md#regras-gerais)).
 - Pessoa, veículo, contrato e régua são gravados juntos: se algo falha, nada é gravado.
@@ -70,9 +70,9 @@ A carteira substitui a aba CARTEIRA. A lista tem uma linha por contrato (placa),
 
 - O cliente pode ter vários contatos de cada tipo, com um principal por tipo. O WhatsApp principal é o usado nas filas.
 - O telefone é aceito com ou sem 55, parênteses, espaços e traços. O DDD é obrigatório.
-- O mesmo número repetido no mesmo cliente é recusado. Em outro cliente, o sistema avisa mas permite, porque famílias dividem números **(proposta)**.
+- O mesmo número repetido no mesmo cliente é recusado. Em outro cliente é permitido, sem aviso: pessoas diferentes podem dividir um número residencial ou empresarial.
 - "Não aceita contato" (opt-out) mantém o número visível, mas desativa o botão de WhatsApp com o aviso do motivo.
-- O cliente precisa ter ao menos um WhatsApp ou telefone principal **(proposta)**.
+- O cliente precisa ter ao menos um WhatsApp ou telefone principal.
 - O atendente pode editar contatos; é o único dado cadastral que ele altera.
 
 **Critérios de aceite**
@@ -88,11 +88,11 @@ A carteira substitui a aba CARTEIRA. A lista tem uma linha por contrato (placa),
 
 - Só o gerencial altera situação, mensalidade, vendedor e código do SGA.
 - Situações possíveis: de "A conferir" para Ativo, Suspenso ou Cancelado; entre Ativo e Suspenso; de qualquer uma para Cancelado.
-- Cancelado é definitivo: para voltar, cadastra-se um novo contrato **(proposta)**. Cancelar pede confirmação, grava a data de encerramento e tira o contrato das filas. O histórico continua.
+- Cancelado é definitivo: para voltar, cadastra-se um novo contrato. Cancelar pede confirmação, grava a data de encerramento e tira o contrato das filas. O histórico continua.
 - Suspenso sai das filas e dos aniversariantes. Ao reativar, volta com o próximo contato calculado e, se a data já passou, entra em Atrasados.
 - Reajuste de mensalidade guarda só o valor atual; o valor anterior fica na auditoria.
 - Trocar o vendedor muda na hora quem enxerga o contrato.
-- Ação em lote para marcar vários contratos "A conferir" como Ativo, já que os 284 importados chegam assim **(proposta)**.
+- Ação em lote para marcar vários contratos "A conferir" como Ativo, já que os 284 importados chegam assim.
 
 **Critérios de aceite**
 
@@ -121,8 +121,8 @@ A carteira substitui a aba CARTEIRA. A lista tem uma linha por contrato (placa),
 **Regras**
 
 - Exporta a lista exatamente como filtrada na carteira ou numa fila, em CSV ou Excel.
-- O vendedor exporta só os seus contratos. O atendente não exporta **(proposta)**.
-- O documento sai mascarado, exceto para o gerencial **(proposta)**. Contatos com opt-out saem marcados.
+- O vendedor exporta só os seus contratos. O atendente não exporta.
+- O documento sai mascarado, exceto para o gerencial. Contatos com opt-out saem marcados.
 - Cada exportação fica na auditoria com o filtro usado e a quantidade de linhas.
 
 **Critérios de aceite**
@@ -135,9 +135,9 @@ A carteira substitui a aba CARTEIRA. A lista tem uma linha por contrato (placa),
 
 **Regras**
 
-- Só o gerencial anonimiza, e só quando todos os contratos do cliente estão cancelados **(proposta)**.
+- Só o gerencial anonimiza, e só quando todos os contratos do cliente estão cancelados.
 - O nome vira "Cliente anonimizado nº" seguido do código interno (por exemplo, nº 1042). Documento, nascimento e contatos são apagados, e a conta da área do cliente é desativada.
-- Contratos (valores, cidade, datas) e atendimentos continuam, para os relatórios. A descrição dos atendimentos é apagada, porque pode conter dados pessoais **(proposta)**.
+- Contratos (valores, cidade, datas) e atendimentos continuam, para os relatórios. A descrição dos atendimentos é apagada, porque pode conter dados pessoais.
 - É irreversível: a confirmação exige digitar ANONIMIZAR.
 - **Modelo de dados:** `associado.documento` aceita vazio somente quando `anonimizado_em` está preenchido (`ck_associado_documento_obrigatorio`).
 
@@ -145,9 +145,30 @@ A carteira substitui a aba CARTEIRA. A lista tem uma linha por contrato (placa),
 
 - Dado um cliente anonimizado, quando busco pelo CPF antigo, então nada aparece, mas os indicadores por cidade continuam contando o contrato dele.
 
+### CAR-09 · Redistribuir contratos em lote
+
+> **Para implementar no futuro.** Hoje o gerencial troca o vendedor contrato a contrato ([CAR-05](#car-05--alterar-situação-mensalidade-e-vendedor-do-contrato)).
+
+**Como** gerencial, **quero** passar vários contratos de uma vez para outro vendedor, **para** redistribuir a carteira que ficou comigo quando desativei um vendedor ([ACE-04](01-acesso.md#ace-04--gerenciar-usuários-da-equipe)), ou equilibrar a carteira da equipe.
+
+**Regras**
+
+- Só o gerencial redistribui.
+- Na carteira, o gerencial filtra (por exemplo, pelos contratos que estão com ele), seleciona vários contratos e escolhe o vendedor que vai recebê-los.
+- O destino precisa ser um vendedor ativo. Contratos cancelados não mudam de vendedor e são ignorados, com a quantidade informada.
+- Cada contrato transferido gera um registro na auditoria, com o vendedor anterior e o novo ([RG-08](README.md#regras-gerais)).
+- Contratos alterados por outra pessoa ao mesmo tempo seguem a [RG-06](README.md#regras-gerais): a redistribuição espera a outra alteração terminar.
+- Limite por vez, como na ativação em lote (até 500 contratos).
+
+**Critérios de aceite**
+
+- Dado um gerencial com 30 contratos herdados de um vendedor desativado, quando seleciona os 30 e escolhe um vendedor ativo, então os 30 passam para esse vendedor e aparecem na carteira dele.
+- Dado um contrato cancelado na seleção, quando redistribuo, então ele continua com o vendedor original e o sistema informa que 1 contrato foi ignorado.
+- Dado um vendedor desativado como destino, quando tento redistribuir, então o sistema recusa.
+
 ### Decisões de implementação
 
-Pontos que as histórias não diziam e foram decididos na implementação (31/10/2026). Revise os marcados como proposta junto com as regras **(proposta)** acima.
+Pontos que as histórias não diziam e foram decididos na implementação (31/10/2026).
 
 | História | Decisão |
 | --- | --- |
@@ -161,7 +182,7 @@ Pontos que as histórias não diziam e foram decididos na implementação (31/10
 | CAR-02 | O telefone também é aceito com o zero de discagem à frente do DDD ("037 99869-2950"). |
 | CAR-03 | O cabeçalho mostra a fila mais urgente entre os contratos (Atrasado, Hoje, Futuro…). Na régua de cada contrato, as etapas antes da pendente aparecem como concluídas, a pendente na data do próximo contato e as futuras somando os prazos da régua. O formulário de atendimento ao lado chega com a ATD-01. |
 | CAR-03 · RG-03 | O vendedor que abre a ficha de quem não tem contrato dele recebe "Cliente não encontrado na carteira". |
-| CAR-04 | O primeiro contato de um tipo já nasce principal. Removendo o principal, o mais antigo do mesmo tipo passa a ser o principal. O mesmo número pode ser WhatsApp e telefone ao mesmo tempo. O aviso de número repetido em outro cliente **(proposta)** ainda não foi feito. |
+| CAR-04 | O primeiro contato de um tipo já nasce principal. Removendo o principal, o mais antigo do mesmo tipo passa a ser o principal. O mesmo número pode ser WhatsApp e telefone ao mesmo tempo. |
 | CAR-04 | Dados pessoais (nome, nascimento, cidade) são corrigidos na ficha por gerencial e vendedor; o atendente só altera contatos. O documento não é editável. |
 | CAR-05 | Na alteração do contrato, mensalidade, vendedor e código do SGA são gravados antes da situação; contrato cancelado não tem mais a mensalidade nem o vendedor alterados. A ativação em lote ignora os contratos escolhidos que não estão "a conferir" e informa quantos foram ignorados (até 500 por vez). |
 | CAR-06 | A contagem de promotores na Inteligência depende da INT-01, ainda não implementada. |

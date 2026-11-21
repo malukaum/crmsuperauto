@@ -1,5 +1,7 @@
 package br.com.superauto.crm.relacionamento.infraestrutura;
 
+import br.com.superauto.crm.relacionamento.repositorio.TrabalhoRelacionamentoRepository;
+import br.com.superauto.crm.relacionamento.servico.CarteiraVisivel;
 import br.com.superauto.crm.relacionamento.servico.IndicadoresDaCarteira;
 import br.com.superauto.crm.relacionamento.servico.SelecaoDeTrabalho;
 
@@ -12,6 +14,11 @@ public class RelacionamentoConfig {
     @Bean
     SelecaoDeTrabalho selecaoDeTrabalho() {
         return new SelecaoDeTrabalho();
+    }
+
+    @Bean
+    CarteiraVisivel carteiraVisivel(TrabalhoRelacionamentoRepository trabalho) {
+        return new CarteiraVisivel(trabalho);
     }
 
     @Bean

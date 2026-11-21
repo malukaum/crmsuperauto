@@ -16,8 +16,8 @@ import java.time.Clock;
 import java.time.ZonedDateTime;
 
 /**
- * ATD-02 · Registrar atendimento avulso. Nunca mexe na régua (proposta), pode ser sobre a pessoa ou sobre um
- * contrato, inclusive cancelado, para a reaproximação de ex-clientes (proposta).
+ * ATD-02 · Registrar atendimento avulso. Nunca mexe na régua, pode ser sobre a pessoa ou sobre um
+ * contrato, inclusive cancelado, para a reaproximação de ex-clientes.
  */
 @Service
 @RequiredArgsConstructor
@@ -29,9 +29,7 @@ public class AtendimentoAvulsoService {
 
     @Transactional
     public void registrar(RegistroAvulso registro, AutorDoContato autor) {
-        if (!registro.tipo().avulso())
-            throw NegocioException.invalido(
-                    "tipo-nao-avulso", "Escolha Suporte, Comercial, Reaproximação ou Indicação.");
+        registro.tipo().exigirAvulso();
         var contratos = carteira.contratosDoAssociado(registro.associadoId(), autor.vendedor());
         registro.contratoId()
                 .filter(id -> contratos.stream().map(ContratoNaFila::getContratoId).noneMatch(id::equals))

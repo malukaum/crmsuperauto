@@ -1,8 +1,11 @@
 package br.com.superauto.crm.relacionamento.api;
 
+import org.springframework.data.web.PagedModel;
+import org.springframework.data.domain.Pageable;
+import br.com.superauto.crm.relacionamento.servico.ConsultaDoHistorico;
 import br.com.superauto.crm.exportacao.FormatoExportacao;
 import br.com.superauto.crm.relacionamento.entidade.Correcao;
-import br.com.superauto.crm.relacionamento.entidade.Corretor;
+import br.com.superauto.crm.relacionamento.entidade.ResponsavelPelaCorrecao;
 import br.com.superauto.crm.relacionamento.entidade.PeriodoDoHistorico;
 import br.com.superauto.crm.relacionamento.entidade.ResultadoContato;
 import br.com.superauto.crm.relacionamento.entidade.TipoDeRelacionamento;
@@ -76,15 +79,18 @@ public class AtendimentosController {
                     Optional.ofNullable(busca));
         }
 
-        PeriodoDoHistorico periodo(LocalDate hoje) {
-            return PeriodoDoHistorico.de(Optional.ofNullable(inicio), Optional.ofNullable(fim), hoje);
+        ConsultaDoHistorico consulta(LocalDate hoje) {
+            return new ConsultaDoHistorico(
+                    PeriodoDoHistorico.de(Optional.ofNullable(inicio), Optional.ofNullable(fim), hoje), filtro());
         }
     }
 
+    /** ATD-05 · Uma página do histórico (parâmetros {@code pagina} e {@code tamanho}). */
     @GetMapping
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
-    public List<LinhaDoHistorico> listar(@ModelAttribute FiltroHistoricoRequest req, JwtAuthenticationToken auth) {
-        return historico.listar(req.periodo(hoje()), req.filtro(), UsuarioAtual.vendedorRestrito(auth));
+    public PagedModel<LinhaDoHistorico> listar(
+            @ModelAttribute FiltroHistoricoRequest req, Pageable pagina, JwtAuthenticationToken auth) {
+        return new PagedModel<>(historico.listar(req.consulta(hoje()), UsuarioAtual.vendedorRestrito(auth), pagina));
     }
 
     @GetMapping("/autores")
@@ -101,8 +107,7 @@ public class AtendimentosController {
             @RequestParam(defaultValue = "XLSX") FormatoExportacao formato,
             JwtAuthenticationToken auth) {
         var linhas =
-                historico.exportar(
-                        req.periodo(hoje()), req.filtro(), AutorDaRequisicao.de(auth));
+                historico.exportar(req.consulta(hoje()), AutorDaRequisicao.de(auth));
         return formato.anexo(ColunasDoHistorico.planilha(linhas), "atendimentos-" + hoje());
     }
 
@@ -165,9 +170,9 @@ public class AtendimentosController {
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
     public void corrigir(
             @PathVariable Long id, @RequestBody @Valid CorrecaoRequest req, JwtAuthenticationToken auth) {
-        var corretor =
-                new Corretor(UsuarioAtual.exigirId(auth), UsuarioAtual.temPapel(auth, Papeis.GERENCIAL));
-        correcoes.corrigir(id, req.correcao(), corretor);
+        var responsavel =
+                new ResponsavelPelaCorrecao(UsuarioAtual.exigirId(auth), UsuarioAtual.temPapel(auth, Papeis.GERENCIAL));
+        correcoes.corrigir(id, req.correcao(), responsavel);
     }
 
     private LocalDate hoje() {

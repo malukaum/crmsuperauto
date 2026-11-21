@@ -1,5 +1,9 @@
 package br.com.superauto.crm.cadastro.servico;
 
+import java.util.function.Function;
+
+import java.util.Optional;
+
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.function.Consumer;
@@ -70,10 +74,10 @@ public class GestaoAssociadoService {
         alterar(ficha, autor, associado -> associado.removerContato(contatoId, autor.id()));
     }
 
-    /** RG-04 · O documento completo, para gerencial e vendedor; cada exibição vai para a auditoria (proposta). */
+    /** RG-04 · O documento completo, para gerencial e vendedor; cada exibição vai para a auditoria. */
     @Transactional
     public String exibirDocumento(Long associadoId, Autor autor) {
-        Associado associado = carregarVisivel(associadoId, autor.escopo());
+        Associado associado = carregarVisivel(associadoId, autor.escopo(), associados::findById);
         String documento = associado.getDocumento().map(Documento::formatado)
                 .orElseThrow(() -> NegocioException.naoEncontrado("Este cadastro foi anonimizado e não tem mais documento."));
         eventos.publishEvent(new DocumentoExibido(associadoId, autor.id()));
@@ -89,15 +93,17 @@ public class GestaoAssociadoService {
 
     /** Carrega, confere a versão vista, aplica a mudança e salva (o {@code save} publica os eventos). */
     private void alterar(FichaAberta ficha, Autor autor, Consumer<Associado> mudanca) {
-        Associado associado = carregarVisivel(ficha.associadoId(), autor.escopo());
+        Associado associado = carregarVisivel(ficha.associadoId(), autor.escopo(), associados::buscarParaAlteracao);
         associado.conferirVersao(ficha.versao());
         mudanca.accept(associado);
         associados.save(associado);
     }
 
-    private Associado carregarVisivel(Long associadoId, EscopoCarteira escopo) {
+    /** Leitura carrega sem trava; alteração carrega travando a linha (RG-06). */
+    private Associado carregarVisivel(Long associadoId, EscopoCarteira escopo,
+                                      Function<Long, Optional<Associado>> carregar) {
         boolean visivel = escopo.vendedor().map(v -> contratos.existsByAssociadoIdAndVendedorId(associadoId, v)).orElse(true);
-        return associados.findById(associadoId).filter(a -> visivel)
+        return carregar.apply(associadoId).filter(a -> visivel)
                 .orElseThrow(() -> NegocioException.naoEncontrado("Cliente não encontrado na carteira."));
     }
 }

@@ -35,7 +35,7 @@ public class GestaoContratosService {
 
     @Transactional
     public void alterar(Long contratoId, AlteracaoContrato alteracao, UUID autor) {
-        Contrato contrato = contratos.findById(contratoId)
+        Contrato contrato = contratos.buscarParaAlteracao(contratoId)
                 .orElseThrow(() -> NegocioException.naoEncontrado("Contrato não encontrado."));
         contrato.conferirVersao(alteracao.versao());
         if (!alteracao.vendedorId().equals(contrato.getVendedorId())) {
@@ -50,11 +50,11 @@ public class GestaoContratosService {
         contratos.save(contrato);
     }
 
-    /** Os importados chegam "a conferir": o gerencial confirma vários de uma vez como ativos (proposta). */
+    /** Os importados chegam "a conferir": o gerencial confirma vários de uma vez como ativos. */
     @Transactional
     public ResultadoAtivacao ativarEmLote(Collection<Long> contratoIds, UUID autor) {
         Set<Long> escolhidos = Set.copyOf(contratoIds);
-        List<Contrato> aConferir = contratos.findAllById(escolhidos).stream().filter(Contrato::aConferir).toList();
+        List<Contrato> aConferir = contratos.buscarTodosParaAlteracao(escolhidos).stream().filter(Contrato::aConferir).toList();
         var agora = OffsetDateTime.now(relogio);
         aConferir.forEach(contrato -> contrato.alterarSituacao(SituacaoContrato.ATIVO, agora, autor));
         contratos.saveAll(aConferir);

@@ -32,7 +32,7 @@ public class ReguaDePosVendaJpa implements ReguaDePosVenda, ConfiguracaoDosPrazo
 
     @Override
     public void alterarPrazos(Map<Short, Integer> prazos, UUID autor) {
-        var configuradas = etapas.findAllByOrderByOrdem();
+        var configuradas = etapas.buscarTodasParaAlteracao();
         configuradas.forEach(e -> e.alterarPrazo(prazos.get(e.getId()), autor));
         etapas.saveAll(configuradas);
     }

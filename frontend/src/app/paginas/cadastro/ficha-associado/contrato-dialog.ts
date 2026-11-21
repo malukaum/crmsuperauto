@@ -17,7 +17,7 @@ import { ReferenciasApi } from '../../../core/api/referencias-api.service';
 import { AvisoMensalidade } from '../../../shared/aviso-mensalidade/aviso-mensalidade';
 import { NOME_SITUACAO } from '../../../shared/formatos/formatos';
 
-/** Mudanças permitidas pela CAR-05; Cancelado é definitivo (proposta). */
+/** Mudanças permitidas pela CAR-05; Cancelado é definitivo. */
 const DESTINOS: Record<SituacaoContrato, SituacaoContrato[]> = {
   A_CONFERIR: ['A_CONFERIR', 'ATIVO', 'SUSPENSO', 'CANCELADO'],
   ATIVO: ['ATIVO', 'SUSPENSO', 'CANCELADO'],

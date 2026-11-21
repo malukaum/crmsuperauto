@@ -2,7 +2,7 @@ package br.com.superauto.crm.config;
 
 import java.util.List;
 
-import br.com.superauto.crm.seguranca.AudienceValidator;
+import br.com.superauto.crm.seguranca.ValidacaoDoToken;
 import br.com.superauto.crm.seguranca.DelegarParaExceptionHandler;
 import br.com.superauto.crm.seguranca.KeycloakRealmRoleConverter;
 
@@ -14,9 +14,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -74,9 +72,7 @@ public class SecurityConfig {
     JwtDecoder jwtDecoder(CrmProperties props) {
         var seg = props.seguranca();
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(seg.jwkSetUri()).build();
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
-                JwtValidators.createDefaultWithIssuer(seg.issuer()),
-                new AudienceValidator(seg.audiencia())));
+        decoder.setJwtValidator(ValidacaoDoToken.criar(seg.issuer(), seg.audiencia()));
         return decoder;
     }
 

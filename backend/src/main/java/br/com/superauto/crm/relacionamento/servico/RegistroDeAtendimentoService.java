@@ -3,6 +3,7 @@ package br.com.superauto.crm.relacionamento.servico;
 import br.com.superauto.crm.erro.NegocioException;
 import br.com.superauto.crm.relacionamento.entidade.AcompanhamentoContrato;
 import br.com.superauto.crm.relacionamento.entidade.Atendimento;
+import br.com.superauto.crm.relacionamento.entidade.ContextoDoContato;
 import br.com.superauto.crm.relacionamento.entidade.ContratoNaFila;
 import br.com.superauto.crm.relacionamento.entidade.EtapaRegua;
 import br.com.superauto.crm.relacionamento.entidade.MensagemDeAniversario;
@@ -12,7 +13,6 @@ import br.com.superauto.crm.relacionamento.entidade.ResultadoContato;
 import br.com.superauto.crm.relacionamento.entidade.TipoDeRelacionamento;
 import br.com.superauto.crm.relacionamento.repositorio.AcompanhamentoContratoRepository;
 import br.com.superauto.crm.relacionamento.repositorio.AtendimentoRepository;
-import br.com.superauto.crm.relacionamento.repositorio.PeriodoDeAtendimentos;
 import br.com.superauto.crm.relacionamento.repositorio.ReguaDePosVenda;
 import br.com.superauto.crm.relacionamento.repositorio.TiposDeContato;
 
@@ -43,30 +43,23 @@ public class RegistroDeAtendimentoService {
     public PreviaDoContato prever(Long contratoId, RegistroDeContato registro, AutorDoContato autor) {
         var contrato = exigirDisponivel(contratoId, registro, autor);
         var contexto = contexto(registro);
-        var previsao =
-                exigirAcompanhamento(contratoId)
-                        .prever(registro.resultado(), registro.retorno(), contexto);
-        String proxima =
-                contexto.etapas().stream()
-                        .filter(e -> previsao.getEtapaPendenteId().filter(e.id()::equals).isPresent())
-                        .map(EtapaRegua::nome)
-                        .findFirst()
-                        .orElseThrow();
+        var previsao = exigirAcompanhamento(contratoId)
+                .prever(new RegistroNaRegua(registro.resultado(), registro.retorno()), contexto);
+        String proxima = EtapaRegua.daRegua(contexto.etapas(), previsao.etapa().orElseThrow()).nome();
         return new PreviaDoContato(
                 registro.resultado() == ResultadoContato.CONCLUIDO ? contrato.getEtapa() : null,
                 proxima,
-                previsao.getProximoContatoEm().orElse(null));
+                previsao.proximoContato().orElse(null));
     }
 
     public void registrar(Long contratoId, RegistroDeContato registro, AutorDoContato autor) {
         var contrato = exigirDisponivel(contratoId, registro, autor);
-        var acompanhamento = exigirAcompanhamento(contratoId);
+        var acompanhamento =
+                acompanhamentos
+                        .buscarParaAlteracao(contratoId)
+                        .orElseThrow(() -> NegocioException.naoEncontrado("Acompanhamento não encontrado."));
         var contexto = contexto(registro);
-        Short etapa =
-                acompanhamento
-                        .getEtapaPendenteId()
-                        .orElseThrow(
-                                () -> NegocioException.conflito("regua-encerrada", "A régua está encerrada."));
+        Short etapa = acompanhamento.etapaEmTrabalho();
         acompanhamento.registrarContato(
                 new RegistroNaRegua(registro.resultado(), registro.retorno()), contexto, autor.id());
         atendimentos.save(
@@ -84,40 +77,26 @@ public class RegistroDeAtendimentoService {
         acompanhamentos.save(acompanhamento);
     }
 
-    public void aniversario(Long contratoId, boolean confirmarRepeticao, AutorDoContato autor) {
+    public void aniversario(Long contratoId, AutorDoContato autor) {
         var contrato = carteira.contrato(contratoId, autor.vendedor());
         contrato.exigirAniversarioDisponivel();
         var agora = ZonedDateTime.now(relogio);
-        var inicioDoAno = agora.toLocalDate().withDayOfYear(1).atStartOfDay(relogio.getZone());
-        var tipo = tipos.id(TipoDeRelacionamento.ANIVERSARIO);
         boolean jaRegistrada =
-                atendimentos
-                        .aniversariosRegistrados(
-                                tipo,
-                                new PeriodoDeAtendimentos(
-                                        inicioDoAno.toOffsetDateTime(),
-                                        inicioDoAno.plusYears(1).toOffsetDateTime(),
-                                        autor.vendedor()))
-                        .contains(contrato.getAssociadoId());
-        new MensagemDeAniversario(jaRegistrada, confirmarRepeticao).exigirConfirmacao();
+                atendimentos.existsByAssociadoIdAndAnoAniversario(contrato.getAssociadoId(), agora.getYear());
         atendimentos.save(
-                Atendimento.registrar(
-                        new Atendimento.Novo(
+                Atendimento.registrarMensagemDeAniversario(
+                        new MensagemDeAniversario(
                                 contrato.getAssociadoId(),
-                                null,
-                                tipo,
-                                null,
-                                ResultadoContato.CONCLUIDO,
-                                null,
-                                null,
+                                tipos.id(TipoDeRelacionamento.ANIVERSARIO),
                                 agora.toOffsetDateTime(),
-                                autor.id())));
+                                autor.id(),
+                                jaRegistrada)));
     }
 
-    private AcompanhamentoContrato.ContextoContato contexto(RegistroDeContato registro) {
+    private ContextoDoContato contexto(RegistroDeContato registro) {
         var agora = ZonedDateTime.now(relogio);
         var momento = MomentoDoAtendimento.de(registro.realizadoEm(), agora);
-        return new AcompanhamentoContrato.ContextoContato(
+        return new ContextoDoContato(
                 registro.versao(), agora.toLocalDate(), momento.valor(), regua.etapas());
     }
 

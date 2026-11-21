@@ -7,6 +7,7 @@ import br.com.superauto.crm.cadastro.repositorio.FiltroCarteira;
 import br.com.superauto.crm.cadastro.repositorio.OrdemCarteira;
 import br.com.superauto.crm.cadastro.repositorio.ResultadoCarteira;
 import br.com.superauto.crm.cadastro.repositorio.TermoBusca;
+import br.com.superauto.crm.compartilhado.entidade.Fila;
 import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
 import br.com.superauto.crm.config.FuncoesDeBusca;
 import jakarta.persistence.EntityManager;
@@ -14,9 +15,12 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.domain.PageImpl;
@@ -32,9 +36,11 @@ import org.springframework.stereotype.Component;
 public class ConsultaCarteiraJpa implements ConsultaCarteira {
 
     private final EntityManager em;
+    private final Clock relogio;
 
-    public ConsultaCarteiraJpa(EntityManager em) {
+    public ConsultaCarteiraJpa(EntityManager em, Clock relogio) {
         this.em = em;
+        this.relogio = relogio;
     }
 
     @Override
@@ -85,13 +91,13 @@ public class ConsultaCarteiraJpa implements ConsultaCarteira {
         return new Mensalidade(em.createQuery(consulta).getSingleResult());
     }
 
-    private static Predicate[] condicoes(CriteriaBuilder cb, Root<LinhaCarteira> linha, FiltroCarteira filtro) {
+    private Predicate[] condicoes(CriteriaBuilder cb, Root<LinhaCarteira> linha, FiltroCarteira filtro) {
         List<Predicate> condicoes = new ArrayList<>();
         if (filtro.excluirCancelados()) {
             condicoes.add(cb.notEqual(linha.get("situacao"), SituacaoContrato.CANCELADO));
         }
         filtro.busca().ifPresent(termo -> condicoes.add(busca(cb, linha, termo)));
-        filtro.fila().ifPresent(f -> condicoes.add(cb.equal(linha.get("fila"), f)));
+        filtro.fila().ifPresent(f -> condicoes.add(naFila(cb, linha, f, LocalDate.now(relogio))));
         filtro.municipioId().ifPresent(m -> condicoes.add(cb.equal(linha.get("municipioId"), m)));
         filtro.situacao().ifPresent(s -> condicoes.add(cb.equal(linha.get("situacao"), s)));
         filtro.etapaId().ifPresent(e -> condicoes.add(cb.equal(linha.get("etapaPendenteId"), e)));
@@ -100,6 +106,22 @@ public class ConsultaCarteiraJpa implements ConsultaCarteira {
         filtro.potencial().ifPresent(p -> condicoes.add(cb.equal(linha.get("potencialIndicacao"), p)));
         filtro.vendedorId().ifPresent(v -> condicoes.add(cb.equal(linha.get("vendedorId"), v)));
         return condicoes.toArray(Predicate[]::new);
+    }
+
+    /** RG-14 · A mesma classificação de {@code LinhaCarteira.filaEm}, traduzida para a consulta. */
+    private static Predicate naFila(CriteriaBuilder cb, Root<LinhaCarteira> linha, Fila fila, LocalDate hoje) {
+        Path<LocalDate> proximo = linha.get("proximoContatoEm");
+        Predicate comRegua = cb.and(linha.get("situacao").in(SituacaoContrato.A_CONFERIR, SituacaoContrato.ATIVO),
+                cb.isNotNull(linha.get("etapaPendenteId")));
+        return switch (fila) {
+            case CANCELADO -> cb.equal(linha.get("situacao"), SituacaoContrato.CANCELADO);
+            case SUSPENSO -> cb.equal(linha.get("situacao"), SituacaoContrato.SUSPENSO);
+            case SEM_DATA -> cb.and(linha.get("situacao").in(SituacaoContrato.A_CONFERIR, SituacaoContrato.ATIVO),
+                    cb.or(cb.isNull(linha.get("etapaPendenteId")), cb.isNull(proximo)));
+            case ATRASADO -> cb.and(comRegua, cb.lessThan(proximo, hoje));
+            case HOJE -> cb.and(comRegua, cb.equal(proximo, hoje));
+            case FUTURO -> cb.and(comRegua, cb.greaterThan(proximo, hoje));
+        };
     }
 
     private static Predicate busca(CriteriaBuilder cb, Root<LinhaCarteira> linha, TermoBusca termo) {

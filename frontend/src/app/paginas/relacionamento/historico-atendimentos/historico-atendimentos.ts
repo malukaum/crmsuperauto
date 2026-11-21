@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -23,6 +22,7 @@ import {
   EXTENSAO_EXPORTACAO,
   FormatoExportacao,
 } from '../../../core/api/carteira-api.service';
+import { PaginaApi } from '../../../core/api/pagina';
 import { problemaDe } from '../../../core/api/problema';
 import { Cidade } from '../../../core/api/referencias-api.service';
 import {
@@ -40,6 +40,11 @@ import { CampoCidade } from '../../../shared/campo-cidade/campo-cidade';
 import { NOME_RESULTADO, formatarData } from '../../../shared/formatos/formatos';
 import { StatusChip } from '../../../shared/status-chip/status-chip';
 import { FILTRO_INICIAL, marcaDeCorrecao } from './filtro-do-historico';
+
+const PAGINA_VAZIA: PaginaApi<LinhaHistorico> = {
+  content: [],
+  page: { size: 0, number: 0, totalElements: 0, totalPages: 0 },
+};
 
 /**
  * ATD-05 · Consultar o histórico de atendimentos, do mais recente para o mais antigo, com filtros e exportação
@@ -89,9 +94,7 @@ export class HistoricoAtendimentos {
   protected readonly erro = signal('');
   protected readonly pagina = signal(0);
   protected readonly tamanho = signal(25);
-  protected readonly visiveis = computed(() =>
-    this.linhas().slice(this.pagina() * this.tamanho(), (this.pagina() + 1) * this.tamanho()),
-  );
+  protected readonly total = signal(0);
 
   constructor() {
     this.consultas
@@ -100,8 +103,9 @@ export class HistoricoAtendimentos {
         switchMap(() => this.consultar()),
         takeUntilDestroyed(inject(DestroyRef)),
       )
-      .subscribe((linhas) => {
-        this.linhas.set(linhas);
+      .subscribe((pagina) => {
+        this.linhas.set(pagina.content);
+        this.total.set(pagina.page.totalElements);
         this.carregando.set(false);
       });
   }
@@ -126,9 +130,11 @@ export class HistoricoAtendimentos {
     this.filtrar();
   }
 
+  /** A troca de página pede a página ao servidor, mantendo os filtros. */
   protected paginar(evento: PageEvent): void {
     this.pagina.set(evento.pageIndex);
     this.tamanho.set(evento.pageSize);
+    this.consultas.next();
   }
 
   protected exportar(formato: FormatoExportacao): void {
@@ -148,10 +154,10 @@ export class HistoricoAtendimentos {
   private consultar() {
     this.carregando.set(true);
     this.erro.set('');
-    return this.api.historico(this.filtro()).pipe(
+    return this.api.historico(this.filtro(), { pagina: this.pagina(), tamanho: this.tamanho() }).pipe(
       catchError((e: unknown) => {
         this.erro.set(problemaDe(e).detail ?? 'Não foi possível carregar o histórico.');
-        return of([]);
+        return of(PAGINA_VAZIA);
       }),
     );
   }

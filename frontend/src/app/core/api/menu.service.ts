@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 
 import { environment } from '../../../environments/environment';
+import { REQUISICAO_DE_FUNDO } from '../auth/auth.interceptor';
 
 export interface ContadoresMenu {
   contatosHoje: number;
@@ -19,7 +20,8 @@ export class MenuService {
   readonly contadores = signal<ContadoresMenu | null>(null);
 
   carregar(): void {
-    this.http.get<ContadoresMenu>(`${environment.apiBase}/interno/menu/contadores`).subscribe({
+    const deFundo = new HttpContext().set(REQUISICAO_DE_FUNDO, true);
+    this.http.get<ContadoresMenu>(`${environment.apiBase}/interno/menu/contadores`, { context: deFundo }).subscribe({
       next: (c) => this.contadores.set(c),
       // Sem contador o menu continua funcionando; não vale a pena incomodar o usuário.
       error: () => this.contadores.set(null),

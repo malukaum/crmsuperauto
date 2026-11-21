@@ -23,7 +23,7 @@ class OAuthFalso {
   initCodeFlow = vi.fn();
   logOut = vi.fn();
   configure = vi.fn();
-  setupAutomaticSilentRefresh = vi.fn();
+  getAccessTokenExpiration = vi.fn(() => Date.now() + 5 * 60 * 1000);
   loadDiscoveryDocumentAndTryLogin = vi.fn(async () => true);
   getRefreshToken = vi.fn(() => null);
   refreshToken = vi.fn();

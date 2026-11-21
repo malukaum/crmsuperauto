@@ -1,5 +1,7 @@
 package br.com.superauto.crm.relacionamento.repositorio;
 
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import br.com.superauto.crm.relacionamento.entidade.Atendimento;
 import br.com.superauto.crm.relacionamento.entidade.ResultadoContato;
 
@@ -16,7 +18,20 @@ public interface AtendimentoRepository extends Repository<Atendimento, Long> {
 
     Optional<Atendimento> findById(Long id);
 
+    /** ATD-04 · O atendimento a corrigir, travado: correções simultâneas do mesmo registro entram em fila. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from Atendimento a where a.id = :id")
+    Optional<Atendimento> buscarParaAlteracao(Long id);
+
+    /** CAR-08 · Os atendimentos do associado, travados na ordem do id, para a anonimização. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from Atendimento a where a.associadoId = :associadoId order by a.id")
+    List<Atendimento> buscarDoAssociadoParaAlteracao(Long associadoId);
+
     List<Atendimento> findByAssociadoId(Long associadoId);
+
+    /** ATD-03: já existe mensagem de aniversário da pessoa no ano (de qualquer autor). */
+    boolean existsByAssociadoIdAndAnoAniversario(Long associadoId, Integer anoAniversario);
 
     /** ATD-04: um atendimento tem no máximo uma correção (também garantido por índice único). */
     boolean existsByCorrigeAtendimentoId(Long atendimentoId);

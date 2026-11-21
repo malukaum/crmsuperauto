@@ -82,8 +82,10 @@ Falha nestes itens bloqueia o commit tanto quanto teste vermelho.
 
 **Persistência**
 - [ ] Entidade com construtor `protected`, métodos de domínio em vez de setters, `@Version` onde há `versao`.
+- [ ] Toda alteração de registro existente carrega com um método `buscar...ParaAlteracao` (`@Lock(PESSIMISTIC_WRITE)`), vários na ordem do id (RG-06).
+- [ ] Toda busca para exibição usa `findById`/consultas (sem trava) dentro de `@Transactional(readOnly = true)`; transação de escrita só quando há alteração ou auditoria.
 - [ ] Changeset novo (nenhum já aplicado foi editado), com rollback; dicionário de dados atualizado.
-- [ ] Mapeamento novo validado com a skill `validar-banco`.
+- [ ] Nenhum teste da suíte depende de container ou banco ativo (sem `@SpringBootTest` contra infraestrutura real); a conferência com `validar-banco`, se feita, foi temporária e apagada.
 
 **Regras gerais**
 - [ ] RG-03: consultas novas filtram pelo vendedor quando o papel é vendedor.

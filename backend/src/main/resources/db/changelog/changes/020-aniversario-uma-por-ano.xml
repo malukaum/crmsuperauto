@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      ATD-03 · Uma mensagem de aniversário por pessoa no ano: a segunda é recusada, inclusive quando duas pessoas
+      registram ao mesmo tempo. ano_aniversario fica preenchido só na mensagem (não nas correções) e o índice único
+      garante a regra. As mensagens já gravadas recebem o ano de Brasília; se houver mais de uma da mesma pessoa no
+      mesmo ano (antes era permitido com confirmação), só a primeira recebe o ano, e as demais continuam no histórico.
+    -->
+    <changeSet id="020-aniversario-uma-por-ano" author="crm-superauto">
+        <addColumn tableName="atendimento">
+            <column name="ano_aniversario" type="integer"
+                    remarks="Ano (Brasília) da mensagem de aniversário; vazio nos demais atendimentos e nas correções"/>
+        </addColumn>
+        <sql><![CDATA[
+WITH mensagens AS (
+    SELECT a.id,
+           EXTRACT(YEAR FROM a.realizado_em AT TIME ZONE 'America/Sao_Paulo')::int AS ano,
+           ROW_NUMBER() OVER (
+               PARTITION BY a.associado_id, EXTRACT(YEAR FROM a.realizado_em AT TIME ZONE 'America/Sao_Paulo')
+               ORDER BY a.realizado_em, a.id) AS ordem
+      FROM atendimento a
+      JOIN tipo_contato t ON t.id = a.tipo_contato_id
+     WHERE t.codigo = 'ANIVERSARIO'
+       AND a.corrige_atendimento_id IS NULL
+)
+UPDATE atendimento a
+   SET ano_aniversario = m.ano
+  FROM mensagens m
+ WHERE a.id = m.id
+   AND m.ordem = 1;
+
+CREATE UNIQUE INDEX uk_atendimento_aniversario_ano ON atendimento (associado_id, ano_aniversario)
+ WHERE ano_aniversario IS NOT NULL;
+        ]]></sql>
+        <rollback>
+            <sql>DROP INDEX uk_atendimento_aniversario_ano;</sql>
+            <dropColumn tableName="atendimento" columnName="ano_aniversario"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

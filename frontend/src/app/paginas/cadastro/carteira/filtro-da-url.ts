@@ -20,7 +20,7 @@ export interface EstadoCarteira {
 }
 
 /**
- * CAR-01 · Filtros, ordenação e página ficam na URL: ao voltar da ficha, a lista volta como estava (proposta),
+ * CAR-01 · Filtros, ordenação e página ficam na URL: ao voltar da ficha, a lista volta como estava,
  * e o endereço pode ser compartilhado.
  */
 export function estadoDaUrl(params: ParamMap): EstadoCarteira {

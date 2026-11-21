@@ -148,6 +148,10 @@ Backend e frontend estão no formato alvo. Referências vivas de cada padrão:
 
 - **Proibido no código Java:** `nativeQuery = true`, `JdbcTemplate`, `NamedParameterJdbcTemplate`, `createNativeQuery`. Use entidades, métodos derivados do Spring Data e JPQL/HQL.
 - Escrita por **dirty checking**: carregue a raiz do agregado numa transação e chame um método de domínio (`contrato.transferirPara(...)`, `usuario.definirAtivo(...)`). Nada de setters públicos genéricos.
+- **Busca para alteração × busca para exibição (RG-06):**
+  - Para alterar um registro existente, use um método `buscar...ParaAlteracao` do repositório (`buscarParaAlteracao(id)`, `buscarTodosParaAlteracao(ids)`…), com `@Lock(LockModeType.PESSIMISTIC_WRITE)` (`SELECT … FOR UPDATE`): essa busca sempre trava a linha até o fim da transação, e alterações simultâneas entram em fila. Vários registros: na ordem do id.
+  - Para exibir, use `findById`, consultas ou modelos de leitura, que nunca travam, dentro de `@Transactional(readOnly = true)`: nenhuma busca de visualização abre transação de escrita. Exceção: exibição que grava auditoria (mostrar documento, exportação) precisa de transação de escrita para o evento.
+  - A espera máxima (5 s, `jakarta.persistence.lock.timeout` no `application.yml`) vira 409 `registro-em-andamento`; a comparação de `versao` continua recusando quem viu um estado já alterado. Inserção não tem o que travar: unicidade é garantida por índice único (violação vira 409 `registro-duplicado`).
 - Por pragmatismo, as classes de `entidade` levam as anotações JPA (e `AbstractAggregateRoot`), e as interfaces de `repositorio` estendem Spring Data. São as únicas dependências de framework aceitas nessas duas camadas.
 - Entidades:
   - Construtor `protected` sem argumentos para o Hibernate e construtor/fábrica de domínio que garante o estado válido.
@@ -160,18 +164,21 @@ Backend e frontend estão no formato alvo. Referências vivas de cada padrão:
   - Id gerado pelo Keycloak (UUID atribuído) → implemente `Persistable` para o `save` fazer INSERT direto.
   - Associações JPA só **dentro** do agregado (`@OneToMany(cascade = ALL, orphanRemoval = true)` da raiz para as partes). Entre agregados, só o id.
 - `spring.jpa.hibernate.ddl-auto` é **`validate`**: o Hibernate confere as entidades contra o schema na subida. Nunca use `update`/`create`.
-- SQL só existe no **Liquibase**: tabelas, `CHECK`s, índices parciais e views (regras de cálculo como `vw_fila_contato`).
-- Changesets já aplicados **nunca são editados**; toda mudança é um changeset novo, com `rollback`. Siga as convenções do topo de `db.changelog-master.xml`.
+- SQL só existe no **Liquibase**: tabelas, `CHECK`s, índices parciais e views. Visão não usa `now()`: o "hoje" é sempre o de Brasília, do `Clock` da aplicação (RG-01).
+- Changesets já aplicados **nunca são editados**; toda mudança de estrutura (tabela, coluna, índice, `CHECK`) é um arquivo novo, versionado na sequência, com `rollback`. Siga as convenções do topo de `db.changelog-master.xml`.
+- **Visões são a exceção:** não alteram a estrutura, então cada uma tem um arquivo em `changes/visoes/`, editado no lugar, com `runOnChange` + `validCheckSum ANY` (o Liquibase reaplica quando a definição muda).
 
 ## Regras transversais (sempre)
 
-- **Hoje = America/Sao_Paulo** (RG-01). Use o `Clock` injetado, nunca `LocalDate.now()` sem relógio.
+- **Hoje = Brasília (America/Sao_Paulo)** (RG-01). Use o `Clock` injetado, nunca `LocalDate.now()` sem relógio, e nunca o `now()` do banco.
 - **Escopo por papel** (RG-03): vendedor só vê os próprios contratos — em toda consulta nova, filtre por vendedor quando o papel for `vendedor`.
 - **Auditoria** (RG-08): toda alteração de cliente, contato, contrato, régua, indicação e configuração gera evento de auditoria com valor anterior e novo, na mesma transação. O contexto que altera publica um **evento de domínio**; o contexto `auditoria` o ouve e grava com `EventoAuditoria.criacao(...)` / `EventoAuditoria.alteracao(...)`. Nenhum outro contexto chama a auditoria direto.
 - **Nada se apaga** (RG-07): contratos e atendimentos mudam de situação ou são corrigidos, nunca excluídos. Usuário é desativado, não excluído.
 - **Erros:** regra de negócio lança `NegocioException` com `Tipo` (`NAO_ENCONTRADO`, `CONFLITO`, `INVALIDO`), um `codigo` kebab-case para o front e mensagem em português para o usuário final. Falha de integração lança `IntegracaoIndisponivelException`. Quem converte para HTTP (ProblemDetail) é só o `GlobalExceptionHandler`.
+- **Tabelas paginadas** são paginadas no servidor e no front: o controller recebe o `Pageable` do Spring (parâmetros `pagina`, a partir de 0, e `tamanho`, padrão 25 e no máximo 100, em `spring.data.web.pageable`), a consulta busca só a página com a contagem total, e a resposta é o `PagedModel` do Spring (`content` + `page`). O front pede a página a cada troca (`PaginaApi` em `core/api/pagina.ts`); nunca recebe a lista inteira para paginar no navegador. A ordem da tabela é a da regra de negócio; ordenação livre só por lista fechada (como `OrdemCarteira`). Exportação é a exceção: leva a lista filtrada inteira.
 - **Segurança:** todo endpoint tem `@PreAuthorize` com as constantes de `Papeis`. Rotas: `/api/interno/**` (equipe), `/api/gestao/**` (gerencial), `/api/cliente/**` (cliente).
 - **Validação de entrada** com Bean Validation nos records de request do controller, mensagens em português. Invariantes de negócio são validadas no domínio (objetos de valor e entidades), não só na borda.
+- **Toda regra que o front valida, o back também valida.** O front valida para orientar o usuário (esconder um botão, avisar antes de enviar); o back é quem garante, e recusa o pedido que chegar fora da regra (ex.: correção de atendimento fora do prazo). Quando a regra depende de dados do servidor, o back calcula e manda pronto (ex.: `podeCorrigir` no histórico da ficha), em vez de o front repetir a regra.
 
 ## Frontend
 
@@ -183,6 +190,7 @@ Backend e frontend estão no formato alvo. Referências vivas de cada padrão:
 - Tema e estilos globais em `src/styles/` (`_tokens`, `_tema`, `_base`, `_pagina`, `_conteudo`, `_tabela`, `_formulario`): cores só por token (`--crm-azul-marca`, `--crm-amarelo`...), estilo usado por mais de uma tela vira classe `crm-*` global, e o `.scss` da tela guarda só o que é dela.
 - Identidade visual (logo Super Auto · Linha Truck): imagens em `public/marca/`, componentes `app-marca` e `app-logo-completa`; o tema de login do Keycloak repete os tokens.
 - Formatos RG-02: datas dd/mm/aaaa, R$ 1.234,56, telefone (37) 9 9999-9999, placa maiúscula sem hífen.
+- Data e hora de um acontecimento (`OffsetDateTime` da API) aparece no fuso do navegador de quem vê (`date` pipe sem fuso fixo); data de calendário (`LocalDate`) é mostrada como veio, com `formatarData`, sem conversão (RG-01).
 - Erros da API chegam como ProblemDetail: use `detail` para a mensagem e `codigo` para decidir o fluxo.
 
 ## Testes
@@ -191,7 +199,8 @@ Backend e frontend estão no formato alvo. Referências vivas de cada padrão:
 - **Domínio testado sem Spring e sem framework de mock:** entidades, objetos de valor e serviços de domínio são testados diretamente; portas viram dublês simples em memória (veja `TransferenciaCarteiraTest`).
 - Serviços de aplicação testados com repositórios e portas simulados (mock de `ProvedorIdentidade`, `ContratosDoVendedor`…).
 - Todo endpoint novo entra em `SegurancaEndpointsTest` (200/401/403 por papel).
-- Mapeamento JPA novo ou alterado: valide contra o Postgres local com a skill `validar-banco` antes de concluir.
+- **Testes são de regra e rodam sem infraestrutura.** A suíte (`mvn -o -q test`, `npx ng test`) passa sem nenhum container ativo: nada de `@SpringBootTest` contra banco, Keycloak ou outro serviço real; dependências externas viram mocks ou dublês em memória. Nunca se testa contra produção.
+- Teste que só faz sentido com o banco ativo (validar schema, visão, consulta real) **não entra na suíte do projeto**: é responsabilidade de quem mantém o ambiente. A skill `validar-banco` continua disponível como conferência manual e temporária, apagada ao fim.
 - Frontend: Vitest (`*.spec.ts`).
 
 ## Comandos
@@ -212,7 +221,7 @@ cd frontend && npx ng test --watch=false             # testes do front
 | `nova-entidade` | Modelar agregado, entidade ou objeto de valor (Liquibase + Hibernate + repositório) |
 | `novo-endpoint` | Caso de uso (serviço de aplicação) + controller + segurança + testes no backend |
 | `nova-tela` | Página Angular nova consumindo a API |
-| `validar-banco` | Conferir mapeamentos e consultas contra o Postgres local sem sujar o banco |
+| `validar-banco` | Conferência manual e temporária de mapeamentos contra o Postgres local (fora da suíte; opcional) |
 | `revisar-convencoes` | Checklist de DDD, SOLID, Clean Code e regras do projeto antes de commit/PR |
 
 ## Ao terminar uma tarefa

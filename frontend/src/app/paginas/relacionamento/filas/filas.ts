@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -19,6 +18,7 @@ import { Subject, catchError, of, startWith, switchMap } from 'rxjs';
 import { RelacionamentoApi, LinhaTrabalho } from '../../../core/api/relacionamento-api.service';
 import { ReferenciasApi, Cidade } from '../../../core/api/referencias-api.service';
 import { MenuService } from '../../../core/api/menu.service';
+import { PaginaApi } from '../../../core/api/pagina';
 import { problemaDe } from '../../../core/api/problema';
 import { AvisoMensalidade } from '../../../shared/aviso-mensalidade/aviso-mensalidade';
 import { CampoCidade } from '../../../shared/campo-cidade/campo-cidade';
@@ -29,6 +29,10 @@ import {
   NOME_SITUACAO,
 } from '../../../shared/formatos/formatos';
 import { RegistroNaFila } from './registro-na-fila';
+const PAGINA_VAZIA: PaginaApi<LinhaTrabalho> = {
+  content: [],
+  page: { size: 0, number: 0, totalElements: 0, totalPages: 0 },
+};
 /** FIL-02 a FIL-04 · Consulta das filas e seleção do associado a contatar. */
 @Component({
   selector: 'app-filas',
@@ -70,9 +74,7 @@ export class Filas {
   protected readonly gravando = signal(false);
   protected readonly pagina = signal(0);
   protected readonly tamanho = signal(25);
-  protected readonly visiveis = computed(() =>
-    this.linhas().slice(this.pagina() * this.tamanho(), (this.pagina() + 1) * this.tamanho()),
-  );
+  protected readonly total = signal(0);
   protected readonly formatarData = formatarData;
   protected readonly formatarTelefone = formatarTelefone;
   protected readonly linkWhatsapp = linkWhatsapp;
@@ -89,25 +91,31 @@ export class Filas {
         switchMap(() => this.consultar()),
         takeUntilDestroyed(inject(DestroyRef)),
       )
-      .subscribe((linhas) => {
-        this.linhas.set(linhas);
+      .subscribe((pagina) => {
+        this.linhas.set(pagina.content);
+        this.total.set(pagina.page.totalElements);
         this.carregando.set(false);
       });
   }
   private consultar() {
     this.carregando.set(true);
+    const pagina = { pagina: this.pagina(), tamanho: this.tamanho() };
     const consulta = this.aniversario
-      ? this.api.aniversarios(this.dias())
-      : this.api.fila(this.atrasados ? 'atrasados' : 'hoje', {
-          busca: this.busca(),
-          cidade: this.cidade()?.id ?? null,
-          etapa: this.etapa(),
-          tipoVeiculo: this.tipoVeiculo(),
-        });
+      ? this.api.aniversarios(this.dias(), pagina)
+      : this.api.fila(
+          this.atrasados ? 'atrasados' : 'hoje',
+          {
+            busca: this.busca(),
+            cidade: this.cidade()?.id ?? null,
+            etapa: this.etapa(),
+            tipoVeiculo: this.tipoVeiculo(),
+          },
+          pagina,
+        );
     return consulta.pipe(
       catchError((erro) => {
         this.erro.set(problemaDe(erro).detail ?? 'Não foi possível carregar a fila.');
-        return of([]);
+        return of(PAGINA_VAZIA);
       }),
     );
   }
@@ -118,16 +126,22 @@ export class Filas {
     this.pagina.set(0);
     this.atualizacoes.next();
   }
+  /** A troca de página pede a página ao servidor, mantendo os filtros. */
   protected paginar(evento: PageEvent): void {
+    if (this.gravando()) return;
     this.pagina.set(evento.pageIndex);
     this.tamanho.set(evento.pageSize);
+    this.selecionado.set(null);
+    this.atualizacoes.next();
   }
   protected escolher(linha: LinhaTrabalho): void {
     this.selecionado.set(linha);
     this.erro.set('');
   }
+  /** Depois de registrar, recarrega a mesma página: quem saiu da fila dá lugar ao próximo. */
   protected aoRegistrar(): void {
-    this.carregar();
+    this.selecionado.set(null);
+    this.atualizacoes.next();
     this.menu.carregar();
   }
   protected aoConflito(mensagem: string): void {

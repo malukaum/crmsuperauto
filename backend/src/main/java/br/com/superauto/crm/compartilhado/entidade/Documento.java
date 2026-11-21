@@ -12,7 +12,7 @@ import br.com.superauto.crm.erro.NegocioException;
  *
  * <p>O construtor só confere o formato gravado (o mesmo do {@code ck_associado_documento}), para dados antigos
  * continuarem legíveis. Documento digitado entra por {@link #de(String)}, que também confere os dígitos
- * verificadores (CAR-02, proposta).
+ * verificadores (CAR-02).
  */
 public record Documento(String valor) {
 

@@ -102,7 +102,7 @@ class GestaoContratosServiceTest {
         var aConferir = comId(ContratoDeTeste.doVendedor(1L, vendedor), 1L);
         var suspenso = comId(ContratoDeTeste.doVendedor(2L, vendedor), 2L);
         suspenso.alterarSituacao(SituacaoContrato.SUSPENSO, null, gerente);
-        when(contratos.findAllById(Set.of(1L, 2L))).thenReturn(List.of(aConferir, suspenso));
+        when(contratos.buscarTodosParaAlteracao(Set.of(1L, 2L))).thenReturn(List.of(aConferir, suspenso));
 
         var resultado = servico.ativarEmLote(List.of(1L, 2L, 2L), gerente);
 
@@ -113,7 +113,7 @@ class GestaoContratosServiceTest {
 
     private Contrato carregado() {
         var contrato = comId(ContratoDeTeste.doVendedor(1L, vendedor), 10L);
-        when(contratos.findById(10L)).thenReturn(Optional.of(contrato));
+        when(contratos.buscarParaAlteracao(10L)).thenReturn(Optional.of(contrato));
         return contrato;
     }
 

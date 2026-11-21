@@ -2,6 +2,7 @@ package br.com.superauto.crm.relacionamento.entidade;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -77,6 +78,14 @@ public class LinhaHistoricoAtendimento {
     private Integer municipioId;
 
     private String cidade;
+
+    @Column(name = "registrado_em")
+    private OffsetDateTime registradoEm;
+
+    /** ATD-04 · Se quem está vendo pode corrigir este registro agora; o já corrigido não recebe outra correção. */
+    public boolean podeSerCorrigidoPor(ResponsavelPelaCorrecao responsavel, ZonedDateTime agora) {
+        return !corrigido && new PermissaoDeCorrecao(registradoPorId, registradoEm).permite(responsavel, agora);
+    }
 
     public ProximaAcao proximaAcao() {
         return ProximaAcao.de(tipoCodigo, resultado);

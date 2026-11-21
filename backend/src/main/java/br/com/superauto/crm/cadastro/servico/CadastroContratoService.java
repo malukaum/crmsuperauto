@@ -72,7 +72,7 @@ public class CadastroContratoService {
         if (!referencias.tipoVeiculoAtivo(dados.tipoVeiculoId())) {
             throw NegocioException.invalido("tipo-veiculo-invalido", "Escolha um tipo de veículo válido.");
         }
-        return veiculos.findByPlaca(dados.placa())
+        return veiculos.buscarPelaPlacaParaAlteracao(dados.placa())
                 .map(veiculo -> {
                     exigirSemContratoVigente(veiculo);
                     veiculo.descrever(dados.modelo(), dados.tipoVeiculoId());

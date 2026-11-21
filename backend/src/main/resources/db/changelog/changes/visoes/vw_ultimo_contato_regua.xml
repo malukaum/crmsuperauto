@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      Último contato concluído da régua por contrato: base do recálculo dos prazos (FIL-06) e ÚLTIMO CONTATO /
+      ETAPA CONCLUÍDA da planilha. A correção de atendimento (ATD-04) é só histórico: o registro original continua
+      valendo para a régua.
+      Visão não altera a estrutura: este arquivo é a definição vigente e é editado no lugar. O Liquibase reaplica
+      quando a definição muda (runOnChange) e aceita o checksum novo (validCheckSum ANY).
+    -->
+    <changeSet id="vw-ultimo-contato-regua" author="crm-superauto" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
+        <createView viewName="vw_ultimo_contato_regua" replaceIfExists="true"><![CDATA[
+SELECT DISTINCT ON (a.contrato_id)
+       a.contrato_id,
+       a.realizado_em AS ultimo_contato_em,
+       a.etapa_id     AS ultima_etapa_concluida_id
+  FROM atendimento a
+ WHERE a.resultado = 'CONCLUIDO'
+   AND a.etapa_id IS NOT NULL
+ ORDER BY a.contrato_id, a.realizado_em DESC, a.id DESC
+        ]]></createView>
+        <!-- A versão anterior está no histórico do git; não há dado a desfazer. -->
+        <rollback/>
+    </changeSet>
+</databaseChangeLog>

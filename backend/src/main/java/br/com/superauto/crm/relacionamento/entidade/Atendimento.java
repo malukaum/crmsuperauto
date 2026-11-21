@@ -36,7 +36,6 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Atendimento extends AbstractAggregateRoot<Atendimento> {
     private static final int TAMANHO_MAXIMO_DO_RESUMO = 2000;
-    private static final int DIAS_PARA_O_AUTOR_CORRIGIR = 1;
 
     @Getter
     @Id
@@ -67,6 +66,10 @@ public class Atendimento extends AbstractAggregateRoot<Atendimento> {
 
     @Column(name = "corrige_atendimento_id", updatable = false)
     private Long corrigeAtendimentoId;
+
+    /** ATD-03: preenchido só na mensagem de aniversário (não nas correções), para uma por pessoa no ano. */
+    @Column(name = "ano_aniversario", updatable = false)
+    private Integer anoAniversario;
 
     @Column(name = "realizado_em", nullable = false)
     private OffsetDateTime realizadoEm;
@@ -107,6 +110,15 @@ public class Atendimento extends AbstractAggregateRoot<Atendimento> {
         return atendimento;
     }
 
+    /** ATD-03 · A mensagem de aniversário: tipo Aniversário, Concluído, ligada à pessoa e sem mexer na régua. */
+    public static Atendimento registrarMensagemDeAniversario(MensagemDeAniversario mensagem) {
+        mensagem.exigirPrimeiraDoAno();
+        var atendimento = registrar(new Novo(mensagem.associadoId(), null, mensagem.tipoId(), null,
+                ResultadoContato.CONCLUIDO, null, null, mensagem.agora(), mensagem.autor()));
+        atendimento.anoAniversario = mensagem.ano();
+        return atendimento;
+    }
+
     private static void validar(Novo novo) {
         Objects.requireNonNull(novo.associadoId(), "associadoId");
         Objects.requireNonNull(novo.tipoId(), "tipoId");
@@ -122,12 +134,12 @@ public class Atendimento extends AbstractAggregateRoot<Atendimento> {
     /**
      * ATD-04 · Gera o registro de correção, que aponta para este. Contrato, tipo, etapa e data do contato continuam
      * os do original; a régua não é desfeita. O autor corrige até o fim do dia seguinte ao registro; o gerencial, a
-     * qualquer momento (proposta).
+     * qualquer momento.
      *
      * @param agora o instante atual no fuso de São Paulo (RG-01)
      */
-    public Atendimento corrigir(Correcao correcao, Corretor corretor, ZonedDateTime agora) {
-        exigirPermissaoDeCorrecao(corretor, agora);
+    public Atendimento corrigir(Correcao correcao, ResponsavelPelaCorrecao responsavel, ZonedDateTime agora) {
+        new PermissaoDeCorrecao(registradoPor, registradoEm).exigir(responsavel, agora);
         var correcaoRegistrada =
                 registrar(
                         new Novo(
@@ -139,23 +151,19 @@ public class Atendimento extends AbstractAggregateRoot<Atendimento> {
                                 correcao.descricao(),
                                 correcao.retorno().orElse(null),
                                 realizadoEm,
-                                corretor.id()));
+                                responsavel.id()));
         correcaoRegistrada.corrigeAtendimentoId = id;
         return correcaoRegistrada;
     }
 
-    private void exigirPermissaoDeCorrecao(Corretor corretor, ZonedDateTime agora) {
-        if (corretor.gerencial()) return;
-        if (!registradoPor.equals(corretor.id()))
-            throw NegocioException.invalido(
-                    "correcao-nao-permitida",
-                    "Só o autor do registro ou o gerencial pode corrigir este atendimento.");
-        LocalDate ultimoDia =
-                registradoEm.atZoneSameInstant(agora.getZone()).toLocalDate().plusDays(DIAS_PARA_O_AUTOR_CORRIGIR);
-        if (agora.toLocalDate().isAfter(ultimoDia))
-            throw NegocioException.invalido(
-                    "correcao-fora-do-prazo",
-                    "O autor pode corrigir até o fim do dia seguinte ao registro. Peça a correção ao gerencial.");
+    /**
+     * ATD-04 · Um atendimento tem no máximo uma correção; para corrigir de novo, corrige-se a correção (também
+     * garantido pelo índice único {@code uk_atendimento_corrige}).
+     */
+    public void exigirSemCorrecao(boolean existeCorrecao) {
+        if (existeCorrecao)
+            throw NegocioException.conflito(
+                    "atendimento-ja-corrigido", "Este atendimento já foi corrigido. Corrija o registro de correção.");
     }
 
     @PostPersist
@@ -169,7 +177,7 @@ public class Atendimento extends AbstractAggregateRoot<Atendimento> {
 
     /**
      * CAR-08 · A única mudança permitida num atendimento: a descrição pode conter dados pessoais e é apagada quando o
-     * associado é anonimizado (proposta). Data, tipo, resultado e autor continuam, para os relatórios.
+     * associado é anonimizado. Data, tipo, resultado e autor continuam, para os relatórios.
      */
     public void apagarDescricaoPorAnonimizacao() {
         descricao = null;

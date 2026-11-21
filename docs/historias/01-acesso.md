@@ -46,11 +46,14 @@ A identidade e os papéis ficam no Keycloak, com quatro papéis: gerencial, vend
 **Regras**
 
 - Sair encerra a sessão no Keycloak, não só no navegador.
-- Sem uso por 30 minutos, a sessão expira **(proposta)**.
+- Sem uso por 30 minutos, a sessão expira. A regra vale no servidor: o token só é renovado quando a pessoa usa o CRM (mexe na tela ou faz uma ação); parada, a sessão expira no Keycloak e a API recusa o token vencido. Consultas automáticas, como os contadores do menu, não contam como uso.
+- Na tela de login, quem marca "Confiar neste dispositivo" (o "Lembrar de mim" do Keycloak) continua conectado nesse dispositivo por até 15 dias, sem expirar por inatividade. Não marque em computador compartilhado; sair encerra a sessão na hora.
 
 **Critérios de aceite**
 
 - Dado um usuário que saiu, quando volta pelo botão Voltar do navegador, então é levado de novo ao login.
+- Dado um usuário que entrou sem marcar "Confiar neste dispositivo", quando fica 30 minutos sem usar, então a sessão é encerrada.
+- Dado um usuário que marcou "Confiar neste dispositivo", quando volta ao CRM no mesmo dispositivo dentro de 15 dias, então entra sem digitar a senha.
 
 ### ACE-04 · Gerenciar usuários da equipe
 
@@ -61,10 +64,11 @@ A identidade e os papéis ficam no Keycloak, com quatro papéis: gerencial, vend
 - Só o gerencial gerencia usuários. Cada pessoa da equipe tem um papel: gerencial, vendedor ou atendente.
 - O usuário novo recebe por e-mail o link para definir a senha.
 - Usuário não é excluído, só desativado, para o histórico manter o autor de cada atendimento.
-- Antes de desativar um vendedor com contratos, o sistema pede para transferi-los a outro vendedor **(proposta)**.
+- Ao desativar um vendedor, os contratos não cancelados dele (Ativo, A conferir e Suspenso) vão para outro vendedor ativo escolhido pelo gerencial. Se ele não escolher, os contratos ficam com o próprio gerencial que desativou, que depois os redistribui ([CAR-09](02-carteira.md#car-09--redistribuir-contratos-em-lote)). Contratos cancelados continuam com o vendedor original, como histórico.
 - Contas de cliente só nascem pelo primeiro acesso ([CLI-01](08-area-do-cliente.md#cli-01--fazer-o-primeiro-acesso)), nunca por esta tela.
 - O usuário técnico "Importação da planilha" não aparece nesta lista.
 
 **Critérios de aceite**
 
 - Dado um vendedor desativado, quando tenta entrar, então o login é recusado, e os atendimentos dele continuam no histórico com o nome dele.
+- Dado um vendedor com contratos não cancelados, quando o gerencial o desativa sem escolher outro vendedor, então os contratos passam para esse gerencial, e cada troca fica na auditoria.

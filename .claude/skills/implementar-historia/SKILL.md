@@ -38,7 +38,7 @@ Na ordem: banco → `entidade` (agregados, objetos de valor, eventos) → `repos
 ## 4. Verificar
 
 - `cd backend && mvn -o -q test`
-- Mapeamento JPA novo/alterado → skill `validar-banco`.
+- Mapeamento JPA novo/alterado → regras cobertas por testes sem infraestrutura; conferência contra o banco (skill `validar-banco`) é opcional, temporária e nunca fica na suíte.
 - Frontend alterado → `cd frontend && npx ng build && npx ng test --watch=false`.
 - Rode a skill `revisar-convencoes`.
 

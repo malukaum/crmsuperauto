@@ -113,7 +113,7 @@ export class FichaAssociado {
     const contrato = contratos.find((c) => c.fila === fila);
     return fila && contrato ? { fila, diasAtraso: contrato.diasAtraso } : null;
   });
-  /** CAR-08 · Só com todos os contratos cancelados (proposta). */
+  /** CAR-08 · Só com todos os contratos cancelados. */
   protected readonly podeAnonimizar = computed(() => {
     const f = this.ficha();
     return !!f && !f.anonimizado && f.contratos.every((c) => c.situacao === 'CANCELADO');
@@ -202,11 +202,6 @@ export class FichaAssociado {
     this.abrir(AnonimizarDialog, this.ficha(), 'Cliente anonimizado.');
   }
 
-  /** ATD-04 · O autor corrige até o fim do dia seguinte (o backend confere o prazo); o gerencial, sempre. */
-  protected podeCorrigir(atendimento: AtendimentoDoHistorico): boolean {
-    return !atendimento.corrigido && (this.gerencial() || atendimento.registradoPorId === this.auth.id());
-  }
-
   protected corrigirAtendimento(atendimento: AtendimentoDoHistorico): void {
     this.abrir(CorrigirAtendimentoDialog, atendimento, 'Correção registrada.');
   }
@@ -257,7 +252,7 @@ export class FichaAssociado {
   }
 
   protected voltar(): void {
-    // Voltar pelo histórico mantém filtros, ordem e página da carteira (proposta da CAR-01).
+    // Voltar pelo histórico mantém filtros, ordem e página da carteira (CAR-01).
     if (history.length > 1) {
       history.back();
     } else {

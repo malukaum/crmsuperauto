@@ -8,5 +8,6 @@ import java.util.List;
  */
 public interface HistoricoDeAtendimentos {
 
-    List<AtendimentoDoHistorico> doAssociado(Long associadoId);
+    /** @param leitor quem está vendo, para cada atendimento dizer se essa pessoa pode corrigi-lo (ATD-04) */
+    List<AtendimentoDoHistorico> doAssociado(Long associadoId, LeitorDaFicha leitor);
 }

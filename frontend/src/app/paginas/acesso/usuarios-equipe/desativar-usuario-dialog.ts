@@ -19,8 +19,8 @@ export interface DadosDesativar {
 }
 
 /**
- * Confirma a desativação. Se a pessoa for vendedora de contratos vigentes, pede para escolher quem
- * fica com eles antes (a API também exige isso e responde 409 se a lista estiver desatualizada).
+ * ACE-04 · Confirma a desativação. Se a pessoa for vendedora de contratos não cancelados, oferece escolher outro
+ * vendedor para recebê-los; sem escolha, eles ficam com o gerencial que desativa, que depois os redistribui.
  */
 @Component({
   selector: 'app-desativar-usuario-dialog',
@@ -38,19 +38,19 @@ export interface DadosDesativar {
           <p>
             <strong>{{ nome }}</strong> é vendedor de
             <strong>{{ contratos() }} {{ contratos() === 1 ? 'contrato vigente' : 'contratos vigentes' }}</strong>.
-            Escolha quem fica com {{ contratos() === 1 ? 'ele' : 'eles' }}:
+            Escolha um vendedor para {{ contratos() === 1 ? 'recebê-lo' : 'recebê-los' }} ou deixe em branco para
+            {{ contratos() === 1 ? 'ele ficar' : 'eles ficarem' }} com você até redistribuir.
           </p>
           @if (dados.vendedores.length) {
             <mat-form-field class="crm-largura-total">
               <mat-label>Transferir contratos para</mat-label>
-              <mat-select [value]="destino()" (valueChange)="destino.set($event)" required>
+              <mat-select [value]="destino()" (valueChange)="destino.set($event)">
+                <mat-option [value]="null">Ficar comigo (redistribuo depois)</mat-option>
                 @for (v of dados.vendedores; track v.id) {
                   <mat-option [value]="v.id">{{ nomeDe(v) }} ({{ v.username }})</mat-option>
                 }
               </mat-select>
             </mat-form-field>
-          } @else {
-            <p class="crm-erro">Não há outro vendedor ativo. Cadastre ou reative um vendedor antes de desativar este.</p>
           }
         </div>
       }
@@ -64,7 +64,7 @@ export interface DadosDesativar {
     <mat-dialog-actions align="end">
       <button mat-button type="button" mat-dialog-close [disabled]="salvando()">Cancelar</button>
       <button mat-flat-button type="button" (click)="confirmar()" [disabled]="!podeConfirmar()">
-        {{ contratos() > 0 ? 'Transferir e desativar' : 'Desativar' }}
+        {{ contratos() > 0 && destino() ? 'Transferir e desativar' : 'Desativar' }}
       </button>
     </mat-dialog-actions>
   `,
@@ -92,9 +92,7 @@ export class DesativarUsuarioDialog {
   protected readonly erro = signal<string | null>(null);
   protected readonly destino = signal<string | null>(null);
 
-  protected readonly podeConfirmar = computed(
-    () => !this.salvando() && (this.contratos() === 0 || this.destino() !== null),
-  );
+  protected readonly podeConfirmar = computed(() => !this.salvando());
 
   protected nomeDe(u: UsuarioEquipe): string {
     return nomeCompleto(u);
@@ -109,10 +107,6 @@ export class DesativarUsuarioDialog {
       error: (e: unknown) => {
         const p = problemaDe(e);
         this.salvando.set(false);
-        if (p.codigo === 'contratos-a-transferir' && p.contratosVigentes) {
-          // A lista estava desatualizada: agora sabemos que há contratos a transferir.
-          this.contratos.set(p.contratosVigentes);
-        }
         this.erro.set(p.detail ?? 'Não foi possível desativar o usuário.');
       },
     });

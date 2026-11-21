@@ -50,7 +50,7 @@ class GestaoUsuariosServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(usuarios.findById(vendedor)).thenReturn(Optional.of(vendedorLocal));
+        when(usuarios.buscarParaAlteracao(vendedor)).thenReturn(Optional.of(vendedorLocal));
         var transferencia = new TransferenciaCarteira(keycloak);
         servico = new GestaoUsuariosService(keycloak, projecao, usuarios, contratos, transferencia, eventos);
         when(keycloak.buscar(vendedor)).thenReturn(Optional.of(usuario(vendedor, "vendedor1", true)));
@@ -97,19 +97,17 @@ class GestaoUsuariosServiceTest {
     }
 
     @Test
-    @DisplayName("Desativar vendedor com contratos vigentes sem destino: 409 com a quantidade, nada é alterado")
-    void desativarVendedorComContratosExigeTransferencia() {
+    @DisplayName("ACE-04: desativar vendedor sem escolher destino passa os contratos não cancelados ao gerencial que desativa")
+    void desativarSemDestinoPassaAoGerencial() {
         when(contratos.contar(vendedor)).thenReturn(7L);
+        when(contratos.transferir(vendedor, gerente, gerente)).thenReturn(7);
 
-        assertThatThrownBy(() -> servico.desativar(vendedor, null, gerente))
-                .isInstanceOfSatisfying(NegocioException.class, e -> {
-                    assertThat(e.getTipo()).isEqualTo(NegocioException.Tipo.CONFLITO);
-                    assertThat(e.getCodigo()).isEqualTo("contratos-a-transferir");
-                    assertThat(e.getDados()).containsEntry("contratosVigentes", 7L);
-                });
-        verify(keycloak, never()).definirAtivo(any(), eq(false));
-        verify(eventos, never()).publishEvent(any(Object.class));
-        assertThat(vendedorLocal.isAtivo()).as("projeção local intacta").isTrue();
+        var resultado = servico.desativar(vendedor, null, gerente);
+
+        assertThat(resultado.ativo()).isFalse();
+        verify(contratos).transferir(vendedor, gerente, gerente);
+        verify(eventos).publishEvent(new UsuarioDesativado(vendedor, true, 7, gerente, gerente));
+        verify(keycloak).definirAtivo(vendedor, false);
     }
 
     @Test
@@ -123,7 +121,7 @@ class GestaoUsuariosServiceTest {
         assertThat(resultado.ativo()).isFalse();
         var ordem = inOrder(contratos, usuarios, keycloak);
         ordem.verify(contratos).transferir(vendedor, outroVendedor, gerente);
-        ordem.verify(usuarios).findById(vendedor);
+        ordem.verify(usuarios).buscarParaAlteracao(vendedor);
         ordem.verify(keycloak).definirAtivo(vendedor, false);
         ordem.verify(keycloak).encerrarSessoes(vendedor);
         verify(eventos).publishEvent(new UsuarioDesativado(vendedor, true, 7, outroVendedor, gerente));

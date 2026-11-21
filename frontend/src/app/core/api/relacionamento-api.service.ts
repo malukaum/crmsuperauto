@@ -1,8 +1,9 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { FormatoExportacao, SituacaoContrato, parametros } from './carteira-api.service';
 import { environment } from '../../../environments/environment';
+import { PaginaApi, PaginaSolicitada } from './pagina';
 
 export interface LinhaTrabalho {
   contratoId: number;
@@ -144,9 +145,9 @@ export class RelacionamentoApi {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiBase;
   /** ATD-05 · Sem datas, o backend usa o mês corrente. */
-  historico(filtro: FiltroHistorico): Observable<LinhaHistorico[]> {
-    return this.http.get<LinhaHistorico[]>(`${this.base}/interno/atendimentos`, {
-      params: parametros(filtro),
+  historico(filtro: FiltroHistorico, pagina: PaginaSolicitada): Observable<PaginaApi<LinhaHistorico>> {
+    return this.http.get<PaginaApi<LinhaHistorico>>(`${this.base}/interno/atendimentos`, {
+      params: parametros({ ...filtro, ...pagina }),
     });
   }
   autores(): Observable<AutorDeAtendimento[]> {
@@ -189,16 +190,18 @@ export class RelacionamentoApi {
   painel(): Observable<PainelResumo> {
     return this.http.get<PainelResumo>(`${this.base}/interno/painel`);
   }
-  fila(fila: FilaDeContatos, filtros: FiltroDaFila): Observable<LinhaTrabalho[]> {
-    let params = new HttpParams();
-    Object.entries(filtros).forEach(([nome, valor]) => {
-      if (valor !== null && valor !== '') params = params.set(nome, valor);
+  fila(
+    fila: FilaDeContatos,
+    filtros: FiltroDaFila,
+    pagina: PaginaSolicitada,
+  ): Observable<PaginaApi<LinhaTrabalho>> {
+    return this.http.get<PaginaApi<LinhaTrabalho>>(`${this.base}/interno/filas/${fila}`, {
+      params: parametros({ ...filtros, ...pagina }),
     });
-    return this.http.get<LinhaTrabalho[]>(`${this.base}/interno/filas/${fila}`, { params });
   }
-  aniversarios(dias: number): Observable<LinhaTrabalho[]> {
-    return this.http.get<LinhaTrabalho[]>(`${this.base}/interno/aniversariantes`, {
-      params: { dias },
+  aniversarios(dias: number, pagina: PaginaSolicitada): Observable<PaginaApi<LinhaTrabalho>> {
+    return this.http.get<PaginaApi<LinhaTrabalho>>(`${this.base}/interno/aniversariantes`, {
+      params: parametros({ dias, ...pagina }),
     });
   }
   preverContato(id: number, registro: RegistroContato): Observable<PreviaContato> {
@@ -210,10 +213,9 @@ export class RelacionamentoApi {
   registrar(id: number, registro: RegistroContato): Observable<void> {
     return this.http.post<void>(`${this.base}/interno/filas/contratos/${id}/registro`, registro);
   }
-  registrarAniversario(id: number, confirmarRepeticao: boolean): Observable<void> {
-    return this.http.post<void>(`${this.base}/interno/aniversariantes/contratos/${id}/registro`, {
-      confirmarRepeticao,
-    });
+  /** ATD-03 · Uma mensagem por pessoa no ano: a segunda é recusada (409). */
+  registrarAniversario(id: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/interno/aniversariantes/contratos/${id}/registro`, null);
   }
   etapas(): Observable<EtapaRegua[]> {
     return this.http.get<EtapaRegua[]>(`${this.base}/gestao/regua`);

@@ -22,12 +22,12 @@ public record LinhaDaCarteira(Long contratoId, Long associadoId, String associad
                               int diasAtraso, UUID vendedorId, String vendedorNome, String whatsapp,
                               boolean whatsappAceitaContato) {
 
-    static LinhaDaCarteira de(LinhaCarteira linha) {
+    static LinhaDaCarteira de(LinhaCarteira linha, LocalDate hoje) {
         return new LinhaDaCarteira(linha.getContratoId(), linha.getAssociadoId(), linha.getAssociadoNome(),
                 linha.getDocumento().map(Documento::mascarado).orElse(null), linha.getPlaca().valor(),
                 linha.getModelo(), linha.getTipoVeiculo(), linha.getCidade(), linha.getUf(),
                 linha.getMensalidade().valor(), linha.getSituacao(), linha.getEtapaPendente().orElse(null),
-                linha.getProximoContatoEm().orElse(null), linha.getFila(), linha.getDiasAtraso(),
+                linha.getProximoContatoEm().orElse(null), linha.filaEm(hoje), linha.diasDeAtrasoEm(hoje),
                 linha.getVendedorId().orElse(null), linha.getVendedorNome().orElse(null),
                 linha.getWhatsapp().map(Telefone::valor).orElse(null), linha.whatsappAceitaContato());
     }

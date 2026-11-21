@@ -1,5 +1,8 @@
 package br.com.superauto.crm.relacionamento.api;
 
+import org.springframework.data.web.PagedModel;
+import org.springframework.data.domain.Pageable;
+import br.com.superauto.crm.relacionamento.servico.FilaSolicitada;
 import br.com.superauto.crm.relacionamento.entidade.FilaDeContatos;
 import br.com.superauto.crm.relacionamento.repositorio.FiltroDaFila;
 import br.com.superauto.crm.relacionamento.servico.ConsultaTrabalhoService;
@@ -48,23 +51,25 @@ public class TrabalhoRelacionamentoController {
         }
     }
 
+    /** FIL-02 / FIL-03 · Uma página da fila (parâmetros {@code pagina} e {@code tamanho}). */
     @GetMapping("/filas/{fila}")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
-    public List<LinhaDeTrabalho> fila(
+    public PagedModel<LinhaDeTrabalho> fila(
             @PathVariable String fila,
             @ModelAttribute FiltrosFilaRequest req,
+            Pageable pagina,
             JwtAuthenticationToken auth) {
-        return consulta.contatos(
-                FilaDeContatos.pelaRota(fila).atrasados(),
-                req.filtro(),
-                UsuarioAtual.vendedorRestrito(auth));
+        var solicitada = new FilaSolicitada(
+                FilaDeContatos.pelaRota(fila).atrasados(), req.filtro(), UsuarioAtual.vendedorRestrito(auth));
+        return new PagedModel<>(consulta.contatos(solicitada, pagina));
     }
 
+    /** FIL-04 · Uma página de aniversariantes de hoje, 7 ou 30 dias. */
     @GetMapping("/aniversariantes")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
-    public List<LinhaDeTrabalho> aniversarios(
-            @RequestParam(defaultValue = "0") int dias, JwtAuthenticationToken auth) {
-        return consulta.aniversarios(dias, UsuarioAtual.vendedorRestrito(auth));
+    public PagedModel<LinhaDeTrabalho> aniversarios(
+            @RequestParam(defaultValue = "0") int dias, Pageable pagina, JwtAuthenticationToken auth) {
+        return new PagedModel<>(consulta.aniversarios(dias, UsuarioAtual.vendedorRestrito(auth), pagina));
     }
 
     @PostMapping("/filas/contratos/{id}/previa")
@@ -85,14 +90,10 @@ public class TrabalhoRelacionamentoController {
         registros.registrar(id, req.comando(OrigemDoRegistro.FILA), AutorDaRequisicao.de(auth));
     }
 
-    public record AniversarioRequest(boolean confirmarRepeticao) {}
-
     @PostMapping("/aniversariantes/contratos/{id}/registro")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
     public void aniversario(
-            @PathVariable Long id,
-            @RequestBody AniversarioRequest req,
-            JwtAuthenticationToken auth) {
-        registros.aniversario(id, req.confirmarRepeticao(), AutorDaRequisicao.de(auth));
+            @PathVariable Long id, JwtAuthenticationToken auth) {
+        registros.aniversario(id, AutorDaRequisicao.de(auth));
     }
 }

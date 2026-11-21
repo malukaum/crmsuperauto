@@ -2,7 +2,7 @@ package br.com.superauto.crm.relacionamento.servico;
 
 import br.com.superauto.crm.erro.NegocioException;
 import br.com.superauto.crm.relacionamento.entidade.Correcao;
-import br.com.superauto.crm.relacionamento.entidade.Corretor;
+import br.com.superauto.crm.relacionamento.entidade.ResponsavelPelaCorrecao;
 import br.com.superauto.crm.relacionamento.repositorio.AtendimentoRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -24,15 +24,12 @@ public class CorrecaoDeAtendimentoService {
     private final Clock relogio;
 
     @Transactional
-    public void corrigir(Long atendimentoId, Correcao correcao, Corretor corretor) {
+    public void corrigir(Long atendimentoId, Correcao correcao, ResponsavelPelaCorrecao responsavel) {
         var original =
                 atendimentos
-                        .findById(atendimentoId)
+                        .buscarParaAlteracao(atendimentoId)
                         .orElseThrow(() -> NegocioException.naoEncontrado("Atendimento não encontrado."));
-        if (atendimentos.existsByCorrigeAtendimentoId(atendimentoId))
-            throw NegocioException.conflito(
-                    "atendimento-ja-corrigido",
-                    "Este atendimento já foi corrigido. Corrija o registro de correção.");
-        atendimentos.save(original.corrigir(correcao, corretor, ZonedDateTime.now(relogio)));
+        original.exigirSemCorrecao(atendimentos.existsByCorrigeAtendimentoId(atendimentoId));
+        atendimentos.save(original.corrigir(correcao, responsavel, ZonedDateTime.now(relogio)));
     }
 }

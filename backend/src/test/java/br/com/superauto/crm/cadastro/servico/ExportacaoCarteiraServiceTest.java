@@ -16,6 +16,7 @@ import br.com.superauto.crm.compartilhado.entidade.Fila;
 import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
 import br.com.superauto.crm.compartilhado.entidade.Placa;
 import br.com.superauto.crm.compartilhado.entidade.Telefone;
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +31,7 @@ class ExportacaoCarteiraServiceTest {
 
     private final ConsultaCarteira carteira = mock(ConsultaCarteira.class);
     private final ApplicationEventPublisher eventos = mock(ApplicationEventPublisher.class);
-    private final ExportacaoCarteiraService servico = new ExportacaoCarteiraService(carteira, eventos);
+    private final ExportacaoCarteiraService servico = new ExportacaoCarteiraService(carteira, eventos, Clock.systemUTC());
     private final UUID vendedor = UUID.randomUUID();
 
     @BeforeEach
@@ -96,7 +97,7 @@ class ExportacaoCarteiraServiceTest {
         when(linha.getSituacao()).thenReturn(SituacaoContrato.ATIVO);
         when(linha.getEtapaPendente()).thenReturn(Optional.of("D+7"));
         when(linha.getProximoContatoEm()).thenReturn(Optional.empty());
-        when(linha.getFila()).thenReturn(Fila.ATRASADO);
+        when(linha.filaEm(any())).thenReturn(Fila.ATRASADO);
         when(linha.getVendedorNome()).thenReturn(Optional.of("Vendedor Um"));
         return linha;
     }

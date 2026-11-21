@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      RG-01 · A fila deixa de ser calculada com a data do banco (now()): passa a vir do relógio da aplicação, no
+      fuso de Brasília. vw_fila_contato sai, e vw_carteira perde as colunas fila e dias_atraso. vw_aniversariante
+      também usava now() e não era lida por nenhum código (os aniversariantes são calculados na aplicação): sai. O Postgres não
+      remove coluna de visão com CREATE OR REPLACE, então as visões envolvidas são derrubadas aqui e recriadas
+      pelos seus arquivos em changes/visoes/, que vêm depois.
+    -->
+    <changeSet id="019-fila-pelo-relogio" author="crm-superauto">
+        <sql><![CDATA[
+DROP VIEW IF EXISTS vw_trabalho_relacionamento;
+DROP VIEW IF EXISTS vw_carteira;
+DROP VIEW IF EXISTS vw_fila_contato;
+DROP VIEW IF EXISTS vw_aniversariante;
+        ]]></sql>
+        <!-- As visões são recriadas pelos arquivos de changes/visoes/; não há dado a desfazer. -->
+        <rollback/>
+    </changeSet>
+</databaseChangeLog>

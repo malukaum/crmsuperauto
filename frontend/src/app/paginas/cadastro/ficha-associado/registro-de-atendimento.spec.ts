@@ -2,8 +2,21 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { ContratoDaFicha, FichaAssociado } from '../../../core/api/associados-api.service';
-import { RelacionamentoApi } from '../../../core/api/relacionamento-api.service';
+import { WritableSignal } from '@angular/core';
+import { RelacionamentoApi, ResultadoContato, TipoAvulso } from '../../../core/api/relacionamento-api.service';
 import { RegistroDeAtendimento } from './registro-de-atendimento';
+
+/** O que o teste usa do formulário: a mesma interação que o template faz. */
+interface FormularioEmTeste {
+  contratos(): ContratoDaFicha[];
+  contratoId(): number | null;
+  podeConfirmar(): boolean;
+  resultado: WritableSignal<ResultadoContato>;
+  retorno: WritableSignal<string>;
+  escolherTipo(tipo: 'POS_VENDA' | TipoAvulso): void;
+  prever(): void;
+  registrar(): void;
+}
 
 function contrato(id: number, situacao: ContratoDaFicha['situacao'], versaoRegua: number | null): ContratoDaFicha {
   return {
@@ -48,14 +61,13 @@ async function preparar() {
   const fixture = TestBed.createComponent(RegistroDeAtendimento);
   fixture.componentRef.setInput('ficha', ficha);
   fixture.detectChanges();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { api, componente: fixture.componentInstance as any };
+  return { api, componente: fixture.componentInstance as unknown as FormularioEmTeste };
 }
 
 describe('RegistroDeAtendimento · ficha', () => {
   it('ATD-01 · pós-venda oferece o suspenso e esconde o cancelado; com um só, já vem escolhido', async () => {
     const { componente } = await preparar();
-    expect(componente.contratos().map((c: ContratoDaFicha) => c.id)).toEqual([1]);
+    expect(componente.contratos().map((c) => c.id)).toEqual([1]);
     expect(componente.contratoId()).toBe(1);
   });
 
@@ -70,7 +82,7 @@ describe('RegistroDeAtendimento · ficha', () => {
   it('ATD-02 · avulso aceita contrato cancelado ou nenhum e não pede prévia', async () => {
     const { api, componente } = await preparar();
     componente.escolherTipo('REAPROXIMACAO');
-    expect(componente.contratos().map((c: ContratoDaFicha) => c.id)).toEqual([1, 2]);
+    expect(componente.contratos().map((c) => c.id)).toEqual([1, 2]);
     expect(componente.contratoId()).toBeNull();
     componente.registrar();
     expect(api.registrarAvulso).toHaveBeenCalledWith(

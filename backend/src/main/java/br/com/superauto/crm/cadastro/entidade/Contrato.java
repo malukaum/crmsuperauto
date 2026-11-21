@@ -118,7 +118,7 @@ public class Contrato extends AbstractAggregateRoot<Contrato> {
 
     /**
      * CAR-02 · Contrato cadastrado na tela: nasce "a conferir" (RG-12), com o vendedor e os dados opcionais do SGA.
-     * A data de adesão não pode ser futura (proposta).
+     * A data de adesão não pode ser futura.
      *
      * @param hoje a data de hoje em São Paulo (RG-01)
      */

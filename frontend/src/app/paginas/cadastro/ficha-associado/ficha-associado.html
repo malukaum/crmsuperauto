@@ -208,7 +208,7 @@
             @for (a of f.atendimentos; track a.id) {
               <li [class.corrigido]="a.corrigido">
                 <div class="historico__topo">
-                  <strong>{{ a.realizadoEm | date: 'dd/MM/yyyy HH:mm' : 'America/Sao_Paulo' }}</strong>
+                  <strong>{{ a.realizadoEm | date: 'dd/MM/yyyy HH:mm' }}</strong>
                   <span>{{ a.tipo }}{{ a.etapa ? ' · ' + a.etapa : '' }}{{ a.placa ? ' · ' + a.placa : '' }}</span>
                   <span class="resultado">{{ nomeResultado[a.resultado] ?? a.resultado }}</span>
                   @if (a.corrigido) {
@@ -217,7 +217,7 @@
                   @if (a.corrigeAtendimentoId) {
                     <app-status-chip tipo="hoje">correção</app-status-chip>
                   }
-                  @if (!f.anonimizado && podeCorrigir(a)) {
+                  @if (!f.anonimizado && a.podeCorrigir) {
                     <button mat-button type="button" class="corrigir" (click)="corrigirAtendimento(a)">Corrigir</button>
                   }
                 </div>
@@ -244,7 +244,7 @@
             @for (i of f.indicacoes; track i.id) {
               <li>
                 <strong>{{ i.indicadoNome }}</strong>
-                <span class="crm-secundario">{{ nomeStatusIndicacao[i.status] ?? i.status }} · {{ i.registradaEm | date: 'dd/MM/yyyy' : 'America/Sao_Paulo' }}</span>
+                <span class="crm-secundario">{{ nomeStatusIndicacao[i.status] ?? i.status }} · {{ i.registradaEm | date: 'dd/MM/yyyy' }}</span>
               </li>
             }
           </ul>

@@ -38,7 +38,7 @@ class AtendimentoTest {
     void correcaoApontaParaOOriginal() {
         var original = registrado();
 
-        var correcao = original.corrigir(SEM_RESPOSTA, new Corretor(AUTOR, false), REGISTRO.plusHours(2));
+        var correcao = original.corrigir(SEM_RESPOSTA, new ResponsavelPelaCorrecao(AUTOR, false), REGISTRO.plusHours(2));
 
         assertThat(correcao.getCorrigeAtendimentoId()).contains(10L);
         assertThat(correcao.getContratoId()).contains(5L);
@@ -49,11 +49,11 @@ class AtendimentoTest {
     @DisplayName("ATD-04: o autor corrige até o fim do dia seguinte ao registro")
     void prazoDoAutor() {
         var original = registrado();
-        var corretor = new Corretor(AUTOR, false);
+        var responsavel = new ResponsavelPelaCorrecao(AUTOR, false);
 
-        assertThat(original.corrigir(SEM_RESPOSTA, corretor, REGISTRO.plusDays(1).withHour(23).withMinute(59)))
+        assertThat(original.corrigir(SEM_RESPOSTA, responsavel, REGISTRO.plusDays(1).withHour(23).withMinute(59)))
                 .isNotNull();
-        assertThatThrownBy(() -> original.corrigir(SEM_RESPOSTA, corretor, REGISTRO.plusDays(2).withHour(0)))
+        assertThatThrownBy(() -> original.corrigir(SEM_RESPOSTA, responsavel, REGISTRO.plusDays(2).withHour(0)))
                 .isInstanceOf(NegocioException.class)
                 .extracting("codigo")
                 .isEqualTo("correcao-fora-do-prazo");
@@ -64,12 +64,34 @@ class AtendimentoTest {
     void quemPodeCorrigir() {
         var original = registrado();
 
-        assertThat(original.corrigir(SEM_RESPOSTA, new Corretor(UUID.randomUUID(), true), REGISTRO.plusMonths(3)))
+        assertThat(original.corrigir(SEM_RESPOSTA, new ResponsavelPelaCorrecao(UUID.randomUUID(), true), REGISTRO.plusMonths(3)))
                 .isNotNull();
-        assertThatThrownBy(() -> original.corrigir(SEM_RESPOSTA, new Corretor(UUID.randomUUID(), false), REGISTRO))
+        assertThatThrownBy(() -> original.corrigir(SEM_RESPOSTA, new ResponsavelPelaCorrecao(UUID.randomUUID(), false), REGISTRO))
                 .isInstanceOf(NegocioException.class)
                 .extracting("codigo")
                 .isEqualTo("correcao-nao-permitida");
+    }
+
+    @Test
+    @DisplayName("ATD-04: atendimento que já tem correção não recebe outra; corrige-se a correção")
+    void umaCorrecaoPorAtendimento() {
+        var original = registrado();
+
+        assertThatThrownBy(() -> original.exigirSemCorrecao(true))
+                .isInstanceOf(NegocioException.class)
+                .extracting("codigo")
+                .isEqualTo("atendimento-ja-corrigido");
+    }
+
+    @Test
+    @DisplayName("ATD-02: só Suporte, Comercial, Reaproximação e Indicação são avulsos")
+    void tiposAvulsos() {
+        TipoDeRelacionamento.SUPORTE.exigirAvulso();
+
+        assertThatThrownBy(TipoDeRelacionamento.POS_VENDA::exigirAvulso)
+                .isInstanceOf(NegocioException.class)
+                .extracting("codigo")
+                .isEqualTo("tipo-nao-avulso");
     }
 
     private static Atendimento.Novo novo(ResultadoContato resultado, LocalDate retorno) {

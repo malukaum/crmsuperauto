@@ -3,7 +3,6 @@ package br.com.superauto.crm.cadastro.repositorio;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Um atendimento como a ficha mostra no histórico (CAR-03).
@@ -11,11 +10,11 @@ import java.util.UUID;
  * @param contratoId vazio em contatos sobre a pessoa, como a mensagem de aniversário
  * @param corrigido já existe um registro de correção apontando para este (ATD-04)
  * @param corrigeAtendimentoId o atendimento que este registro corrige, se for uma correção
- * @param registradoPorId para a ficha oferecer a correção ao autor (ATD-04)
+ * @param podeCorrigir quem está vendo pode corrigir este registro agora (ATD-04)
  */
 public record AtendimentoDoHistorico(Long id, Optional<Long> contratoId, Optional<String> placa, String tipo,
                                      Optional<String> etapa, String resultado, Optional<String> descricao,
                                      Optional<LocalDate> retornoAgendadoPara, OffsetDateTime realizadoEm,
                                      String registradoPor, boolean corrigido, Optional<Long> corrigeAtendimentoId,
-                                     UUID registradoPorId) {
+                                     boolean podeCorrigir) {
 }

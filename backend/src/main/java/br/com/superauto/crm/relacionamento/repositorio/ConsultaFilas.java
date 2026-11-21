@@ -1,5 +1,7 @@
 package br.com.superauto.crm.relacionamento.repositorio;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import br.com.superauto.crm.relacionamento.entidade.ContratoNaFila;
 import br.com.superauto.crm.relacionamento.entidade.PeriodoDeAniversarios;
 
@@ -13,7 +15,8 @@ public interface ConsultaFilas {
     record Contatos(
             boolean atrasados, LocalDate hoje, FiltroDaFila filtro, Optional<UUID> vendedor) {}
 
-    List<ContratoNaFila> contatos(Contatos consulta, int limite);
+    /** Uma página da fila, na ordem da fila (a ordenação pedida pelo cliente é ignorada). */
+    Page<ContratoNaFila> contatos(Contatos consulta, Pageable pagina);
 
     long contarContatos(Contatos consulta);
 

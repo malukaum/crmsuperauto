@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      CAR-03 e ATD-05 · Histórico de atendimentos com os nomes de tipo, etapa e autor, a marca "corrigido" (já existe
+      um registro de correção apontando para ele, ATD-04) e o que os filtros do histórico usam: código do tipo, id
+      do autor, nome e cidade do associado, e quando foi registrado (prazo de correção do autor, ATD-04). Colunas novas entram no fim, como o CREATE OR REPLACE VIEW exige.
+      Visão não altera a estrutura: este arquivo é a definição vigente e é editado no lugar. O Liquibase reaplica
+      quando a definição muda (runOnChange) e aceita o checksum novo (validCheckSum ANY).
+    -->
+    <changeSet id="vw-historico-atendimento" author="crm-superauto" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
+        <createView viewName="vw_historico_atendimento" replaceIfExists="true"><![CDATA[
+SELECT at.id,
+       at.associado_id,
+       at.contrato_id,
+       v.placa,
+       tc.descricao          AS tipo,
+       e.nome                AS etapa,
+       at.resultado,
+       at.descricao,
+       at.retorno_agendado_para,
+       at.realizado_em,
+       u.nome                AS registrado_por,
+       at.corrige_atendimento_id,
+       EXISTS (SELECT 1 FROM atendimento cor WHERE cor.corrige_atendimento_id = at.id) AS corrigido,
+       tc.codigo             AS tipo_codigo,
+       at.registrado_por     AS registrado_por_id,
+       a.nome                AS associado_nome,
+       a.municipio_id,
+       m.nome                AS cidade,
+       at.registrado_em
+  FROM atendimento at
+  JOIN tipo_contato tc            ON tc.id = at.tipo_contato_id
+  JOIN usuario u                  ON u.id = at.registrado_por
+  JOIN associado a                ON a.id = at.associado_id
+  LEFT JOIN municipio m           ON m.id = a.municipio_id
+  LEFT JOIN etapa_relacionamento e ON e.id = at.etapa_id
+  LEFT JOIN contrato c            ON c.id = at.contrato_id
+  LEFT JOIN veiculo v             ON v.id = c.veiculo_id
+        ]]></createView>
+        <!-- A versão anterior está no histórico do git; não há dado a desfazer. -->
+        <rollback/>
+    </changeSet>
+</databaseChangeLog>

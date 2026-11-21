@@ -16,11 +16,11 @@ O registro de atendimento substitui a macro `RegistrarAtendimento` e a aba ATEND
 - **Concluído:** a etapa pendente fica registrada como concluída e a régua avança (D+7 → D+30 → D+60 → D+90 → Trimestral → Trimestral). O retorno manual anterior é apagado, e o próximo contato passa a ser a data do atendimento + o prazo da nova etapa.
 - **Sem resposta:** a etapa não muda. O próximo contato é a data informada ou, sem data, hoje + 2 dias.
 - **Reagendado:** a etapa não muda, e a data combinada com o cliente é obrigatória.
-- **Pendente:** etapa e data não mudam; fica só o registro **(proposta: a macro não usava este resultado)**.
+- **Pendente:** etapa e data não mudam; fica só o registro (a macro não usava este resultado).
 - Uma data manual informada em qualquer resultado vale como retorno manual e prevalece sobre o cálculo. Ela não pode ser anterior a hoje.
 - Resumo opcional, até 2.000 caracteres.
 - Contrato cancelado: recusa com "Contrato cancelado. O atendimento não será gravado." Contrato suspenso pode ser registrado, como na macro.
-- O autor é quem está logado. A data e hora é a de agora, ou uma anterior informada pelo usuário, de até 7 dias atrás **(proposta)**.
+- O autor é quem está logado. A data e hora é a de agora, ou uma anterior informada pelo usuário, de até 7 dias atrás.
 - Histórico e régua são gravados juntos: se um falha, nenhum é gravado.
 
 **Critérios de aceite**
@@ -38,9 +38,9 @@ O registro de atendimento substitui a macro `RegistrarAtendimento` e a aba ATEND
 **Regras**
 
 - Tipos: Suporte, Comercial, Reaproximação e Indicação.
-- Contato avulso nunca mexe na régua, qualquer que seja o resultado **(proposta: a macro gravava o avulso como pós-venda)**.
+- Contato avulso nunca mexe na régua, qualquer que seja o resultado (a macro gravava o avulso como pós-venda).
 - O contrato é opcional: o contato pode ser sobre a pessoa.
-- Pode ser registrado para contrato cancelado, o que serve para a reaproximação de ex-clientes **(proposta)**.
+- Pode ser registrado para contrato cancelado, o que serve para a reaproximação de ex-clientes.
 - Reagendado continua exigindo data, que fica só como informação no histórico.
 
 **Critérios de aceite**
@@ -55,11 +55,12 @@ O registro de atendimento substitui a macro `RegistrarAtendimento` e a aba ATEND
 
 - Grava o tipo Aniversário, resultado Concluído, ligado à pessoa e não a um contrato.
 - Não altera a régua de nenhum contrato, como na macro ("agenda de pós-venda preservada").
-- Se já houver mensagem registrada para a pessoa no ano, o sistema avisa antes de gravar outra **(proposta)**.
+- Uma mensagem por pessoa no ano: se já houver mensagem registrada para ela no ano (por qualquer pessoa da equipe), a nova é recusada. Vale também quando duas pessoas registram ao mesmo tempo: a primeira grava e a segunda é recusada.
 
 **Critérios de aceite**
 
 - Dado um aniversariante com D+30 pendente, quando registro a mensagem, então a data do D+30 não muda e a linha passa a mostrar "Mensagem enviada".
+- Dado um aniversariante que já recebeu a mensagem neste ano, quando tento registrar outra, então o sistema recusa.
 
 ### ATD-04 · Corrigir um atendimento
 
@@ -68,8 +69,8 @@ O registro de atendimento substitui a macro `RegistrarAtendimento` e a aba ATEND
 **Regras**
 
 - Atendimento não é editado nem apagado ([RG-07](README.md#regras-gerais)). A correção é um novo registro que aponta para o original, que passa a aparecer como "corrigido" no histórico.
-- O autor pode corrigir até o fim do dia seguinte ao registro; o gerencial, a qualquer momento **(proposta)**.
-- A correção não desfaz a régua sozinha. Se o erro mudou a régua (um Concluído por engano, por exemplo), o gerencial ajusta a etapa pendente e o retorno manual na ficha, com registro na auditoria **(proposta)**.
+- O autor pode corrigir até o fim do dia seguinte ao registro; o gerencial, a qualquer momento.
+- A correção não desfaz a régua sozinha. Se o erro mudou a régua (um Concluído por engano, por exemplo), o gerencial ajusta a etapa pendente e o retorno manual na ficha, com registro na auditoria.
 
 **Critérios de aceite**
 
@@ -94,7 +95,7 @@ O registro de atendimento substitui a macro `RegistrarAtendimento` e a aba ATEND
 
 ### Decisões de implementação
 
-Pontos que as histórias não diziam e foram decididos na implementação (21/11/2026). Revise os marcados como proposta junto com as regras **(proposta)** acima.
+Pontos que as histórias não diziam e foram decididos na implementação (21/11/2026).
 
 | História | Decisão |
 | --- | --- |
@@ -102,7 +103,8 @@ Pontos que as histórias não diziam e foram decididos na implementação (21/11
 | ATD-01 | A data e hora informada (até 7 dias atrás) vale também para o cálculo: no Concluído, o próximo contato é o dia do atendimento + o prazo da nova etapa. Sem data, é agora. Data no futuro é recusada. |
 | ATD-02 | Contato avulso pode ficar sem contrato ("Sobre a pessoa") ou ligado a qualquer contrato do cliente, inclusive cancelado. O vendedor só registra para clientes que têm contrato dele. A data de retorno do avulso é só informativa. |
 | ATD-04 | A correção mantém contrato, tipo, etapa e a data do contato do original; muda resultado, data de retorno e resumo. Um atendimento tem no máximo uma correção; para corrigir de novo, corrige-se a correção. O botão "Corrigir" aparece para o gerencial e para o autor; o prazo do autor (fim do dia seguinte ao registro) é conferido no servidor. |
-| ATD-04 | O último contato concluído da régua (base do recálculo da FIL-06) ignora os atendimentos já corrigidos. O ajuste da régua pelo gerencial fica no contrato da ficha: escolhe a etapa pendente e, opcionalmente, um retorno manual; sem retorno, o próximo contato é a base da régua + o prazo da etapa. O ajuste vai para a auditoria. |
+| ATD-04 | A correção é só histórico: não muda a régua nem o cálculo dela depois (a base da régua da FIL-06 continua considerando o registro original). Mudar a régua é um passo separado, do gerencial, no contrato da ficha: escolhe a etapa pendente e, opcionalmente, um retorno manual; sem retorno, o próximo contato é a base da régua + o prazo da etapa. O ajuste vai para a auditoria. |
+| ATD-04 · RG-06 | Entre dois registros simultâneos do mesmo contrato, vale o que chegou primeiro; o outro é descartado se a régua já mudou. Se o primeiro estiver errado, ele é corrigido pela ATD-04, sem alterar a situação do contrato. |
 | ATD-05 | A tela "Atendimentos" do menu passou a ser o histórico completo. Sem datas, mostra o mês corrente; cada consulta cobre no máximo um ano. A busca procura no nome do cliente (sem acento) e na placa (a partir de 3 caracteres). O filtro de usuário lista quem registrou atendimentos visíveis, inclusive "Importação da planilha". |
 | ATD-05 | A próxima ação segue a macro só no pós-venda (Concluído → "Retorno automático"; Sem resposta e Reagendado → "Nova tentativa"; Pendente → "Sem alteração no retorno"). Aniversário e avulsos não mexem na régua e mostram sempre "Sem alteração no retorno". |
 | ATD-05 · CAR-07 | A exportação sai em Excel (.xlsx) ou CSV, só para gerencial e vendedor (o vendedor, só a sua carteira), com o filtro usado e a quantidade de linhas na auditoria. Uma coluna marca os registros corrigidos e as correções. |

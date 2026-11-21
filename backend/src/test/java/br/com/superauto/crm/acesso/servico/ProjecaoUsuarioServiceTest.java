@@ -37,7 +37,7 @@ class ProjecaoUsuarioServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(repositorio.findById(any())).thenAnswer(i -> Optional.ofNullable(banco.get(i.<UUID>getArgument(0))));
+        when(repositorio.buscarParaAlteracao(any())).thenAnswer(i -> Optional.ofNullable(banco.get(i.<UUID>getArgument(0))));
         when(repositorio.save(any())).thenAnswer(i -> {
             Usuario u = i.getArgument(0);
             banco.put(u.getId(), u);
@@ -58,7 +58,7 @@ class ProjecaoUsuarioServiceTest {
         assertThat(salvo.getValue().isNew()).isTrue();
         assertThat(salvo.getValue().isAtivo()).isTrue();
         assertThat(salvo.getValue().getNome()).isEqualTo("Vendedor Um");
-        verify(repositorio, times(1)).findById(id);
+        verify(repositorio, times(1)).buscarParaAlteracao(id);
     }
 
     @Test
@@ -93,7 +93,7 @@ class ProjecaoUsuarioServiceTest {
         servico.registrar(id, new DadosProjecao("atendente1", null, Email.de("atendente1@x.com")));
         servico.registrar(id, new DadosProjecao("atendente1", "  ", Email.de("atendente1@x.com")));
         assertThat(banco.get(id).getNome()).isEqualTo("atendente1");
-        verify(repositorio, times(1)).findById(id);
+        verify(repositorio, times(1)).buscarParaAlteracao(id);
     }
 
     @Test

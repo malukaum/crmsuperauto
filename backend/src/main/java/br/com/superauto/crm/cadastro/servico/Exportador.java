@@ -5,7 +5,7 @@ import java.util.UUID;
 
 /**
  * Quem exporta a carteira (CAR-07) e o que pode levar: o vendedor, só os seus contratos; o documento sai
- * completo só para o gerencial (proposta).
+ * completo só para o gerencial.
  */
 public record Exportador(UUID id, EscopoCarteira escopo, boolean gerencial) {
 

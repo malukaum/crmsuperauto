@@ -61,7 +61,7 @@ class CadastroContratoServiceTest {
         when(referencias.tipoVeiculoAtivo(CARRO)).thenReturn(true);
         when(referencias.municipio(FORMIGA)).thenReturn(Optional.of(new Localidade(FORMIGA, "Formiga", "MG")));
         when(associados.findByDocumento(any())).thenReturn(Optional.empty());
-        when(veiculos.findByPlaca(any())).thenReturn(Optional.empty());
+        when(veiculos.buscarPelaPlacaParaAlteracao(any())).thenReturn(Optional.empty());
         when(associados.save(any())).thenAnswer(i -> comId(i.getArgument(0), 5L));
         when(veiculos.save(any())).thenAnswer(i -> comId(i.getArgument(0), 6L));
         when(contratos.save(any())).thenAnswer(i -> comId(i.getArgument(0), 9L));
@@ -97,7 +97,7 @@ class CadastroContratoServiceTest {
     @DisplayName("CAR-02: dada uma placa com contrato ativo, recusa e devolve o caminho para a ficha existente")
     void placaComContratoVigente() {
         var veiculo = comId(Veiculo.cadastrar(Placa.de("HAA7216"), "Gol", CARRO), 6L);
-        when(veiculos.findByPlaca(Placa.de("HAA7216"))).thenReturn(Optional.of(veiculo));
+        when(veiculos.buscarPelaPlacaParaAlteracao(Placa.de("HAA7216"))).thenReturn(Optional.of(veiculo));
         var vigente = comId(ContratoDeTeste.vigente(77L), 40L);
         when(contratos.findFirstByVeiculoIdAndSituacaoNot(6L, SituacaoContrato.CANCELADO)).thenReturn(Optional.of(vigente));
 
@@ -114,7 +114,7 @@ class CadastroContratoServiceTest {
     @DisplayName("CAR-02: placa de contrato cancelado ganha contrato novo com o mesmo veículo")
     void placaComContratoCancelado() {
         var veiculo = comId(Veiculo.cadastrar(Placa.de("HAA7216"), "Gol", CARRO), 6L);
-        when(veiculos.findByPlaca(Placa.de("HAA7216"))).thenReturn(Optional.of(veiculo));
+        when(veiculos.buscarPelaPlacaParaAlteracao(Placa.de("HAA7216"))).thenReturn(Optional.of(veiculo));
 
         servico.cadastrar(cadastro(Optional.of(pessoa())), new Cadastrante(vendedor, false));
 

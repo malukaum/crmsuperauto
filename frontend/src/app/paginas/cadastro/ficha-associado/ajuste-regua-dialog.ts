@@ -13,7 +13,7 @@ import { ReferenciasApi } from '../../../core/api/referencias-api.service';
 import { RelacionamentoApi } from '../../../core/api/relacionamento-api.service';
 
 /**
- * ATD-04 · O gerencial ajusta a etapa pendente e o retorno manual depois de um atendimento lançado errado (proposta).
+ * ATD-04 · O gerencial ajusta a etapa pendente e o retorno manual depois de um atendimento lançado errado.
  * A mudança fica na auditoria.
  */
 @Component({

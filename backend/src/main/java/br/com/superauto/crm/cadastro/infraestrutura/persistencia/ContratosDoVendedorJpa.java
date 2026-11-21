@@ -44,7 +44,7 @@ public class ContratosDoVendedorJpa implements ContratosDoVendedor {
     @Override
     @Transactional
     public int transferir(UUID de, UUID para, UUID autor) {
-        var vigentes = contratos.findByVendedorIdAndSituacaoNot(de, SituacaoContrato.CANCELADO);
+        var vigentes = contratos.buscarDoVendedorParaAlteracao(de, SituacaoContrato.CANCELADO);
         vigentes.forEach(contrato -> contrato.transferirPara(para, autor));
         contratos.saveAll(vigentes);
         return vigentes.size();

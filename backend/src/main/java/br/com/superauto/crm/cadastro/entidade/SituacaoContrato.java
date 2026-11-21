@@ -5,7 +5,7 @@ import java.util.Set;
 /**
  * Situação do contrato (RG-12), espelhando o {@code ck_contrato_situacao}, com as mudanças permitidas pela CAR-05:
  * de "A conferir" para Ativo, Suspenso ou Cancelado; entre Ativo e Suspenso; de qualquer uma para Cancelado.
- * Cancelado é definitivo (proposta): para voltar, cadastra-se um novo contrato.
+ * Cancelado é definitivo: para voltar, cadastra-se um novo contrato.
  */
 public enum SituacaoContrato {
     A_CONFERIR,

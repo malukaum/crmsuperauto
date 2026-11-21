@@ -11,7 +11,7 @@ import java.util.Optional;
 
 /**
  * ATD-01 · Quando o atendimento aconteceu: agora ou uma data e hora anterior informada pelo usuário, de até 7 dias
- * atrás (proposta), no fuso de São Paulo (RG-01).
+ * atrás, no fuso de São Paulo (RG-01).
  */
 public record MomentoDoAtendimento(OffsetDateTime valor) {
     static final int DIAS_DE_ATRASO_PERMITIDOS = 7;

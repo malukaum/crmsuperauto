@@ -12,7 +12,7 @@ import br.com.superauto.crm.erro.NegocioException;
  *   <li>o mesmo tipo e número (ou e-mail) não se repete no mesmo associado;</li>
  *   <li>há um principal por tipo: marcar outro como principal desmarca o anterior, e o primeiro de um tipo
  *       já nasce principal;</li>
- *   <li>o associado precisa de ao menos um WhatsApp ou telefone (proposta), e quem sai do principal passa a
+ *   <li>o associado precisa de ao menos um WhatsApp ou telefone, e quem sai do principal passa a
  *       vez para o mais antigo do mesmo tipo.</li>
  * </ul>
  */

@@ -79,7 +79,7 @@ public class CarteiraController {
         return consulta.buscar(req.filtro(), req.paginaSolicitada(), AutorDoToken.escopo(auth));
     }
 
-    /** Excel (.xlsx, padrão) ou CSV, com a lista exatamente como filtrada. O atendente não exporta (proposta). */
+    /** Excel (.xlsx, padrão) ou CSV, com a lista exatamente como filtrada. O atendente não exporta. */
     @GetMapping("/exportacao")
     @PreAuthorize(Papeis.GERENCIAL_OU_VENDEDOR)
     public ResponseEntity<byte[]> exportar(@ModelAttribute FiltroCarteiraRequest req,

@@ -12,12 +12,22 @@ spring:
     hibernate:
       ddl-auto: validate
     properties:
+      # RG-06: quem espera uma trava de linha (cadastros em alteração) desiste após 5 s e recebe 409.
+      jakarta.persistence.lock.timeout: 5000
       hibernate:
         jdbc:
           time_zone: America/Sao_Paulo
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
+  data:
+    web:
+      # Tabelas paginadas no servidor: ?pagina=0&tamanho=25 (máximo 100 por página).
+      pageable:
+        page-parameter: pagina
+        size-parameter: tamanho
+        default-page-size: 25
+        max-page-size: 100
   jackson:
     time-zone: America/Sao_Paulo
   mvc:

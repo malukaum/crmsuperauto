@@ -14,12 +14,14 @@ import br.com.superauto.crm.acesso.repositorio.ProvedorIdentidade;
 import br.com.superauto.crm.seguranca.Papeis;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Lado de leitura da equipe: quem está na equipe, com papel e carteira de cada um (ACE-04), e os vendedores ativos
  * para os formulários e filtros da carteira.
  */
 @Service
+@Transactional(readOnly = true)
 public class ConsultaEquipeService {
 
     private static final Locale PORTUGUES_DO_BRASIL = Locale.of("pt", "BR");

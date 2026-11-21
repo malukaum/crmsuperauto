@@ -1,5 +1,8 @@
 package br.com.superauto.crm.relacionamento.infraestrutura.persistencia;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Page;
 import br.com.superauto.crm.config.FuncoesDeBusca;
 import br.com.superauto.crm.relacionamento.entidade.ContratoNaFila;
 import br.com.superauto.crm.relacionamento.entidade.PeriodoDeAniversarios;
@@ -30,7 +33,7 @@ import java.util.UUID;
 public class ConsultaFilasJpa implements ConsultaFilas {
     private final EntityManager em;
 
-    public List<ContratoNaFila> contatos(Contatos pedido, int limite) {
+    public Page<ContratoNaFila> contatos(Contatos pedido, Pageable pagina) {
         var cb = (HibernateCriteriaBuilder) em.getCriteriaBuilder();
         var consulta = cb.createQuery(ContratoNaFila.class);
         var contrato = consulta.from(ContratoNaFila.class);
@@ -39,9 +42,11 @@ public class ConsultaFilasJpa implements ConsultaFilas {
         if (pedido.atrasados()) ordem.add(cb.asc(contrato.get("proximoContato")));
         ordem.add(cb.asc(contrato.get("nome")));
         ordem.add(cb.asc(contrato.get("contratoId")));
-        var busca = em.createQuery(consulta.orderBy(ordem));
-        if (limite > 0) busca.setMaxResults(limite);
-        return busca.getResultList();
+        var linhas = em.createQuery(consulta.orderBy(ordem))
+                .setFirstResult((int) pagina.getOffset())
+                .setMaxResults(pagina.getPageSize())
+                .getResultList();
+        return new PageImpl<>(linhas, pagina, contarContatos(pedido));
     }
 
     public long contarContatos(Contatos pedido) {

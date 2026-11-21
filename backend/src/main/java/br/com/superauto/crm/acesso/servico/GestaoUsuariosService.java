@@ -2,6 +2,7 @@ package br.com.superauto.crm.acesso.servico;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
 import br.com.superauto.crm.acesso.entidade.Conta;
@@ -83,22 +84,20 @@ public class GestaoUsuariosService {
     }
 
     /**
-     * Desativa o login. Se a pessoa tiver contratos vigentes como vendedor, exige {@code transferirPara}
-     * (outro vendedor ativo); sem isso responde conflito com a quantidade, para a tela perguntar.
+     * Desativa o login. Os contratos não cancelados da pessoa como vendedora vão para {@code transferirPara}
+     * (outro vendedor ativo) ou, se não houver escolha, para o gerencial que desativa (ACE-04).
      */
     @Transactional
     public UsuarioEquipe desativar(UUID id, UUID transferirPara, UUID autor) {
         exigirOutraPessoa(id, autor, "Você não pode desativar o seu próprio usuário.");
         Conta conta = buscarDaEquipe(id);
         String papel = papelDaEquipe(identidade.papeis(id));
-        long vigentes = contratos.contar(id);
-        int transferidos = vigentes > 0
-                ? transferirCarteira(id, TransferenciaCarteira.exigirDestinoInformado(transferirPara, vigentes), autor)
-                : 0;
+        UUID destino = contratos.contar(id) > 0 ? destinoDaCarteira(id, Optional.ofNullable(transferirPara), autor) : null;
+        int transferidos = destino == null ? 0 : contratos.transferir(id, destino, autor);
         projecao.registrar(conta);
         definirAtivoLocal(id, false);
         eventos.publishEvent(new UsuarioDesativado(id, conta.ativo(), transferidos,
-                transferidos > 0 ? transferirPara : null, autor));
+                transferidos > 0 ? destino : null, autor));
 
         // Por último o provedor: se ele falhar, a transação desfaz a transferência, a desativação local e a auditoria.
         identidade.definirAtivo(id, false);
@@ -142,11 +141,17 @@ public class GestaoUsuariosService {
         projecao.registrar(conta);
     }
 
-    private int transferirCarteira(UUID vendedor, UUID destino, UUID autor) {
-        Conta contaDestino = transferencia.exigirVendedorDestino(vendedor, destino);
-        // O vendedor de destino pode nunca ter entrado no CRM: garante a projeção (FK de contrato.vendedor_id).
-        projecao.registrar(contaDestino);
-        return contratos.transferir(vendedor, destino, autor);
+    /**
+     * ACE-04 · Os contratos não cancelados vão para o vendedor escolhido; sem escolha, ficam com o gerencial que
+     * desativou (já está no CRM, com projeção local), que depois os redistribui.
+     */
+    private UUID destinoDaCarteira(UUID vendedor, Optional<UUID> escolhido, UUID gerencial) {
+        return escolhido.map(destino -> {
+            Conta contaDestino = transferencia.exigirVendedorDestino(vendedor, destino);
+            // O vendedor de destino pode nunca ter entrado no CRM: garante a projeção (FK de contrato.vendedor_id).
+            projecao.registrar(contaDestino);
+            return destino;
+        }).orElse(gerencial);
     }
 
     private static void exigirOutraPessoa(UUID alvo, UUID autor, String mensagem) {
@@ -155,9 +160,9 @@ public class GestaoUsuariosService {
         }
     }
 
-    /** Altera a projeção carregada na transação; o Hibernate grava o UPDATE no commit. */
+    /** Altera a projeção travada na transação; o Hibernate grava o UPDATE no commit. */
     private void definirAtivoLocal(UUID id, boolean ativo) {
-        usuarios.findById(id).ifPresent(u -> u.definirAtivo(ativo));
+        usuarios.buscarParaAlteracao(id).ifPresent(u -> u.definirAtivo(ativo));
     }
 
     private Conta buscarDaEquipe(UUID id) {

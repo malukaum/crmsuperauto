@@ -12,7 +12,6 @@ import java.util.UUID;
 
 import br.com.superauto.crm.acesso.entidade.Conta;
 import br.com.superauto.crm.acesso.repositorio.ProvedorIdentidade;
-import br.com.superauto.crm.erro.NegocioException;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,21 +39,6 @@ class TransferenciaCarteiraTest {
         assertThatThrownBy(() -> transferencia.exigirVendedorDestino(origem, UUID.randomUUID())).hasMessageContaining("não existe");
         assertThatThrownBy(() -> transferencia.exigirVendedorDestino(origem, inativo)).hasMessageContaining("vendedor ativo");
         assertThatThrownBy(() -> transferencia.exigirVendedorDestino(origem, atendente)).hasMessageContaining("vendedor ativo");
-    }
-
-    @Test
-    @DisplayName("Vendedor com contratos vigentes exige destino: sem ele, conflito com a quantidade")
-    void destinoObrigatorio() {
-        UUID destino = UUID.randomUUID();
-        assertThat(TransferenciaCarteira.exigirDestinoInformado(destino, 3)).isEqualTo(destino);
-
-        assertThatThrownBy(() -> TransferenciaCarteira.exigirDestinoInformado(null, 1))
-                .isInstanceOfSatisfying(NegocioException.class, e -> {
-                    assertThat(e.getTipo()).isEqualTo(NegocioException.Tipo.CONFLITO);
-                    assertThat(e.getCodigo()).isEqualTo("contratos-a-transferir");
-                    assertThat(e.getDados()).containsEntry("contratosVigentes", 1L);
-                })
-                .hasMessageContaining("1 contrato vigente.");
     }
 
     /** Dublê simples da porta: o domínio é testado sem Spring e sem framework de mock. */

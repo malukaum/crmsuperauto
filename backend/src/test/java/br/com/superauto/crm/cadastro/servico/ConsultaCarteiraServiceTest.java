@@ -12,6 +12,7 @@ import br.com.superauto.crm.cadastro.repositorio.ResultadoCarteira;
 import br.com.superauto.crm.cadastro.repositorio.TermoBusca;
 import br.com.superauto.crm.compartilhado.entidade.Fila;
 import br.com.superauto.crm.compartilhado.entidade.Mensalidade;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,7 +26,7 @@ import org.springframework.data.domain.Pageable;
 class ConsultaCarteiraServiceTest {
 
     private final ConsultaCarteira carteira = mock(ConsultaCarteira.class);
-    private final ConsultaCarteiraService servico = new ConsultaCarteiraService(carteira);
+    private final ConsultaCarteiraService servico = new ConsultaCarteiraService(carteira, Clock.systemUTC());
 
     @Test
     @DisplayName("RG-03: o vendedor só vê os próprios contratos, mesmo pedindo o filtro de outro vendedor")

@@ -41,6 +41,8 @@ import java.util.UUID;
 public class AcompanhamentoContrato extends AbstractAggregateRoot<AcompanhamentoContrato>
         implements Persistable<Long> {
 
+    private static final int DIAS_ATE_NOVA_TENTATIVA = 2;
+
     @Id
     @Column(name = "contrato_id")
     private Long contratoId;
@@ -54,9 +56,6 @@ public class AcompanhamentoContrato extends AbstractAggregateRoot<Acompanhamento
 
     @Column(name = "proximo_contato_em")
     private LocalDate proximoContatoEm;
-
-    @Column(name = "encerrado_em")
-    private OffsetDateTime encerradoEm;
 
     @UpdateTimestamp
     @Column(name = "atualizado_em", nullable = false)
@@ -93,45 +92,103 @@ public class AcompanhamentoContrato extends AbstractAggregateRoot<Acompanhamento
         return acompanhamento;
     }
 
-    private static final int DIAS_ATE_NOVA_TENTATIVA = 2;
+    /** ATD-01 · Aplica o resultado do contato na régua; retorno manual sempre prevalece (RG-14). */
+    public void registrarContato(RegistroNaRegua registro, ContextoDoContato contexto, UUID autor) {
+        alterarAgenda(autor, () -> aplicar(registro, contexto));
+    }
 
-    /** Aplica o resultado na régua; retorno manual sempre prevalece (RG-14). */
-    public void registrar(
-            ResultadoContato resultado, Optional<LocalDate> retorno, ContextoContato contexto) {
-        validarRegistro(resultado, retorno, contexto);
-        if (resultado == ResultadoContato.CONCLUIDO) concluirEtapa(contexto);
-        if (resultado == ResultadoContato.SEM_RESPOSTA)
-            agendarRetorno(contexto.hoje().plusDays(DIAS_ATE_NOVA_TENTATIVA));
-        retorno.ifPresent(this::agendarRetorno);
-        marcarAlterado(contexto.realizadoEm());
+    /** ATD-01 · O que o registro faria com a régua, sem alterar este acompanhamento. */
+    public EstadoDoAcompanhamento prever(RegistroNaRegua registro, ContextoDoContato contexto) {
+        var previsao = new AcompanhamentoContrato();
+        previsao.contratoId = contratoId;
+        previsao.etapaPendenteId = etapaPendenteId;
+        previsao.retornoManualEm = retornoManualEm;
+        previsao.proximoContatoEm = proximoContatoEm;
+        previsao.versao = versao;
+        previsao.aplicar(registro, contexto);
+        return previsao.estado();
     }
 
     /**
-     * Todo registro avança a versão, mesmo o Pendente, que não muda a régua: assim um registro simultâneo do mesmo
-     * contrato é recusado (RG-06). O valor gravado vem do {@code @UpdateTimestamp}.
+     * ATD-04 · O gerencial corrige a régua depois de um atendimento lançado errado: define a etapa pendente e, se
+     * quiser, um retorno manual. Sem retorno, o próximo contato volta a ser a base da régua + o prazo da etapa.
      */
-    private void marcarAlterado(OffsetDateTime momento) {
-        atualizadoEm = momento;
+    public void ajustarPelaGerencia(AjusteDaRegua ajuste, ContextoDoAjuste contexto, UUID autor) {
+        exigirAlteravel(ajuste.versao());
+        exigirRetornoAPartirDe(ajuste.retorno(), contexto.hoje());
+        EtapaRegua etapa = EtapaRegua.daRegua(contexto.etapas(), ajuste.etapaId());
+        alterarAgenda(autor, () -> {
+            etapaPendenteId = etapa.id();
+            retornoManualEm = ajuste.retorno().orElse(null);
+            proximoContatoEm = ajuste.retorno().orElse(contexto.baseRegua().plusDays(etapa.diasAposAnterior()));
+        });
     }
 
-    private void validarRegistro(
-            ResultadoContato resultado, Optional<LocalDate> retorno, ContextoContato contexto) {
-        Objects.requireNonNull(resultado, "resultado");
-        if (versao != contexto.versao()) throw NegocioException.edicaoSimultanea();
-        if (etapaPendenteId == null)
-            throw NegocioException.invalido("regua-encerrada", "A régua está encerrada.");
-        if (retorno.filter(data -> data.isBefore(contexto.hoje())).isPresent()) {
-            throw NegocioException.invalido(
-                    "retorno-invalido", "O retorno não pode ser anterior a hoje.");
-        }
-        if (resultado == ResultadoContato.REAGENDADO && retorno.isEmpty()) {
-            throw NegocioException.invalido(
-                    "retorno-obrigatorio", "Informe a data combinada para o retorno.");
-        }
+    /** FIL-06 · Recalcula o próximo contato com os novos prazos; o retorno manual é mantido. */
+    public void recalcularAgenda(LocalDate base, List<EtapaRegua> etapas, UUID autor) {
+        alterarAgenda(autor, () -> proximoContatoEm = preverRecalculo(base, etapas).orElse(null));
+    }
+
+    /** FIL-06 · O próximo contato depois do recálculo, para a prévia contar quem muda de data. */
+    public Optional<LocalDate> preverRecalculo(LocalDate base, List<EtapaRegua> etapas) {
+        if (!reguaAtiva() || retornoManualEm != null) return getProximoContatoEm();
+        return Optional.of(base.plusDays(EtapaRegua.daRegua(etapas, etapaPendenteId).diasAposAnterior()));
+    }
+
+    /** A etapa que o contato trabalha (a pendente); régua encerrada não recebe mais contato. */
+    public Short etapaEmTrabalho() {
+        if (etapaPendenteId == null) throw NegocioException.invalido("regua-encerrada", "A régua está encerrada.");
+        return etapaPendenteId;
+    }
+
+    /** A régua ainda tem etapa pendente (não está encerrada). */
+    public boolean reguaAtiva() {
+        return etapaPendenteId != null;
+    }
+
+    /** FIL-06 · Se o recálculo com os novos prazos mudaria a data do próximo contato. */
+    public boolean mudariaDeDataNoRecalculo(LocalDate base, List<EtapaRegua> etapas) {
+        return !getProximoContatoEm().equals(preverRecalculo(base, etapas));
+    }
+
+    public EstadoDoAcompanhamento estado() {
+        return new EstadoDoAcompanhamento(
+                getEtapaPendenteId(), getProximoContatoEm(), getRetornoManualEm());
+    }
+
+    /** RG-08 · Toda mudança da agenda passa por aqui: se a agenda mudou, publica o anterior e o novo. */
+    private void alterarAgenda(UUID autor, Runnable mudanca) {
+        var anterior = estado();
+        mudanca.run();
+        if (!anterior.equals(estado()))
+            registerEvent(new AcompanhamentoAtualizado(contratoId, autor, anterior, estado()));
+    }
+
+    private void aplicar(RegistroNaRegua registro, ContextoDoContato contexto) {
+        Objects.requireNonNull(registro.resultado(), "resultado");
+        exigirAlteravel(contexto.versao());
+        exigirRetornoAPartirDe(registro.retorno(), contexto.hoje());
+        if (registro.resultado() == ResultadoContato.REAGENDADO && registro.retorno().isEmpty())
+            throw NegocioException.invalido("retorno-obrigatorio", "Informe a data combinada para o retorno.");
+        if (registro.resultado() == ResultadoContato.CONCLUIDO) concluirEtapa(contexto);
+        if (registro.resultado() == ResultadoContato.SEM_RESPOSTA)
+            agendarRetorno(contexto.hoje().plusDays(DIAS_ATE_NOVA_TENTATIVA));
+        registro.retorno().ifPresent(this::agendarRetorno);
+    }
+
+    /** RG-06: quem viu outra versão não altera; régua encerrada não muda mais. */
+    private void exigirAlteravel(int versaoVista) {
+        if (versao != versaoVista) throw NegocioException.edicaoSimultanea();
+        etapaEmTrabalho();
+    }
+
+    private static void exigirRetornoAPartirDe(Optional<LocalDate> retorno, LocalDate hoje) {
+        if (retorno.filter(data -> data.isBefore(hoje)).isPresent())
+            throw NegocioException.invalido("retorno-invalido", "O retorno não pode ser anterior a hoje.");
     }
 
     /** O próximo contato conta a partir do dia do atendimento, que pode ser anterior a hoje (ATD-01). */
-    private void concluirEtapa(ContextoContato contexto) {
+    private void concluirEtapa(ContextoDoContato contexto) {
         EtapaRegua atual = contexto.etapa(etapaPendenteId);
         EtapaRegua proxima = contexto.etapa(atual.proximaEtapaId());
         etapaPendenteId = proxima.id();
@@ -142,100 +199,6 @@ public class AcompanhamentoContrato extends AbstractAggregateRoot<Acompanhamento
     private void agendarRetorno(LocalDate data) {
         retornoManualEm = data;
         proximoContatoEm = data;
-    }
-
-    public AcompanhamentoContrato prever(
-            ResultadoContato resultado, Optional<LocalDate> retorno, ContextoContato contexto) {
-        var previsao = new AcompanhamentoContrato();
-        previsao.contratoId = contratoId;
-        previsao.etapaPendenteId = etapaPendenteId;
-        previsao.retornoManualEm = retornoManualEm;
-        previsao.proximoContatoEm = proximoContatoEm;
-        previsao.versao = versao;
-        previsao.registrar(resultado, retorno, contexto);
-        return previsao;
-    }
-
-    /** @param realizadoEm quando o atendimento aconteceu, no fuso de São Paulo */
-    public record ContextoContato(
-            int versao, LocalDate hoje, OffsetDateTime realizadoEm, List<EtapaRegua> etapas) {
-        public ContextoContato {
-            etapas = List.copyOf(etapas);
-        }
-
-        LocalDate dataDoAtendimento() {
-            return realizadoEm.toLocalDate();
-        }
-
-        EtapaRegua etapa(Short id) {
-            return etapaDa(etapas, id);
-        }
-    }
-
-    /** @param baseRegua o dia do último contato concluído ou, sem nenhum, da adesão (RG-14) */
-    public record ContextoDoAjuste(LocalDate hoje, LocalDate baseRegua, List<EtapaRegua> etapas) {
-        public ContextoDoAjuste {
-            Objects.requireNonNull(hoje, "hoje");
-            Objects.requireNonNull(baseRegua, "baseRegua");
-            etapas = List.copyOf(etapas);
-        }
-    }
-
-    private static EtapaRegua etapaDa(List<EtapaRegua> etapas, Short id) {
-        return etapas.stream()
-                .filter(etapa -> etapa.id().equals(id))
-                .findFirst()
-                .orElseThrow(
-                        () ->
-                                NegocioException.invalido(
-                                        "etapa-inexistente", "Etapa não encontrada na régua."));
-    }
-
-    /**
-     * ATD-04 · O gerencial corrige a régua depois de um atendimento lançado errado: define a etapa pendente e, se
-     * quiser, um retorno manual. Sem retorno, o próximo contato volta a ser a base da régua + o prazo da etapa.
-     */
-    public void ajustarPelaGerencia(AjusteDaRegua ajuste, ContextoDoAjuste contexto, UUID autor) {
-        if (versao != ajuste.versao()) throw NegocioException.edicaoSimultanea();
-        if (etapaPendenteId == null)
-            throw NegocioException.invalido("regua-encerrada", "A régua está encerrada.");
-        if (ajuste.retorno().filter(data -> data.isBefore(contexto.hoje())).isPresent())
-            throw NegocioException.invalido(
-                    "retorno-invalido", "O retorno não pode ser anterior a hoje.");
-        var anterior = estado();
-        EtapaRegua etapa = etapaDa(contexto.etapas(), ajuste.etapaId());
-        etapaPendenteId = etapa.id();
-        retornoManualEm = ajuste.retorno().orElse(null);
-        proximoContatoEm =
-                ajuste.retorno().orElse(contexto.baseRegua().plusDays(etapa.diasAposAnterior()));
-        registerEvent(new AcompanhamentoAtualizado(contratoId, autor, anterior, estado()));
-    }
-
-    public Optional<LocalDate> preverRecalculo(LocalDate base, List<EtapaRegua> etapas) {
-        if (etapaPendenteId == null || retornoManualEm != null) return getProximoContatoEm();
-        return Optional.of(base.plusDays(etapaDa(etapas, etapaPendenteId).diasAposAnterior()));
-    }
-
-    public void recalcular(LocalDate base, List<EtapaRegua> etapas) {
-        proximoContatoEm = preverRecalculo(base, etapas).orElse(null);
-    }
-
-    public EstadoDoAcompanhamento estado() {
-        return new EstadoDoAcompanhamento(
-                getEtapaPendenteId(), getProximoContatoEm(), getRetornoManualEm());
-    }
-
-    public void registrarContato(RegistroNaRegua registro, ContextoContato contexto, UUID autor) {
-        var anterior = estado();
-        registrar(registro.resultado(), registro.retorno(), contexto);
-        registerEvent(new AcompanhamentoAtualizado(contratoId, autor, anterior, estado()));
-    }
-
-    public void recalcularAgenda(LocalDate base, List<EtapaRegua> etapas, UUID autor) {
-        var anterior = estado();
-        recalcular(base, etapas);
-        if (!anterior.equals(estado()))
-            registerEvent(new AcompanhamentoAtualizado(contratoId, autor, anterior, estado()));
     }
 
     @PostLoad
@@ -264,9 +227,5 @@ public class AcompanhamentoContrato extends AbstractAggregateRoot<Acompanhamento
 
     public Optional<LocalDate> getProximoContatoEm() {
         return Optional.ofNullable(proximoContatoEm);
-    }
-
-    public Optional<OffsetDateTime> getEncerradoEm() {
-        return Optional.ofNullable(encerradoEm);
     }
 }

@@ -25,6 +25,13 @@ import {
 import { problemaDe } from '../../../core/api/problema';
 import { formatarData } from '../../../shared/formatos/formatos';
 import { mensagemInicial, conversaComMensagem } from './mensagem-do-contato';
+/** A fila mudou desde que foi carregada: recarrega e mostra o motivo (RG-06, ATD-03). */
+const CODIGOS_DE_FILA_DESATUALIZADA = [
+  'edicao-simultanea',
+  'fila-mudou',
+  'aniversario-ja-registrado',
+  'registro-duplicado',
+];
 /** FIL-02 a FIL-05 · Formulário de registro com prévia, confirmação e edição da mensagem. */
 @Component({
   selector: 'app-registro-na-fila',
@@ -49,7 +56,6 @@ export class RegistroNaFila {
   protected readonly textoMensagem = signal('');
   protected readonly erro = signal('');
   protected readonly gravando = signal(false);
-  protected readonly repeticao = signal(false);
   protected readonly previsao = signal<PreviaContato | null>(null);
   protected readonly formatarData = formatarData;
   constructor() {
@@ -75,7 +81,6 @@ export class RegistroNaFila {
     this.retorno.set('');
     this.descricao.set('');
     this.erro.set('');
-    this.repeticao.set(false);
     this.textoMensagem.set(mensagemInicial(linha, aniversario));
     this.invalidarPrevia();
   }
@@ -104,7 +109,7 @@ export class RegistroNaFila {
     this.definirOcupacao(true);
     this.erro.set('');
     const pedido = this.aniversario()
-      ? this.api.registrarAniversario(this.linha().contratoId, this.repeticao())
+      ? this.api.registrarAniversario(this.linha().contratoId)
       : this.api.registrar(this.linha().contratoId, this.registro());
     pedido.pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: () => {
@@ -125,8 +130,6 @@ export class RegistroNaFila {
     const problema = problemaDe(erro);
     const mensagem = problema.detail ?? 'Não foi possível concluir a operação.';
     this.erro.set(mensagem);
-    if (problema.codigo === 'aniversario-ja-registrado') this.repeticao.set(true);
-    if (problema.codigo === 'edicao-simultanea' || problema.codigo === 'fila-mudou')
-      this.conflito.emit(mensagem);
+    if (CODIGOS_DE_FILA_DESATUALIZADA.includes(problema.codigo ?? '')) this.conflito.emit(mensagem);
   }
 }

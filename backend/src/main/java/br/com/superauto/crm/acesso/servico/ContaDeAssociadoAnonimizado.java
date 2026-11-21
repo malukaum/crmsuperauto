@@ -28,7 +28,7 @@ public class ContaDeAssociadoAnonimizado {
         if (evento.usuarioId() == null) {
             return;
         }
-        usuarios.findById(evento.usuarioId()).ifPresent(usuario -> usuario.definirAtivo(false));
+        usuarios.buscarParaAlteracao(evento.usuarioId()).ifPresent(usuario -> usuario.definirAtivo(false));
         identidade.definirAtivo(evento.usuarioId(), false);
         identidade.encerrarSessoes(evento.usuarioId());
     }

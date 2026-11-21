@@ -1,6 +1,6 @@
 # Histórias de usuário
 
-São 37 histórias em 9 módulos, cada uma com suas regras de negócio e critérios de aceite. As regras vêm da planilha, da macro de atendimento e das decisões do modelo de dados. Regras novas, sugeridas para o sistema web, estão marcadas com **(proposta)** e precisam da sua validação.
+São 38 histórias em 9 módulos, cada uma com suas regras de negócio e critérios de aceite. As regras vêm da planilha, da macro de atendimento e das decisões do modelo de dados. Regras novas, sugeridas para o sistema web, estão marcadas com **(proposta)** e precisam da sua validação.
 
 **Como ler:** cada história tem o formato *Como / quero / para*, as **Regras** de negócio e os **Critérios de aceite** (*Dado / quando / então*), que viram testes. As regras gerais (RG) valem para todas e não se repetem. O modelo de dados está em [`../modelo-de-dados`](../modelo-de-dados/README.md).
 
@@ -9,7 +9,7 @@ São 37 histórias em 9 módulos, cada uma com suas regras de negócio e critér
 | Módulo | Arquivo | Histórias |
 | --- | --- | --- |
 | Acesso e perfis (ACE) | [01-acesso.md](01-acesso.md) | 4 |
-| Carteira de clientes (CAR) | [02-carteira.md](02-carteira.md) | 8 |
+| Carteira de clientes (CAR) | [02-carteira.md](02-carteira.md) | 9 |
 | Painel, filas e régua (FIL) | [03-filas-e-regua.md](03-filas-e-regua.md) | 6 |
 | Atendimentos (ATD) | [04-atendimentos.md](04-atendimentos.md) | 5 |
 | Indicações (IND) | [05-indicacoes.md](05-indicacoes.md) | 3 |
@@ -36,6 +36,7 @@ O MVP tem 25 histórias: com elas a equipe já trabalha sem a planilha. A fase i
 | [CAR-06](02-carteira.md#car-06--classificar-perfil-e-potencial-de-indicação) | Classificar perfil e potencial de indicação | Gerencial, vendedor, atendente | MVP · sem. 6 |
 | [CAR-07](02-carteira.md#car-07--exportar-lista-de-clientes) | Exportar lista de clientes | Gerencial, vendedor | Gestão · sem. 7 |
 | [CAR-08](02-carteira.md#car-08--anonimizar-cliente-lgpd) | Anonimizar cliente (LGPD) | Gerencial | Gestão · sem. 9 |
+| [CAR-09](02-carteira.md#car-09--redistribuir-contratos-em-lote) | Redistribuir contratos em lote | Gerencial | Futuro |
 | [FIL-01](03-filas-e-regua.md#fil-01--ver-o-painel) | Ver o painel | Gerencial, vendedor, atendente | MVP · sem. 5 |
 | [FIL-02](03-filas-e-regua.md#fil-02--trabalhar-a-fila-de-contatos-de-hoje) | Trabalhar a fila de contatos de hoje | Gerencial, vendedor, atendente | MVP · sem. 5 |
 | [FIL-03](03-filas-e-regua.md#fil-03--trabalhar-a-fila-de-atrasados) | Trabalhar a fila de atrasados | Gerencial, vendedor, atendente | MVP · sem. 5 |
@@ -68,12 +69,12 @@ Estas regras valem para todas as histórias e não são repetidas em cada uma.
 
 | ID | Regra |
 | --- | --- |
-| RG-01 | **Data de hoje.** "Hoje" é sempre a data de São Paulo (America/Sao\_Paulo), qualquer que seja o fuso do servidor ou do navegador. |
+| RG-01 | **Data de hoje.** "Hoje" é sempre a data de Brasília (America/Sao\_Paulo), qualquer que seja o fuso do servidor, do banco, do navegador ou do cliente: filas, atrasos e prazos seguem a agenda da equipe. Na tela, data e hora de um acontecimento (um atendimento registrado, por exemplo) aparecem no fuso de quem está vendo; datas de calendário (próximo contato, aniversário, adesão) não têm fuso e aparecem como estão. |
 | RG-02 | **Formatos.** Datas em dd/mm/aaaa, valores em R$ 1.234,56, telefone como (37) 9 9999-9999 e placa em maiúsculas sem hífen. |
 | RG-03 | **Visibilidade por papel.** Gerencial e atendente veem toda a carteira. O vendedor vê apenas os contratos em que é o vendedor, em todas as telas (filas, carteira, ficha, inteligência, exportação). O cliente vê apenas os próprios dados. |
-| RG-04 | **CPF/CNPJ.** O atendente vê o documento mascarado (\*\*\*.\*\*\*.418-\*\*). Gerencial e vendedor veem completo ao clicar em "mostrar", e cada exibição é registrada na auditoria **(proposta)**. |
+| RG-04 | **CPF/CNPJ.** O atendente vê o documento mascarado (\*\*\*.\*\*\*.418-\*\*). Gerencial e vendedor veem completo ao clicar em "mostrar", e cada exibição é registrada na auditoria. |
 | RG-05 | **Busca.** Nome sem diferença de acento ou maiúsculas ("jose" encontra "José" e vice-versa), por trecho do nome. Também por placa, CPF/CNPJ ou telefone, com ou sem pontuação. |
-| RG-06 | **Edição simultânea.** Se duas pessoas alteram a mesma ficha, a segunda gravação é recusada com a mensagem "Este cadastro foi alterado por outra pessoa. Recarregue para ver a versão atual." Nada é sobrescrito em silêncio. |
+| RG-06 | **Edição simultânea.** Toda alteração de um cadastro trava o registro até terminar: quem chega depois espera a primeira gravação acabar (até 5 segundos; passado isso, recebe "Outra pessoa está alterando este registro agora. Tente de novo em instantes."). Depois da espera, se a primeira mudou o que a segunda tinha visto, a segunda é recusada com "Este cadastro foi alterado por outra pessoa. Recarregue para ver a versão atual." Nada é sobrescrito em silêncio. |
 | RG-07 | **Nada se apaga.** Contratos e atendimentos nunca são excluídos: contrato muda de situação, atendimento é corrigido por outro registro. |
 | RG-08 | **Auditoria.** Toda alteração de cliente, contato, contrato, régua, indicação e configuração é registrada com quem, quando, valor anterior e valor novo. |
 | RG-09 | **Mensalidade não é receita.** Toda tela com valores de mensalidade mostra o aviso de que são valores contratados, não recebidos. Recebimento só com integração ao SGA. |

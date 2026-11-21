@@ -10,6 +10,7 @@ import {
 } from '../../../core/api/relacionamento-api.service';
 import { ReferenciasApi } from '../../../core/api/referencias-api.service';
 import { MenuService } from '../../../core/api/menu.service';
+import { PaginaApi } from '../../../core/api/pagina';
 import { Filas } from './filas';
 
 const associado: LinhaTrabalho = {
@@ -31,12 +32,16 @@ const associado: LinhaTrabalho = {
   mensagemEnviada: false,
 };
 
+function pagina(linhas: LinhaTrabalho[]): PaginaApi<LinhaTrabalho> {
+  return { content: linhas, page: { size: 25, number: 0, totalElements: linhas.length, totalPages: 1 } };
+}
+
 async function preparar(linha = associado) {
   const api = {
     fila: vi
       .fn()
-      .mockReturnValueOnce(of([linha]))
-      .mockReturnValue(of([])),
+      .mockReturnValueOnce(of(pagina([linha])))
+      .mockReturnValue(of(pagina([]))),
     preverContato: vi
       .fn()
       .mockReturnValue(

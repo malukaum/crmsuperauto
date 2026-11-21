@@ -1,6 +1,7 @@
 package br.com.superauto.crm.erro;
 
 import java.net.URI;
+import java.sql.SQLException;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -57,6 +60,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private final Clock clock;
 
+    /** SQLSTATE do Postgres para violação de índice único. */
+    private static final String VIOLACAO_DE_UNICIDADE = "23505";
+
     public GlobalExceptionHandler(Clock clock) {
         this.clock = clock;
     }
@@ -92,6 +98,36 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     ProblemDetail edicaoSimultanea(ObjectOptimisticLockingFailureException ex, HttpServletRequest request) {
         return negocio(NegocioException.edicaoSimultanea(), request);
+    }
+
+    /**
+     * RG-06 · Um índice único recusou a gravação porque outra pessoa gravou o mesmo item um instante antes (ex.:
+     * segunda mensagem de aniversário no ano, segunda correção do mesmo atendimento). Outras violações de
+     * integridade são erro do sistema e seguem como erro inesperado.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    ProblemDetail registroDuplicado(DataIntegrityViolationException ex, HttpServletRequest request) {
+        if (!violouIndiceUnico(ex)) {
+            return erroInesperado(ex, request);
+        }
+        return negocio(NegocioException.conflito("registro-duplicado",
+                "Outra pessoa acabou de registrar isso. Recarregue para ver o que já foi gravado."), request);
+    }
+
+    private static boolean violouIndiceUnico(Throwable erro) {
+        for (Throwable causa = erro; causa != null; causa = causa.getCause()) {
+            if (causa instanceof SQLException sql && VIOLACAO_DE_UNICIDADE.equals(sql.getSQLState())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** RG-06 · Outra alteração do mesmo registro segurou a trava de linha além do limite de espera (5 s). */
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    ProblemDetail registroEmAndamento(PessimisticLockingFailureException ex, HttpServletRequest request) {
+        return negocio(NegocioException.conflito("registro-em-andamento",
+                "Outra pessoa está alterando este registro agora. Tente de novo em instantes."), request);
     }
 
     @ExceptionHandler(IntegracaoIndisponivelException.class)

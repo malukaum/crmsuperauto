@@ -96,7 +96,7 @@ public class AssociadosController {
     @GetMapping("/{id}")
     @PreAuthorize(Papeis.EQUIPE_INTERNA)
     public FichaAssociado ficha(@PathVariable Long id, JwtAuthenticationToken auth) {
-        return consulta.ficha(id, AutorDoToken.escopo(auth));
+        return consulta.ficha(id, AutorDoToken.escopo(auth), AutorDoToken.leitor(auth));
     }
 
     /** RG-04 · O atendente vê o documento mascarado; gerencial e vendedor veem completo, com registro na auditoria. */

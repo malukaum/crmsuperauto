@@ -10,7 +10,7 @@ As filas substituem as abas CENTRAL DO DIA, ATRASADOS e ANIVERSARIANTES. Nos doi
 
 **Regras**
 
-- Indicadores: clientes na carteira (contratos não cancelados, por tipo de veículo; a planilha contava todas as linhas) **(proposta)**, contatos de hoje, atrasados, aniversariantes de hoje e dos próximos 7 dias, mensalidades ativas (soma dos contratos Ativo) e atendimentos no mês (mês corrente, todos os tipos).
+- Indicadores: clientes na carteira (contratos não cancelados, por tipo de veículo; a planilha contava todas as linhas), contatos de hoje, atrasados, aniversariantes de hoje e dos próximos 7 dias, mensalidades ativas (soma dos contratos Ativo) e atendimentos no mês (mês corrente, todos os tipos).
 - Se houver contratos "A conferir", aparece um aviso com a quantidade e o link para filtrá-los na carteira.
 - Abaixo: os próximos contatos de hoje (até 5), a situação dos contratos e os próximos aniversariantes.
 - Cada indicador abre a fila ou o filtro correspondente.
@@ -29,7 +29,7 @@ As filas substituem as abas CENTRAL DO DIA, ATRASADOS e ANIVERSARIANTES. Nos doi
 
 - Entram os contratos com régua ativa, situação A conferir ou Ativo e próximo contato igual a hoje.
 - Colunas, como na planilha: cliente, WhatsApp, veículo, placa, mensalidade, data, etapa e cidade, com as ações WhatsApp, Registrar e Ver ficha.
-- Ordem por nome **(proposta; a planilha seguia a ordem das linhas)**. Filtros por cidade, etapa e tipo de veículo, e busca ([RG-05](README.md#regras-gerais)).
+- Ordem por nome (a planilha seguia a ordem das linhas). Filtros por cidade, etapa e tipo de veículo, e busca ([RG-05](README.md#regras-gerais)).
 - Registrar abre o formulário na própria fila. Depois de gravar, a fila é atualizada e o cliente sai dela se o próximo contato mudou.
 - Se outra pessoa registrou o mesmo cliente nesse meio-tempo, a gravação é recusada ([RG-06](README.md#regras-gerais)). É o equivalente ao aviso "A fila mudou" da macro.
 
@@ -61,9 +61,9 @@ As filas substituem as abas CENTRAL DO DIA, ATRASADOS e ANIVERSARIANTES. Nos doi
 
 - Uma linha por pessoa, não por placa. Entram as pessoas com nascimento no dia e mês de hoje e pelo menos um contrato que não esteja suspenso nem cancelado.
 - Quem nasceu em 29/02 aparece em 28/02 nos anos não bissextos.
-- Abas: Hoje, Próximos 7 dias e Próximos 30 dias **(proposta; a planilha mostrava só hoje)**.
+- Abas: Hoje, Próximos 7 dias e Próximos 30 dias (a planilha mostrava só hoje).
 - Colunas: cliente, WhatsApp, veículo e placa, mensalidade, dia do aniversário, situação e cidade.
-- A ação principal é registrar a mensagem de aniversário ([ATD-03](04-atendimentos.md#atd-03--registrar-mensagem-de-aniversário)). Depois de registrada, a linha mostra "Mensagem enviada" **(proposta)**.
+- A ação principal é registrar a mensagem de aniversário ([ATD-03](04-atendimentos.md#atd-03--registrar-mensagem-de-aniversário)). Depois de registrada, a linha mostra "Mensagem enviada".
 - Pessoa jurídica não tem nascimento e nunca aparece.
 
 **Critérios de aceite**
@@ -80,7 +80,7 @@ As filas substituem as abas CENTRAL DO DIA, ATRASADOS e ANIVERSARIANTES. Nos doi
 - O botão abre wa.me com o WhatsApp principal do cliente (55 + DDD + número), numa nova aba. Nada é enviado sozinho ([RG-10](README.md#regras-gerais)).
 - Sem WhatsApp, o botão some e aparece "Sem WhatsApp". Com opt-out, o botão fica desativado ([CAR-04](02-carteira.md#car-04--atualizar-contatos-do-cliente)).
 - Abrir a conversa não registra atendimento: o registro é um passo separado.
-- Texto inicial sugerido por tipo de contato (pós-venda, aniversário), editável antes de enviar **(proposta)**.
+- Texto inicial sugerido por tipo de contato (pós-venda, aniversário), editável antes de enviar.
 
 **Critérios de aceite**
 
@@ -92,9 +92,9 @@ As filas substituem as abas CENTRAL DO DIA, ATRASADOS e ANIVERSARIANTES. Nos doi
 
 **Regras**
 
-- Só o gerencial altera. Cada etapa aceita de 1 a 365 dias. A sequência das etapas é fixa nesta tela; criar etapa nova é uma mudança de sistema **(proposta)**.
+- Só o gerencial altera. Cada etapa aceita de 1 a 365 dias. A sequência das etapas é fixa nesta tela; criar etapa nova é uma mudança de sistema.
 - Ao salvar, o próximo contato de todos os contratos com régua ativa é recalculado. Os que têm retorno manual mantêm a data manual.
-- Antes de confirmar, o sistema mostra quantos contratos vão mudar de data **(proposta)**.
+- Antes de confirmar, o sistema mostra quantos contratos vão mudar de data.
 - A alteração vai para a auditoria ([RG-08](README.md#regras-gerais)).
 
 **Critérios de aceite**
@@ -107,3 +107,5 @@ As filas substituem as abas CENTRAL DO DIA, ATRASADOS e ANIVERSARIANTES. Nos doi
 | História | Decisão |
 | --- | --- |
 | FIL-02 · FIL-03 | Os contadores do menu usam a mesma consulta das filas e o "hoje" de São Paulo do servidor (RG-01), para o número ao lado do menu nunca divergir da lista (21/11/2026). |
+| FIL-02 · RG-06 | Registros simultâneos do mesmo contrato entram em fila: o acompanhamento é travado (`SELECT … FOR UPDATE`) até o fim da transação, e o segundo espera o primeiro terminar. A versão só avança quando a régua muda. Por isso, se o primeiro mudou a régua (Concluído, Sem resposta, Reagendado ou retorno manual), o segundo, que viu a versão antiga, é recusado com "alterado por outra pessoa", sem avançar a régua duas vezes; se o primeiro foi Pendente, o segundo grava normalmente. Espera acima de 5 segundos responde "Outra pessoa está registrando neste contrato agora" (21/11/2026). |
+| FIL-06 · RG-06 | Salvar os prazos trava os acompanhamentos de régua ativa (na ordem do contrato) e as etapas antes de recalcular. Um atendimento registrado ao mesmo tempo espera o salvamento terminar (ou vice-versa); quem chega depois trabalha sobre o que já foi gravado, e a prévia da régua deixa de valer se a carteira mudou nesse meio-tempo (21/11/2026). |

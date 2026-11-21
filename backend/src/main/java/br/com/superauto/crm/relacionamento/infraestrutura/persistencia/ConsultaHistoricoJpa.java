@@ -1,5 +1,9 @@
 package br.com.superauto.crm.relacionamento.infraestrutura.persistencia;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Page;
+import jakarta.persistence.criteria.CriteriaQuery;
 import br.com.superauto.crm.config.FuncoesDeBusca;
 import br.com.superauto.crm.relacionamento.entidade.ContratoNaFila;
 import br.com.superauto.crm.relacionamento.entidade.LinhaHistoricoAtendimento;
@@ -30,14 +34,34 @@ public class ConsultaHistoricoJpa implements ConsultaHistorico {
     private final EntityManager em;
 
     @Override
-    public List<LinhaHistoricoAtendimento> listar(Pedido pedido) {
+    public Page<LinhaHistoricoAtendimento> listar(Pedido pedido, Pageable pagina) {
+        var linhas = em.createQuery(selecao(pedido))
+                .setFirstResult((int) pagina.getOffset())
+                .setMaxResults(pagina.getPageSize())
+                .getResultList();
+        return new PageImpl<>(linhas, pagina, contar(pedido));
+    }
+
+    @Override
+    public List<LinhaHistoricoAtendimento> todos(Pedido pedido) {
+        return em.createQuery(selecao(pedido)).getResultList();
+    }
+
+    private CriteriaQuery<LinhaHistoricoAtendimento> selecao(Pedido pedido) {
         var cb = em.getCriteriaBuilder();
         var consulta = cb.createQuery(LinhaHistoricoAtendimento.class);
         var linha = consulta.from(LinhaHistoricoAtendimento.class);
-        consulta.select(linha)
+        return consulta.select(linha)
                 .where(condicoes(cb, consulta, linha, pedido))
                 .orderBy(cb.desc(linha.get("realizadoEm")), cb.desc(linha.get("id")));
-        return em.createQuery(consulta).getResultList();
+    }
+
+    private long contar(Pedido pedido) {
+        var cb = em.getCriteriaBuilder();
+        var consulta = cb.createQuery(Long.class);
+        var linha = consulta.from(LinhaHistoricoAtendimento.class);
+        return em.createQuery(consulta.select(cb.count(linha)).where(condicoes(cb, consulta, linha, pedido)))
+                .getSingleResult();
     }
 
     @Override

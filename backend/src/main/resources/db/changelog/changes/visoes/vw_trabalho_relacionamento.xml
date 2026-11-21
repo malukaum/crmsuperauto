@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      FIL-01 a FIL-04 · A carteira com o que as filas, o painel e os registros usam: nascimento, base da régua (dia
+      do último contato concluído ou da adesão, RG-14) e versão do acompanhamento (RG-06). Inclui anonimizados,
+      para os indicadores históricos continuarem (RG-07).
+      Visão não altera a estrutura: este arquivo é a definição vigente e é editado no lugar. O Liquibase reaplica
+      quando a definição muda (runOnChange) e aceita o checksum novo (validCheckSum ANY).
+    -->
+    <changeSet id="vw-trabalho-relacionamento" author="crm-superauto" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
+        <createView viewName="vw_trabalho_relacionamento" replaceIfExists="true"><![CDATA[
+SELECT c.contrato_id, c.associado_id, c.associado_nome, c.documento, c.telefones, c.cidade, c.municipio_id,
+       c.placa, c.modelo, c.tipo_veiculo, c.tipo_veiculo_id, c.valor_mensalidade, c.situacao, c.vendedor_id,
+       c.etapa_pendente_id, c.etapa_pendente, c.proximo_contato_em, c.whatsapp, c.whatsapp_aceita_contato,
+       a.data_nascimento,
+       COALESCE((u.ultimo_contato_em AT TIME ZONE 'America/Sao_Paulo')::date,
+                (c.aderido_em AT TIME ZONE 'America/Sao_Paulo')::date) AS base_regua,
+       COALESCE(ac.versao, 0) AS acompanhamento_versao
+  FROM vw_carteira c
+  JOIN associado a ON a.id = c.associado_id
+  LEFT JOIN acompanhamento_contrato ac ON ac.contrato_id = c.contrato_id
+  LEFT JOIN vw_ultimo_contato_regua u ON u.contrato_id = c.contrato_id
+        ]]></createView>
+        <!-- A versão anterior está no histórico do git; não há dado a desfazer. -->
+        <rollback/>
+    </changeSet>
+</databaseChangeLog>

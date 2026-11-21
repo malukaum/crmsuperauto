@@ -4,6 +4,7 @@ import static br.com.superauto.crm.Identificadores.comId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +19,7 @@ import br.com.superauto.crm.cadastro.repositorio.ConsultaCarteira;
 import br.com.superauto.crm.cadastro.repositorio.EtapaPrevista;
 import br.com.superauto.crm.cadastro.repositorio.EtapaPrevista.SituacaoEtapa;
 import br.com.superauto.crm.cadastro.repositorio.HistoricoDeAtendimentos;
+import br.com.superauto.crm.cadastro.repositorio.LeitorDaFicha;
 import br.com.superauto.crm.cadastro.repositorio.IndicacoesDoAssociado;
 import br.com.superauto.crm.cadastro.repositorio.ReferenciasDoCadastro;
 import br.com.superauto.crm.cadastro.repositorio.ReguaDoContrato;
@@ -42,6 +44,8 @@ import org.junit.jupiter.api.Test;
 
 class ConsultaAssociadoServiceTest {
 
+    private static final LeitorDaFicha LEITOR = new LeitorDaFicha(UUID.randomUUID(), true);
+
     private final AssociadoRepository associados = mock(AssociadoRepository.class);
     private final ConsultaCarteira carteira = mock(ConsultaCarteira.class);
     private final ReferenciasDoCadastro referencias = mock(ReferenciasDoCadastro.class);
@@ -65,14 +69,14 @@ class ConsultaAssociadoServiceTest {
         when(carteira.doAssociado(7L)).thenReturn(linhas);
         when(reguas.previsoes(any())).thenAnswer(i -> Map.of(
                 100L, new ReguaDoContrato(0, List.of(pendente())), 101L, new ReguaDoContrato(0, List.of(pendente()))));
-        when(historico.doAssociado(7L)).thenReturn(List.of(atendimento(1L, 100L), atendimento(2L, 101L), aniversario(3L)));
+        when(historico.doAssociado(eq(7L), any())).thenReturn(List.of(atendimento(1L, 100L), atendimento(2L, 101L), aniversario(3L)));
         when(indicacoes.feitasPor(7L)).thenReturn(List.of());
     }
 
     @Test
     @DisplayName("CAR-03: dado um cliente com duas placas, a ficha mostra os dois contratos, cada um com sua régua")
     void duasPlacas() {
-        var ficha = servico.ficha(7L, EscopoCarteira.TUDO);
+        var ficha = servico.ficha(7L, EscopoCarteira.TUDO, LEITOR);
 
         assertThat(ficha.contratos()).extracting(FichaAssociado.ContratoDaFicha::placa).containsExactly("HAA7216", "BRA2E19");
         assertThat(ficha.contratos()).allSatisfy(c -> assertThat(c.regua()).hasSize(1));
@@ -81,13 +85,13 @@ class ConsultaAssociadoServiceTest {
     @Test
     @DisplayName("CAR-03: dado o atendente, quando abre uma ficha, o documento aparece mascarado")
     void documentoMascarado() {
-        assertThat(servico.ficha(7L, EscopoCarteira.TUDO).documento()).isEqualTo("***.***.247-**");
+        assertThat(servico.ficha(7L, EscopoCarteira.TUDO, LEITOR).documento()).isEqualTo("***.***.247-**");
     }
 
     @Test
     @DisplayName("RG-03: o vendedor só vê os próprios contratos, os atendimentos deles e os contatos sobre a pessoa")
     void vendedorSoOsSeus() {
-        var ficha = servico.ficha(7L, EscopoCarteira.doVendedor(vendedor1));
+        var ficha = servico.ficha(7L, EscopoCarteira.doVendedor(vendedor1), LEITOR);
 
         assertThat(ficha.contratos()).extracting(FichaAssociado.ContratoDaFicha::id).containsExactly(100L);
         assertThat(ficha.atendimentos()).extracting(AtendimentoDoHistorico::id).containsExactly(1L, 3L);
@@ -96,7 +100,7 @@ class ConsultaAssociadoServiceTest {
     @Test
     @DisplayName("RG-03: o vendedor não abre a ficha de quem não tem contrato dele")
     void vendedorSemContrato() {
-        assertThatThrownBy(() -> servico.ficha(7L, EscopoCarteira.doVendedor(UUID.randomUUID())))
+        assertThatThrownBy(() -> servico.ficha(7L, EscopoCarteira.doVendedor(UUID.randomUUID()), LEITOR))
                 .isInstanceOfSatisfying(NegocioException.class,
                         e -> assertThat(e.getTipo()).isEqualTo(NegocioException.Tipo.NAO_ENCONTRADO));
     }
@@ -109,7 +113,7 @@ class ConsultaAssociadoServiceTest {
         when(linha.getSituacao()).thenReturn(SituacaoContrato.ATIVO);
         when(linha.getAderidoEm()).thenReturn(OffsetDateTime.parse("2026-03-13T00:00:00-03:00"));
         when(linha.getVendedorId()).thenReturn(Optional.of(vendedor));
-        when(linha.getFila()).thenReturn(Fila.FUTURO);
+        when(linha.filaEm(any())).thenReturn(Fila.FUTURO);
         return linha;
     }
 
@@ -120,12 +124,12 @@ class ConsultaAssociadoServiceTest {
     private static AtendimentoDoHistorico atendimento(Long id, Long contratoId) {
         return new AtendimentoDoHistorico(id, Optional.of(contratoId), Optional.empty(), "Pós-venda", Optional.empty(),
                 "CONCLUIDO", Optional.empty(), Optional.empty(), OffsetDateTime.now(), "Fulano", false, Optional.empty(),
-                UUID.randomUUID());
+                false);
     }
 
     private static AtendimentoDoHistorico aniversario(Long id) {
         return new AtendimentoDoHistorico(id, Optional.empty(), Optional.empty(), "Aniversário", Optional.empty(),
                 "CONCLUIDO", Optional.empty(), Optional.empty(), OffsetDateTime.now(), "Fulano", false, Optional.empty(),
-                UUID.randomUUID());
+                false);
     }
 }

@@ -45,8 +45,8 @@ class AcompanhamentoContratoTest {
         assertThat(acompanhamento.getEtapaPendenteId()).contains(D7.id());
     }
 
-    private static AcompanhamentoContrato.ContextoContato em(LocalDate hoje, int versao) {
-        return new AcompanhamentoContrato.ContextoContato(
+    private static ContextoDoContato em(LocalDate hoje, int versao) {
+        return new ContextoDoContato(
                 versao, hoje, hoje.atStartOfDay().atOffset(ZoneOffset.ofHours(-3)), REGUA);
     }
 
@@ -54,7 +54,7 @@ class AcompanhamentoContratoTest {
     @DisplayName("FIL-02: concluir D+7 em 25/03 avança para D+30 em 17/04")
     void concluirAvancaEtapa() {
         var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
-        acompanhamento.registrar(
+        registrar(acompanhamento, 
                 ResultadoContato.CONCLUIDO, Optional.empty(), em(LocalDate.of(2026, 3, 25), 0));
         assertThat(acompanhamento.getEtapaPendenteId()).contains(D30.id());
         assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 4, 17));
@@ -64,7 +64,7 @@ class AcompanhamentoContratoTest {
     @DisplayName("FIL-03: sem resposta em 31/10 agenda nova tentativa em 02/11 sem mudar a etapa")
     void semResposta() {
         var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
-        acompanhamento.registrar(
+        registrar(acompanhamento, 
                 ResultadoContato.SEM_RESPOSTA, Optional.empty(), em(LocalDate.of(2026, 10, 31), 0));
         assertThat(acompanhamento.getEtapaPendenteId()).contains(D7.id());
         assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 11, 2));
@@ -75,7 +75,7 @@ class AcompanhamentoContratoTest {
     void recalcularPrazos() {
         var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
         var concluido = LocalDate.of(2026, 3, 25);
-        acompanhamento.registrar(ResultadoContato.CONCLUIDO, Optional.empty(), em(concluido, 0));
+        registrar(acompanhamento, ResultadoContato.CONCLUIDO, Optional.empty(), em(concluido, 0));
         var novaRegua =
                 REGUA.stream()
                         .map(
@@ -90,7 +90,7 @@ class AcompanhamentoContratoTest {
                                                         e.inicial())
                                                 : e)
                         .toList();
-        acompanhamento.recalcular(concluido, novaRegua);
+        recalcular(acompanhamento, concluido, novaRegua);
         assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 4, 19));
     }
 
@@ -99,11 +99,11 @@ class AcompanhamentoContratoTest {
     void preservaManual() {
         var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
         var manual = LocalDate.of(2026, 11, 5);
-        acompanhamento.registrar(
+        registrar(acompanhamento, 
                 ResultadoContato.REAGENDADO,
                 Optional.of(manual),
                 em(LocalDate.of(2026, 10, 31), 0));
-        acompanhamento.recalcular(
+        recalcular(acompanhamento, 
                 LocalDate.of(2026, 3, 13),
                 List.of(new EtapaRegua(D7.id(), "D7", "D+7", 365, D30.id(), true)));
         assertThat(acompanhamento.getProximoContatoEm()).contains(manual);
@@ -115,7 +115,7 @@ class AcompanhamentoContratoTest {
         var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
         Assertions.assertThatThrownBy(
                         () ->
-                                acompanhamento.registrar(
+                                registrar(acompanhamento, 
                                         ResultadoContato.CONCLUIDO,
                                         Optional.empty(),
                                         em(LocalDate.of(2026, 3, 25), 1)))
@@ -130,12 +130,12 @@ class AcompanhamentoContratoTest {
         var hoje = LocalDate.of(2026, 10, 31);
         Assertions.assertThatThrownBy(
                         () ->
-                                acompanhamento.registrar(
+                                registrar(acompanhamento, 
                                         ResultadoContato.REAGENDADO, Optional.empty(), em(hoje, 0)))
                 .isInstanceOf(NegocioException.class);
         Assertions.assertThatThrownBy(
                         () ->
-                                acompanhamento.registrar(
+                                registrar(acompanhamento, 
                                         ResultadoContato.CONCLUIDO,
                                         Optional.of(hoje.minusDays(1)),
                                         em(hoje, 0)))
@@ -148,10 +148,9 @@ class AcompanhamentoContratoTest {
         var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
         var previa =
                 acompanhamento.prever(
-                        ResultadoContato.CONCLUIDO,
-                        Optional.empty(),
+                        new RegistroNaRegua(ResultadoContato.CONCLUIDO, Optional.empty()),
                         em(LocalDate.of(2026, 3, 25), 0));
-        assertThat(previa.getProximoContatoEm()).contains(LocalDate.of(2026, 4, 17));
+        assertThat(previa.proximoContato()).contains(LocalDate.of(2026, 4, 17));
         assertThat(acompanhamento.getEtapaPendenteId()).contains(D7.id());
         assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 3, 20));
     }
@@ -161,13 +160,13 @@ class AcompanhamentoContratoTest {
     void trimestralEPendente() {
         var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
         for (int i = 0; i < 4; i++)
-            acompanhamento.registrar(
+            registrar(acompanhamento, 
                     ResultadoContato.CONCLUIDO, Optional.empty(), em(LocalDate.of(2026, 6, 1), 0));
-        acompanhamento.registrar(
+        registrar(acompanhamento, 
                 ResultadoContato.CONCLUIDO, Optional.empty(), em(LocalDate.of(2026, 6, 1), 0));
         assertThat(acompanhamento.getEtapaPendenteId()).contains(TRIMESTRAL.id());
         assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 8, 30));
-        acompanhamento.registrar(
+        registrar(acompanhamento, 
                 ResultadoContato.PENDENTE, Optional.empty(), em(LocalDate.of(2026, 6, 2), 0));
         assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 8, 30));
     }
@@ -177,26 +176,26 @@ class AcompanhamentoContratoTest {
     void concluidoRetroativo() {
         var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
         var lancadoDepois =
-                new AcompanhamentoContrato.ContextoContato(
+                new ContextoDoContato(
                         0,
                         LocalDate.of(2026, 3, 27),
                         LocalDate.of(2026, 3, 25).atTime(15, 0).atOffset(ZoneOffset.ofHours(-3)),
                         REGUA);
 
-        acompanhamento.registrar(ResultadoContato.CONCLUIDO, Optional.empty(), lancadoDepois);
+        registrar(acompanhamento, ResultadoContato.CONCLUIDO, Optional.empty(), lancadoDepois);
 
         assertThat(acompanhamento.getProximoContatoEm()).contains(LocalDate.of(2026, 4, 17));
     }
 
-    private static AcompanhamentoContrato.ContextoDoAjuste ajusteEm(LocalDate hoje, LocalDate base) {
-        return new AcompanhamentoContrato.ContextoDoAjuste(hoje, base, REGUA);
+    private static ContextoDoAjuste ajusteEm(LocalDate hoje, LocalDate base) {
+        return new ContextoDoAjuste(hoje, base, REGUA);
     }
 
     @Test
     @DisplayName("ATD-04: o gerencial volta a régua para D+7 e o próximo contato é a base + 7 dias")
     void ajusteSemRetorno() {
         var acompanhamento = AcompanhamentoContrato.iniciar(10L, REGUA, LocalDate.of(2026, 3, 13));
-        acompanhamento.registrar(
+        registrar(acompanhamento, 
                 ResultadoContato.CONCLUIDO, Optional.empty(), em(LocalDate.of(2026, 3, 25), 0));
 
         acompanhamento.ajustarPelaGerencia(
@@ -238,5 +237,17 @@ class AcompanhamentoContratoTest {
         Assertions.assertThatThrownBy(() -> acompanhamento.ajustarPelaGerencia(
                         new AjusteDaRegua(3, D7.id(), Optional.empty()), contexto, autor))
                 .isInstanceOf(NegocioException.class);
+    }
+
+    private static final java.util.UUID AUTOR = java.util.UUID.randomUUID();
+
+    /** O registro de contato como a aplicação faz, pela raiz que publica o evento de auditoria. */
+    private static void registrar(AcompanhamentoContrato acompanhamento, ResultadoContato resultado,
+                                  Optional<LocalDate> retorno, ContextoDoContato contexto) {
+        acompanhamento.registrarContato(new RegistroNaRegua(resultado, retorno), contexto, AUTOR);
+    }
+
+    private static void recalcular(AcompanhamentoContrato acompanhamento, LocalDate base, List<EtapaRegua> etapas) {
+        acompanhamento.recalcularAgenda(base, etapas, AUTOR);
     }
 }

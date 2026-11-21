@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      CAR-01 · Uma linha por contrato (placa), com a pessoa, o veículo e a régua. A fila (Hoje, Atrasado...) não é
+      calculada aqui: depende do "hoje" de Brasília, que vem do relógio da aplicação (RG-01, LinhaCarteira.filaEm).
+      "telefones" junta os números do associado para a busca por telefone (RG-05).
+      Visão não altera a estrutura: este arquivo é a definição vigente e é editado no lugar. O Liquibase reaplica
+      quando a definição muda (runOnChange) e aceita o checksum novo (validCheckSum ANY).
+    -->
+    <changeSet id="vw-carteira" author="crm-superauto" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
+        <createView viewName="vw_carteira" replaceIfExists="true"><![CDATA[
+SELECT c.id                  AS contrato_id,
+       c.versao              AS contrato_versao,
+       a.id                  AS associado_id,
+       a.nome                AS associado_nome,
+       a.documento,
+       a.perfil,
+       a.potencial_indicacao,
+       a.municipio_id,
+       m.nome                AS cidade,
+       m.uf_sigla            AS uf,
+       v.placa,
+       v.modelo,
+       v.tipo_veiculo_id,
+       tv.descricao          AS tipo_veiculo,
+       c.valor_mensalidade,
+       c.situacao,
+       c.codigo_sga,
+       c.aderido_em,
+       c.vendido_em,
+       c.encerrado_em,
+       c.vendedor_id,
+       u.nome                AS vendedor_nome,
+       ac.etapa_pendente_id,
+       e.nome                AS etapa_pendente,
+       e.ordem               AS etapa_ordem,
+       ac.proximo_contato_em,
+       w.valor               AS whatsapp,
+       w.aceita_contato      AS whatsapp_aceita_contato,
+       (SELECT string_agg(ca.valor, ' ')
+          FROM contato_associado ca
+         WHERE ca.associado_id = a.id
+           AND ca.tipo IN ('WHATSAPP', 'TELEFONE')) AS telefones
+  FROM contrato c
+  JOIN associado a                 ON a.id = c.associado_id
+  JOIN veiculo v                   ON v.id = c.veiculo_id
+  JOIN tipo_veiculo tv             ON tv.id = v.tipo_veiculo_id
+  LEFT JOIN municipio m            ON m.id = a.municipio_id
+  LEFT JOIN usuario u              ON u.id = c.vendedor_id
+  LEFT JOIN acompanhamento_contrato ac ON ac.contrato_id = c.id
+  LEFT JOIN etapa_relacionamento e ON e.id = ac.etapa_pendente_id
+  LEFT JOIN contato_associado w    ON w.associado_id = a.id AND w.tipo = 'WHATSAPP' AND w.principal
+        ]]></createView>
+        <!-- A versão anterior está no histórico do git; não há dado a desfazer. -->
+        <rollback/>
+    </changeSet>
+</databaseChangeLog>

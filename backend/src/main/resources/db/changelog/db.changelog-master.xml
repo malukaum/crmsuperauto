@@ -16,7 +16,10 @@
     um changeset por tabela (tabela + checks + índices), com rollback explícito
     CHECKs, índices parciais/de expressão e a extensão pg_trgm vão em <sql>,
     porque o Liquibase Community não tem change types para eles
-    changesets já aplicados nunca são editados: toda mudança é um changeset novo
+    changesets já aplicados nunca são editados: toda mudança de estrutura (tabela, coluna, índice, CHECK)
+    vai num arquivo novo, versionado na sequência (019-..., 020-...)
+    visões não alteram a estrutura: cada uma tem um arquivo em changes/visoes/, editado no lugar, com
+    runOnChange + validCheckSum ANY; ficam no fim, na ordem das dependências entre elas
 -->
 <databaseChangeLog
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
@@ -32,15 +35,20 @@
     <include file="changes/006-comercial.xml" relativeToChangelogFile="true"/>
     <include file="changes/007-importacao.xml" relativeToChangelogFile="true"/>
     <include file="changes/008-auditoria.xml" relativeToChangelogFile="true"/>
-    <include file="changes/009-visoes.xml" relativeToChangelogFile="true"/>
     <include file="changes/010-dados-iniciais.xml" relativeToChangelogFile="true"/>
     <include file="changes/011-busca-sem-acento.xml" relativeToChangelogFile="true"/>
     <include file="changes/012-usuario-sistema.xml" relativeToChangelogFile="true"/>
     <include file="changes/013-carteira.xml" relativeToChangelogFile="true"/>
-    <include file="changes/014-carteira-visoes.xml" relativeToChangelogFile="true"/>
     <include file="changes/015-contato-unicidade-adiavel.xml" relativeToChangelogFile="true"/>
 
     <include file="changes/016-filas.xml" relativeToChangelogFile="true"/>
-    <include file="changes/017-relacionamento-historico-completo.xml" relativeToChangelogFile="true"/>
     <include file="changes/018-atendimentos.xml" relativeToChangelogFile="true"/>
+    <include file="changes/019-fila-pelo-relogio.xml" relativeToChangelogFile="true"/>
+    <include file="changes/020-aniversario-uma-por-ano.xml" relativeToChangelogFile="true"/>
+
+    <!-- Visões: uma por arquivo, editadas no lugar (ver convenções acima) -->
+    <include file="changes/visoes/vw_ultimo_contato_regua.xml" relativeToChangelogFile="true"/>
+    <include file="changes/visoes/vw_carteira.xml" relativeToChangelogFile="true"/>
+    <include file="changes/visoes/vw_historico_atendimento.xml" relativeToChangelogFile="true"/>
+    <include file="changes/visoes/vw_trabalho_relacionamento.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

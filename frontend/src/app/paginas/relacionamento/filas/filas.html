@@ -73,7 +73,7 @@
   @if (carregando()) {
     <p role="status">Carregando fila…</p>
   } @else {
-    <p>{{ linhas().length }} {{ aniversario ? 'pessoa(s)' : 'contrato(s)' }}</p>
+    <p>{{ total() }} {{ aniversario ? 'pessoa(s)' : 'contrato(s)' }}</p>
     <div class="crm-card crm-tabela-rolagem">
       <table class="crm-tabela">
         <thead>
@@ -89,7 +89,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (linha of visiveis(); track linha.contratoId) {
+          @for (linha of linhas(); track linha.contratoId) {
             <tr>
               <td>
                 {{ linha.nome }}
@@ -146,7 +146,7 @@
     </div>
     <mat-paginator
       [disabled]="gravando()"
-      [length]="linhas().length"
+      [length]="total()"
       [pageSize]="tamanho()"
       [pageIndex]="pagina()"
       [pageSizeOptions]="[10, 25, 50]"

@@ -17,14 +17,16 @@ describe('RelacionamentoApi · contrato das filas', () => {
   afterEach(() => http.verify());
   it('envia busca e filtros preenchidos sem tentar definir vendedor pelo navegador', () => {
     api
-      .fila('atrasados', { busca: 'José', cidade: 2535, etapa: null, tipoVeiculo: null })
+      .fila('atrasados', { busca: 'José', cidade: 2535, etapa: null, tipoVeiculo: null }, { pagina: 1, tamanho: 25 })
       .subscribe();
     const pedido = http.expectOne((pedido) => pedido.url === '/api/interno/filas/atrasados');
     expect(pedido.request.params.get('busca')).toBe('José');
     expect(pedido.request.params.get('cidade')).toBe('2535');
     expect(pedido.request.params.has('etapa')).toBe(false);
     expect(pedido.request.params.has('vendedor')).toBe(false);
-    pedido.flush([]);
+    expect(pedido.request.params.get('pagina')).toBe('1');
+    expect(pedido.request.params.get('tamanho')).toBe('25');
+    pedido.flush({ content: [], page: { size: 25, number: 1, totalElements: 0, totalPages: 0 } });
   });
   it('mantém código e mensagem de conflito para a fila pedir uma nova leitura', () => {
     let codigo: string | undefined;
@@ -59,14 +61,15 @@ describe('RelacionamentoApi · contrato das filas', () => {
         usuario: null,
         cidade: 2535,
         busca: 'haa7216',
-      })
+      }, { pagina: 0, tamanho: 25 })
       .subscribe();
     const pedido = http.expectOne((pedido) => pedido.url === '/api/interno/atendimentos');
     expect(pedido.request.params.get('tipo')).toBe('SUPORTE');
     expect(pedido.request.params.get('cidade')).toBe('2535');
     expect(pedido.request.params.get('busca')).toBe('haa7216');
     expect(pedido.request.params.has('inicio')).toBe(false);
-    pedido.flush([]);
+    expect(pedido.request.params.get('pagina')).toBe('0');
+    pedido.flush({ content: [], page: { size: 25, number: 0, totalElements: 0, totalPages: 0 } });
   });
   it('ATD-04 · a correção é um novo registro apontando para o original', () => {
     api.corrigir(55, { resultado: 'SEM_RESPOSTA', retorno: null, descricao: 'Não atendeu' }).subscribe();

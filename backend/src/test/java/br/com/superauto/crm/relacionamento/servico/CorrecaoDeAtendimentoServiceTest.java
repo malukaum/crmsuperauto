@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import br.com.superauto.crm.erro.NegocioException;
 import br.com.superauto.crm.relacionamento.entidade.Atendimento;
 import br.com.superauto.crm.relacionamento.entidade.Correcao;
-import br.com.superauto.crm.relacionamento.entidade.Corretor;
+import br.com.superauto.crm.relacionamento.entidade.ResponsavelPelaCorrecao;
 import br.com.superauto.crm.relacionamento.entidade.ResultadoContato;
 import br.com.superauto.crm.relacionamento.repositorio.AtendimentoRepository;
 
@@ -18,12 +18,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 class CorrecaoDeAtendimentoServiceTest {
     private static final Correcao CORRECAO = new Correcao(ResultadoContato.SEM_RESPOSTA, Optional.empty(), null);
-    private static final Corretor GERENCIAL = new Corretor(UUID.randomUUID(), true);
+    private static final ResponsavelPelaCorrecao GERENCIAL = new ResponsavelPelaCorrecao(UUID.randomUUID(), true);
 
     private final AtendimentoRepository atendimentos = mock(AtendimentoRepository.class);
     private final CorrecaoDeAtendimentoService servico =
@@ -32,7 +33,9 @@ class CorrecaoDeAtendimentoServiceTest {
     @Test
     @DisplayName("ATD-04: atendimento já corrigido não recebe outra correção; corrige-se a correção")
     void jaCorrigido() {
-        when(atendimentos.findById(10L)).thenReturn(Optional.of(mock(Atendimento.class)));
+        var original = Atendimento.registrar(new Atendimento.Novo(7L, null, (short) 3, null, ResultadoContato.CONCLUIDO,
+                null, null, OffsetDateTime.now(), UUID.randomUUID()));
+        when(atendimentos.buscarParaAlteracao(10L)).thenReturn(Optional.of(original));
         when(atendimentos.existsByCorrigeAtendimentoId(10L)).thenReturn(true);
 
         assertThatThrownBy(() -> servico.corrigir(10L, CORRECAO, GERENCIAL))
@@ -45,7 +48,7 @@ class CorrecaoDeAtendimentoServiceTest {
     @Test
     @DisplayName("ATD-04: atendimento inexistente responde como não encontrado")
     void naoEncontrado() {
-        when(atendimentos.findById(10L)).thenReturn(Optional.empty());
+        when(atendimentos.buscarParaAlteracao(10L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> servico.corrigir(10L, CORRECAO, GERENCIAL))
                 .isInstanceOf(NegocioException.class)

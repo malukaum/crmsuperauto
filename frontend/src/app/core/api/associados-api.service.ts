@@ -64,8 +64,8 @@ export interface AtendimentoDoHistorico {
   /** Já existe um registro de correção para este atendimento (ATD-04). */
   corrigido: boolean;
   corrigeAtendimentoId: number | null;
-  /** Para oferecer a correção ao autor (ATD-04). */
-  registradoPorId: string;
+  /** Quem está vendo pode corrigir agora (ATD-04); o servidor confere de novo ao gravar. */
+  podeCorrigir: boolean;
 }
 
 export interface IndicacaoFeita {

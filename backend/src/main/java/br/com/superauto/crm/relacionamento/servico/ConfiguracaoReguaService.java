@@ -18,12 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 
 /** FIL-06: prévia identificada pelo estado lido; mudanças posteriores exigem uma nova prévia. */
 @Service
@@ -41,12 +43,12 @@ public class ConfiguracaoReguaService {
 
     @Transactional(readOnly = true)
     public PreviaDaRegua prever(Map<Short, Integer> prazos) {
-        return plano(prazos).previa();
+        return plano(prazos, acompanhamentos::findAllById).previa();
     }
 
     @Transactional
     public void salvar(Map<Short, Integer> prazos, String confirmacao, UUID autor) {
-        Plano plano = plano(prazos);
+        Plano plano = plano(prazos, acompanhamentos::buscarTodosParaAlteracao);
         if (!plano.previa().confirmacao().equals(confirmacao)) {
             throw NegocioException.conflito(
                     "previa-desatualizada",
@@ -65,17 +67,23 @@ public class ConfiguracaoReguaService {
         acompanhamentos.saveAll(plano.acompanhamentos());
     }
 
-    private Plano plano(Map<Short, Integer> prazos) {
-        var atuais = regua.etapas();
-        var novas = new PrazosDaRegua(prazos).aplicar(atuais);
+    /**
+     * Ao salvar, os acompanhamentos são travados antes de ler as etapas: quem chegou depois espera e vê a régua e as
+     * versões já gravadas, e a confirmação da prévia deixa de bater (RG-06).
+     */
+    private Plano plano(
+            Map<Short, Integer> prazos,
+            Function<Collection<Long>, List<AcompanhamentoContrato>> carregarAcompanhamentos) {
         Map<Long, ContratoNaFila> contratos = new LinkedHashMap<>();
         trabalho.comReguaAtiva().forEach(c -> contratos.put(c.getContratoId(), c));
+        var carregados = carregarAcompanhamentos.apply(contratos.keySet());
+        var atuais = regua.etapas();
+        var novas = new PrazosDaRegua(prazos).aplicar(atuais);
         var ativos =
-                acompanhamentos.findAllById(contratos.keySet()).stream()
+                carregados.stream()
                         .filter(
                                 a ->
-                                        a.getEtapaPendenteId().isPresent()
-                                                && contratos.containsKey(a.getId()))
+                                        a.reguaAtiva() && contratos.containsKey(a.getId()))
                         .sorted(Comparator.comparing(AcompanhamentoContrato::getId))
                         .toList();
         return new Plano(atuais, novas, ativos, contratos);
@@ -97,9 +105,7 @@ public class ConfiguracaoReguaService {
 
         private boolean alteraData(AcompanhamentoContrato acompanhamento) {
             var base = contratos.get(acompanhamento.getId()).getBaseRegua();
-            return !acompanhamento
-                    .getProximoContatoEm()
-                    .equals(acompanhamento.preverRecalculo(base, etapas));
+            return acompanhamento.mudariaDeDataNoRecalculo(base, etapas);
         }
 
         private String identificar(AcompanhamentoContrato acompanhamento) {

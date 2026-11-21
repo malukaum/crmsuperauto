@@ -72,7 +72,7 @@ public class GestaoContratosController {
         gestao.alterar(id, req.alteracao(), UsuarioAtual.exigirId(auth));
     }
 
-    /** Marca vários contratos "a conferir" como ativos de uma vez (proposta). */
+    /** Marca vários contratos "a conferir" como ativos de uma vez. */
     @PostMapping("/ativacao-em-lote")
     public ResultadoAtivacao ativarEmLote(@Valid @RequestBody AtivacaoEmLoteRequest req, JwtAuthenticationToken auth) {
         return gestao.ativarEmLote(req.contratoIds(), UsuarioAtual.exigirId(auth));

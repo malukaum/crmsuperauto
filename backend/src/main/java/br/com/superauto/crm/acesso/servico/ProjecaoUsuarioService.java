@@ -66,7 +66,7 @@ public class ProjecaoUsuarioService {
     }
 
     private boolean gravar(UUID id, DadosProjecao dados) {
-        boolean mudou = repositorio.findById(id)
+        boolean mudou = repositorio.buscarParaAlteracao(id)
                 .map(u -> u.atualizarDados(dados.username(), dados.nome(), dados.email()))
                 .orElseGet(() -> {
                     repositorio.save(new Usuario(id, dados.username(), dados.nome(), dados.email()));

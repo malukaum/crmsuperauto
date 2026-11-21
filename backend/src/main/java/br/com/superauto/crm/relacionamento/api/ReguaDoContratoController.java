@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.Optional;
 
-/** ATD-04 · O gerencial ajusta a régua de um contrato depois de um atendimento lançado errado (proposta). */
+/** ATD-04 · O gerencial ajusta a régua de um contrato depois de um atendimento lançado errado. */
 @RestController
 @RequestMapping("/api/gestao/regua/contratos")
 @RequiredArgsConstructor

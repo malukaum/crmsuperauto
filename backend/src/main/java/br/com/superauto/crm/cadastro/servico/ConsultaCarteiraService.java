@@ -1,5 +1,8 @@
 package br.com.superauto.crm.cadastro.servico;
 
+import java.time.Clock;
+import java.time.LocalDate;
+
 import br.com.superauto.crm.cadastro.repositorio.ConsultaCarteira;
 import br.com.superauto.crm.cadastro.repositorio.FiltroCarteira;
 
@@ -15,14 +18,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class ConsultaCarteiraService {
 
     private final ConsultaCarteira carteira;
+    private final Clock relogio;
 
-    public ConsultaCarteiraService(ConsultaCarteira carteira) {
+    public ConsultaCarteiraService(ConsultaCarteira carteira, Clock relogio) {
         this.carteira = carteira;
+        this.relogio = relogio;
     }
 
     public PaginaCarteira buscar(FiltroCarteira filtro, PaginaSolicitada pagina, EscopoCarteira escopo) {
         var resultado = carteira.buscar(noEscopo(filtro, escopo), paginacao(pagina));
-        var linhas = resultado.pagina().getContent().stream().map(LinhaDaCarteira::de).toList();
+        var hoje = LocalDate.now(relogio);
+        var linhas = resultado.pagina().getContent().stream().map(linha -> LinhaDaCarteira.de(linha, hoje)).toList();
         return new PaginaCarteira(linhas, pagina.numero(), pagina.tamanho(), resultado.pagina().getTotalElements(),
                 resultado.somaMensalidades().valor());
     }

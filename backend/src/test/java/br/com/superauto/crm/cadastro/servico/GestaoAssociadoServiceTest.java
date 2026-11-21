@@ -55,6 +55,19 @@ class GestaoAssociadoServiceTest {
                 new DadosPessoais("José", LocalDate.of(1980, 5, 10), 1), Telefone.de("37998692950"), Optional.empty()),
                 vendedor), 7L);
         when(associados.findById(7L)).thenReturn(Optional.of(associado));
+        when(associados.buscarParaAlteracao(7L)).thenReturn(Optional.of(associado));
+    }
+
+    @Test
+    @DisplayName("RG-06: alterar a ficha trava a linha do associado; só mostrar o documento não trava")
+    void travaSoNaAlteracao() {
+        when(contratos.existsByAssociadoIdAndVendedorId(7L, vendedor)).thenReturn(true);
+
+        servico.exibirDocumento(7L, oVendedor);
+        verify(associados, never()).buscarParaAlteracao(7L);
+
+        servico.classificar(new FichaAberta(7L, 0), Classificacao.PADRAO, gerente);
+        verify(associados).buscarParaAlteracao(7L);
     }
 
     @Test

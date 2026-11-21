@@ -129,14 +129,6 @@ public class LinhaCarteira {
     @Column(name = "proximo_contato_em")
     private LocalDate proximoContatoEm;
 
-    @Getter
-    @Enumerated(EnumType.STRING)
-    private Fila fila;
-
-    @Getter
-    @Column(name = "dias_atraso")
-    private int diasAtraso;
-
     private String whatsapp;
 
     @Column(name = "whatsapp_aceita_contato")
@@ -189,5 +181,22 @@ public class LinhaCarteira {
     /** Falso quando o WhatsApp principal tem opt-out: o botão de conversa fica desativado (CAR-04). */
     public boolean whatsappAceitaContato() {
         return Boolean.TRUE.equals(whatsappAceitaContato);
+    }
+
+    /**
+     * RG-14 · Em que fila o contrato está hoje: suspenso e cancelado ficam na própria situação; sem régua ativa,
+     * "Sem data"; com régua, pela data do próximo contato.
+     *
+     * @param hoje o dia de Brasília, do relógio da aplicação (RG-01)
+     */
+    public Fila filaEm(LocalDate hoje) {
+        if (situacao == SituacaoContrato.CANCELADO) return Fila.CANCELADO;
+        if (situacao == SituacaoContrato.SUSPENSO) return Fila.SUSPENSO;
+        return etapaPendenteId == null ? Fila.SEM_DATA : Fila.daAgenda(getProximoContatoEm(), hoje);
+    }
+
+    /** Dias de atraso do próximo contato da régua ativa; zero sem régua. */
+    public int diasDeAtrasoEm(LocalDate hoje) {
+        return etapaPendenteId == null ? 0 : Fila.diasDeAtraso(getProximoContatoEm(), hoje);
     }
 }

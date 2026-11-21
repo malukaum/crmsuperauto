@@ -174,7 +174,7 @@ public class Associado extends AbstractAggregateRoot<Associado> {
 
     /**
      * CAR-08: apaga nome, documento, nascimento e contatos, de forma irreversível, e só quando todos os
-     * contratos do associado estão cancelados (proposta). Os contratos e os atendimentos continuam, para os
+     * contratos do associado estão cancelados. Os contratos e os atendimentos continuam, para os
      * relatórios; a cidade fica, para os indicadores por cidade.
      *
      * @param contratosDoAssociado todos os contratos da pessoa, para conferir a regra

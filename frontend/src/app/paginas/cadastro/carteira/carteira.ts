@@ -220,7 +220,7 @@ export class Carteira {
     return Object.values(filtros).some((v) => v !== undefined);
   }
 
-  // ---------- ativação em lote (CAR-05, proposta) ----------
+  // ---------- ativação em lote (CAR-05) ----------
 
   protected marcar(linha: LinhaDaCarteira, marcado: boolean): void {
     this.marcados.update((atual) => {

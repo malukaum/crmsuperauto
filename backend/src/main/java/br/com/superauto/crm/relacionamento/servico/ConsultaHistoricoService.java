@@ -1,5 +1,7 @@
 package br.com.superauto.crm.relacionamento.servico;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import br.com.superauto.crm.relacionamento.entidade.HistoricoExportado;
 import br.com.superauto.crm.relacionamento.entidade.PeriodoDoHistorico;
 import br.com.superauto.crm.relacionamento.repositorio.AutorDeAtendimento;
@@ -31,17 +33,9 @@ public class ConsultaHistoricoService {
     private final Clock relogio;
 
     @Transactional(readOnly = true)
-    public List<LinhaDoHistorico> listar(
-            PeriodoDoHistorico periodo, FiltroDoHistorico filtro, Optional<UUID> vendedor) {
-        var pedido =
-                new ConsultaHistorico.Pedido(
-                        periodo.inicioNoFuso(relogio.getZone()),
-                        periodo.fimNoFuso(relogio.getZone()),
-                        filtro,
-                        vendedor);
-        return historico.listar(pedido).stream()
-                .map(linha -> LinhaDoHistorico.de(linha, relogio.getZone()))
-                .toList();
+    public Page<LinhaDoHistorico> listar(ConsultaDoHistorico consulta, Optional<UUID> vendedor, Pageable pagina) {
+        return historico.listar(pedido(consulta, vendedor), pagina)
+                .map(linha -> LinhaDoHistorico.de(linha, relogio.getZone()));
     }
 
     @Transactional(readOnly = true)
@@ -50,11 +44,19 @@ public class ConsultaHistoricoService {
     }
 
     @Transactional
-    public List<LinhaDoHistorico> exportar(
-            PeriodoDoHistorico periodo, FiltroDoHistorico filtro, AutorDoContato autor) {
-        var linhas = listar(periodo, filtro, autor.vendedor());
-        eventos.publishEvent(new HistoricoExportado(informados(periodo, filtro), linhas.size(), autor.id()));
+    public List<LinhaDoHistorico> exportar(ConsultaDoHistorico consulta, AutorDoContato autor) {
+        var linhas = historico.todos(pedido(consulta, autor.vendedor())).stream()
+                .map(linha -> LinhaDoHistorico.de(linha, relogio.getZone()))
+                .toList();
+        eventos.publishEvent(new HistoricoExportado(
+                informados(consulta.periodo(), consulta.filtro()), linhas.size(), autor.id()));
         return linhas;
+    }
+
+    private ConsultaHistorico.Pedido pedido(ConsultaDoHistorico consulta, Optional<UUID> vendedor) {
+        var fuso = relogio.getZone();
+        return new ConsultaHistorico.Pedido(
+                consulta.periodo().inicioNoFuso(fuso), consulta.periodo().fimNoFuso(fuso), consulta.filtro(), vendedor);
     }
 
     private static Map<String, Object> informados(PeriodoDoHistorico periodo, FiltroDoHistorico filtro) {

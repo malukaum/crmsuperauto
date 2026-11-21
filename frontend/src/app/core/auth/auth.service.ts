@@ -2,11 +2,13 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
 
 import { criarAuthConfig } from './auth.config';
-import { InatividadeService } from './inatividade.service';
+import { InatividadeService, sessaoLembrada } from './inatividade.service';
 import { EQUIPE_INTERNA, NOME_PAPEL, Papel, ehPapel } from './papel';
 
 interface ClaimsToken {
-  sub?: string;
+  /** Emissão e validade (segundos desde 1970), usadas para reconhecer a sessão lembrada (ACE-03). */
+  iat?: number;
+  exp?: number;
   preferred_username?: string;
   name?: string;
   given_name?: string;
@@ -14,6 +16,9 @@ interface ClaimsToken {
   realm_access?: { roles?: unknown[] };
   [claim: string]: unknown;
 }
+
+/** Renova o token de acesso quando falta menos que isto para ele vencer (ACE-03). */
+const MARGEM_DE_RENOVACAO_MS = 60 * 1000;
 
 /**
  * Estado de autenticação exposto como signals. O token de acesso é a fonte da verdade para papéis
@@ -25,14 +30,13 @@ export class AuthService {
   private readonly inatividade = inject(InatividadeService);
 
   private readonly accessToken = signal<string | null>(null);
+  private renovacao: Promise<void> | null = null;
   /** Mensagem amigável quando o Keycloak não responde na inicialização. */
   readonly erroInicializacao = signal<string | null>(null);
 
   readonly logado = computed(() => this.accessToken() !== null);
   private readonly claims = computed<ClaimsToken>(() => decodificarJwt(this.accessToken()));
 
-  /** O `sub` do Keycloak, que é também o id do usuário no CRM. */
-  readonly id = computed(() => this.claims().sub ?? '');
   readonly username = computed(() => this.claims().preferred_username ?? '');
   readonly nome = computed(() => this.claims().name ?? this.claims().given_name ?? this.username());
   readonly email = computed(() => this.claims().email ?? '');
@@ -82,23 +86,43 @@ export class AuthService {
 
     try {
       await this.oauth.loadDiscoveryDocumentAndTryLogin();
-      if (this.oauth.hasValidAccessToken()) {
-        this.oauth.setupAutomaticSilentRefresh();
-      } else if (this.oauth.getRefreshToken()) {
-        // Voltou à aba com o access token vencido, mas o refresh ainda vale.
-        await this.oauth.refreshToken().catch(() => this.oauth.logOut(true));
-        if (this.oauth.hasValidAccessToken()) {
-          this.oauth.setupAutomaticSilentRefresh();
-        }
-      }
+      // Abrir o CRM é uso: com o token de acesso vencido e a sessão ainda ativa, renova.
+      await this.renovarSeNecessario();
     } catch (erro) {
       console.error('Falha ao inicializar a autenticação', erro);
       this.erroInicializacao.set('Não foi possível conectar ao servidor de login. Tente novamente em instantes.');
     }
     this.sincronizar();
     if (this.logado()) {
-      this.inatividade.iniciar(() => this.logout());
+      const lembrada = sessaoLembrada(decodificarJwt(this.oauth.getRefreshToken()));
+      this.inatividade.iniciar({
+        aoUsar: () => void this.renovarSeNecessario(),
+        aoExpirar: lembrada ? undefined : () => this.logout(),
+      });
     }
+  }
+
+  /**
+   * ACE-03 · O token só é renovado quando a pessoa usa o CRM (tela ou chamada à API), nunca sozinho em segundo
+   * plano. Assim, parada, a sessão expira no Keycloak. Renova quando faltar menos de 1 minuto para o token de
+   * acesso vencer; chamadas simultâneas aguardam a mesma renovação.
+   */
+  renovarSeNecessario(): Promise<void> {
+    if (!this.oauth.getRefreshToken() || this.tokenValidoPorMaisDe(MARGEM_DE_RENOVACAO_MS)) {
+      return Promise.resolve();
+    }
+    this.renovacao ??= this.oauth
+      .refreshToken()
+      .then(
+        () => undefined,
+        () => undefined, // a falha já dispara token_refresh_error, que leva ao login
+      )
+      .finally(() => (this.renovacao = null));
+    return this.renovacao;
+  }
+
+  private tokenValidoPorMaisDe(margemMs: number): boolean {
+    return this.oauth.hasValidAccessToken() && this.oauth.getAccessTokenExpiration() - Date.now() > margemMs;
   }
 
   login(): void {

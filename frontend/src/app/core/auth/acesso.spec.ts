@@ -27,7 +27,7 @@ class OAuthFalso {
   initCodeFlow = vi.fn();
   logOut = vi.fn();
   configure = vi.fn();
-  setupAutomaticSilentRefresh = vi.fn();
+  getAccessTokenExpiration = vi.fn(() => Date.now() + 5 * 60 * 1000);
   loadDiscoveryDocumentAndTryLogin = vi.fn(async () => true);
   getRefreshToken = vi.fn(() => null);
   refreshToken = vi.fn();
@@ -189,7 +189,7 @@ describe('acesso e perfis', () => {
     it('sem uso por 30 minutos encerra a sessão', () => {
       const servico = TestBed.inject(InatividadeService);
       const expirou = vi.fn();
-      servico.iniciar(expirou);
+      servico.iniciar({ aoUsar: vi.fn(), aoExpirar: expirou });
 
       vi.advanceTimersByTime(TEMPO_INATIVIDADE_MS - 60_000);
       expect(expirou).not.toHaveBeenCalled();
@@ -204,7 +204,7 @@ describe('acesso e perfis', () => {
     it('qualquer uso (tecla, clique) reinicia a contagem', () => {
       const servico = TestBed.inject(InatividadeService);
       const expirou = vi.fn();
-      servico.iniciar(expirou);
+      servico.iniciar({ aoUsar: vi.fn(), aoExpirar: expirou });
 
       vi.advanceTimersByTime(20 * 60_000);
       document.dispatchEvent(new KeyboardEvent('keydown'));
@@ -212,6 +212,26 @@ describe('acesso e perfis', () => {
       expect(expirou).not.toHaveBeenCalled();
       vi.advanceTimersByTime(10 * 60_000);
       expect(expirou).toHaveBeenCalledTimes(1);
+    });
+
+    it('o uso avisa para renovar o token, no máximo a cada 30 segundos', () => {
+      const servico = TestBed.inject(InatividadeService);
+      const usou = vi.fn();
+      servico.iniciar({ aoUsar: usou, aoExpirar: vi.fn() });
+
+      document.dispatchEvent(new KeyboardEvent('keydown'));
+      document.dispatchEvent(new KeyboardEvent('keydown'));
+      expect(usou).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(30_000);
+      document.dispatchEvent(new KeyboardEvent('keydown'));
+      expect(usou).toHaveBeenCalledTimes(2);
+    });
+
+    it('sessão lembrada ("Confiar neste dispositivo") não expira por inatividade', () => {
+      const servico = TestBed.inject(InatividadeService);
+      servico.iniciar({ aoUsar: vi.fn() });
+
+      expect(() => vi.advanceTimersByTime(TEMPO_INATIVIDADE_MS * 2)).not.toThrow();
     });
 
     it('o login liga a contagem e ela chama o logout de verdade', async () => {

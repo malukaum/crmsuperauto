@@ -134,4 +134,4 @@ Checklist:
 
 ## 4. Validar
 
-Rode `cd backend && mvn -o -q test` e depois a skill **`validar-banco`**: só ela prova que `ddl-auto: validate` aceita o mapeamento e que as consultas funcionam no Postgres de verdade.
+Rode `cd backend && mvn -o -q test` (sem containers: a suíte só tem testes de regra). Conferir o mapeamento no Postgres de verdade é responsabilidade de quem mantém o ambiente; se quiser, use a skill **`validar-banco`**, que é manual e temporária e não deixa teste na suíte.

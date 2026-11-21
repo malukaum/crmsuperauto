@@ -271,6 +271,7 @@ Visão geral, decisões e regras: [Modelo de dados](README.md).
 | `descricao` | `character varying(2000)` | sim |  |  |
 | `retorno_agendado_para` | `date` | sim |  | Data de retorno informada (DATA EXCEÇÃO na planilha). Obrigatória em REAGENDADO. |
 | `corrige_atendimento_id` | `bigint` | sim |  | FK → `atendimento`; Atendimento que este registro corrige. |
+| `ano_aniversario` | `integer` | sim |  | Ano (Brasília) da mensagem de aniversário; vazio nos demais atendimentos e nas correções (ATD-03). |
 | `realizado_em` | `timestamp with time zone` | não |  | Quando o contato aconteceu. |
 | `registrado_em` | `timestamp with time zone` | não | now() | Quando foi lançado no sistema. |
 | `registrado_por` | `uuid` | não |  | FK → `usuario` |
@@ -289,6 +290,7 @@ Visão geral, decisões e regras: [Modelo de dados](README.md).
 - `ix_atendimento_contrato_concluido`: `btree (contrato_id, realizado_em DESC) WHERE (((resultado) = 'CONCLUIDO') AND (etapa_id IS NOT NULL))`
 - `ix_atendimento_realizado_em`: `btree (realizado_em)`
 - `ix_atendimento_usuario`: `btree (registrado_por)`
+- `uk_atendimento_aniversario_ano`: `UNIQUE btree (associado_id, ano_aniversario) WHERE (ano_aniversario IS NOT NULL)` — uma mensagem de aniversário por pessoa no ano (ATD-03).
 - `uk_atendimento_corrige`: `UNIQUE btree (corrige_atendimento_id) WHERE (corrige_atendimento_id IS NOT NULL)` — um atendimento tem no máximo uma correção (ATD-04); a cadeia continua corrigindo a correção.
 
 ### `indicacao`
@@ -394,12 +396,10 @@ Visão geral, decisões e regras: [Modelo de dados](README.md).
 
 | Objeto | O que entrega |
 | --- | --- |
-| `vw_fila_contato` | Fila de cada contrato com régua ativa: `HOJE`, `ATRASADO`, `FUTURO`, `SEM_DATA`, `SUSPENSO` ou `CANCELADO`, e os dias de atraso. |
-| `vw_aniversariante` | Próximo aniversário e dias até ele, para associados com contrato vigente; 29/02 vira 28/02 em ano não bissexto. |
-| `vw_carteira` | CAR-01 · Uma linha por contrato com associado, documento, cidade/UF, veículo, mensalidade, situação, etapa pendente, próximo contato, fila (de `vw_fila_contato`; sem régua ativa = `SEM_DATA`), vendedor, WhatsApp principal com opt-out e todos os telefones do associado (só para a busca). |
+| `vw_carteira` | CAR-01 · Uma linha por contrato com associado, documento, cidade/UF, veículo, mensalidade, situação, etapa pendente, próximo contato, vendedor, WhatsApp principal com opt-out e todos os telefones do associado (só para a busca). | A fila (Hoje, Atrasado…) não vem da visão: é calculada na aplicação com o "hoje" de Brasília (RG-01).
 | `vw_historico_atendimento` | CAR-03 e ATD-05 · Atendimentos com nome do tipo, da etapa e do autor, placa do contrato e a marca `corrigido` (já existe um registro que o corrige, ATD-04). Para os filtros do histórico, também `tipo_codigo`, `registrado_por_id`, `associado_nome`, `municipio_id` e `cidade`. |
 | `vw_trabalho_relacionamento` | FIL-01 a FIL-06 · Projeção por contrato da carteira, com nascimento, data-base da régua (último pós-venda concluído ou adesão, em São Paulo) e versão do acompanhamento. Preserva contratos anonimizados para os totais históricos; as consultas das filas excluem suspensos/cancelados e aplicam o vendedor. |
-| `vw_ultimo_contato_regua` | Último contato de régua concluído por contrato (ÚLTIMO CONTATO e ETAPA CONCLUÍDA da planilha). Ignora atendimentos já corrigidos: vale o registro mais recente da cadeia de correções (ATD-04). |
+| `vw_ultimo_contato_regua` | Último contato de régua concluído por contrato (ÚLTIMO CONTATO e ETAPA CONCLUÍDA da planilha). |
 | `texto_busca(text)` | Remove acentos e põe em minúsculas. Busca: `texto_busca(nome) LIKE '%' \|\| texto_busca(:termo) \|\| '%'`. |
 
 O "hoje" das visões é sempre `(now() AT TIME ZONE 'America/Sao_Paulo')::date`.

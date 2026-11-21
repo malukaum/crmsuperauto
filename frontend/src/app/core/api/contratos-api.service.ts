@@ -60,7 +60,7 @@ export class ContratosApi {
     return this.http.put<void>(`${this.gestao}/${id}`, alteracao);
   }
 
-  /** Marca vários contratos "a conferir" como ativos (proposta). */
+  /** Marca vários contratos "a conferir" como ativos. */
   ativarEmLote(contratoIds: number[]): Observable<ResultadoAtivacao> {
     return this.http.post<ResultadoAtivacao>(`${this.gestao}/ativacao-em-lote`, { contratoIds });
   }

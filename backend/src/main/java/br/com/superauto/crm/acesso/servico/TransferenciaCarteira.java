@@ -1,6 +1,5 @@
 package br.com.superauto.crm.acesso.servico;
 
-import java.util.Map;
 import java.util.UUID;
 
 import br.com.superauto.crm.acesso.entidade.Conta;
@@ -9,8 +8,9 @@ import br.com.superauto.crm.erro.NegocioException;
 import br.com.superauto.crm.seguranca.Papeis;
 
 /**
- * Serviço de domínio: decide se a carteira de um vendedor pode ir para outro. Envolve duas contas e os
- * papéis delas, por isso não cabe em nenhuma. Só aceita como destino um vendedor ativo e diferente da origem.
+ * Serviço de domínio: decide para quem vai a carteira de um vendedor desativado (ACE-04). Envolve duas contas e os
+ * papéis delas, por isso não cabe em nenhuma. O destino escolhido precisa ser um vendedor ativo e diferente da
+ * origem; sem escolha, a carteira fica com o gerencial que desativou, que depois a redistribui.
  */
 public class TransferenciaCarteira {
 
@@ -18,23 +18,6 @@ public class TransferenciaCarteira {
 
     public TransferenciaCarteira(ProvedorIdentidade identidade) {
         this.identidade = identidade;
-    }
-
-    /**
-     * Vendedor com contratos vigentes só é desativado depois de transferi-los: sem destino, responde conflito
-     * com a quantidade, para a tela perguntar para quem passar.
-     *
-     * @return o destino informado
-     */
-    public static UUID exigirDestinoInformado(UUID destino, long contratosVigentes) {
-        if (destino == null) {
-            throw NegocioException.conflito("contratos-a-transferir",
-                    "Este usuário é vendedor de " + contratosVigentes
-                            + (contratosVigentes == 1 ? " contrato vigente" : " contratos vigentes")
-                            + ". Escolha outro vendedor para recebê-los antes de desativar.",
-                    Map.of("contratosVigentes", contratosVigentes));
-        }
-        return destino;
     }
 
     /** @return a conta do vendedor que vai receber os contratos */

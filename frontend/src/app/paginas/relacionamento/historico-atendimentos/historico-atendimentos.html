@@ -72,7 +72,7 @@
   @if (carregando()) {
     <p role="status">Carregando histórico…</p>
   } @else {
-    <p>{{ linhas().length }} atendimento(s)</p>
+    <p>{{ total() }} atendimento(s)</p>
     <div class="crm-card crm-card--lista crm-tabela-rolagem">
       <table class="crm-tabela">
         <thead>
@@ -89,9 +89,9 @@
           </tr>
         </thead>
         <tbody>
-          @for (linha of visiveis(); track linha.id) {
+          @for (linha of linhas(); track linha.id) {
             <tr [class.corrigido]="linha.corrigido">
-              <td>{{ linha.realizadoEm | date: 'dd/MM/yyyy HH:mm' : 'America/Sao_Paulo' }}</td>
+              <td>{{ linha.realizadoEm | date: 'dd/MM/yyyy HH:mm' }}</td>
               <td>{{ linha.placa || '—' }}</td>
               <td>
                 <a [routerLink]="['/carteira/associados', linha.associadoId]">{{ linha.associado }}</a>
@@ -125,7 +125,7 @@
       </table>
     </div>
     <mat-paginator
-      [length]="linhas().length"
+      [length]="total()"
       [pageSize]="tamanho()"
       [pageIndex]="pagina()"
       [pageSizeOptions]="[25, 50, 100]"

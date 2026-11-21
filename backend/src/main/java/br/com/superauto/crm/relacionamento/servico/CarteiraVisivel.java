@@ -6,18 +6,16 @@ import br.com.superauto.crm.relacionamento.repositorio.TrabalhoRelacionamentoRep
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * RG-03 · Os contratos que quem registra o atendimento enxerga: gerencial e atendente, todos; o vendedor, só os
- * seus. Fora do escopo, o contrato ou o associado responde como não encontrado.
+ * Serviço de domínio (RG-03): os contratos que quem registra o atendimento enxerga. Gerencial e atendente, todos;
+ * o vendedor, só os seus. Fora do escopo, o contrato ou o associado responde como não encontrado. Sem Spring,
+ * registrado em {@code RelacionamentoConfig}.
  */
-@Component
 @RequiredArgsConstructor
 public class CarteiraVisivel {
     private final TrabalhoRelacionamentoRepository trabalho;

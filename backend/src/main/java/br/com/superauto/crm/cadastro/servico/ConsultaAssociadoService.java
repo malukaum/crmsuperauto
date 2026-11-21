@@ -16,6 +16,7 @@ import br.com.superauto.crm.cadastro.repositorio.AssociadoRepository;
 import br.com.superauto.crm.cadastro.repositorio.AtendimentoDoHistorico;
 import br.com.superauto.crm.cadastro.repositorio.ConsultaCarteira;
 import br.com.superauto.crm.cadastro.repositorio.HistoricoDeAtendimentos;
+import br.com.superauto.crm.cadastro.repositorio.LeitorDaFicha;
 import br.com.superauto.crm.cadastro.repositorio.IndicacoesDoAssociado;
 import br.com.superauto.crm.cadastro.repositorio.Localidade;
 import br.com.superauto.crm.cadastro.repositorio.ReferenciasDoCadastro;
@@ -66,7 +67,7 @@ public class ConsultaAssociadoService {
         });
     }
 
-    public FichaAssociado ficha(Long associadoId, EscopoCarteira escopo) {
+    public FichaAssociado ficha(Long associadoId, EscopoCarteira escopo, LeitorDaFicha leitor) {
         Associado associado = associados.findById(associadoId).orElseThrow(ConsultaAssociadoService::naoEncontrado);
         List<LinhaCarteira> contratos = carteira.doAssociado(associadoId).stream()
                 .filter(linha -> escopo.enxergaContratoDe(linha.getVendedorId()))
@@ -75,12 +76,14 @@ public class ConsultaAssociadoService {
             throw naoEncontrado();
         }
         Set<Long> visiveis = contratos.stream().map(LinhaCarteira::getContratoId).collect(Collectors.toSet());
-        return montar(associado, contratos, reguas.previsoes(visiveis), atendimentos(associadoId, escopo, visiveis));
+        return montar(associado, contratos, reguas.previsoes(visiveis),
+                atendimentos(associadoId, escopo, leitor, visiveis));
     }
 
     /** O vendedor vê os atendimentos dos seus contratos e os contatos sobre a pessoa, como a mensagem de aniversário. */
-    private List<AtendimentoDoHistorico> atendimentos(Long associadoId, EscopoCarteira escopo, Set<Long> visiveis) {
-        return historico.doAssociado(associadoId).stream()
+    private List<AtendimentoDoHistorico> atendimentos(Long associadoId, EscopoCarteira escopo, LeitorDaFicha leitor,
+                                                      Set<Long> visiveis) {
+        return historico.doAssociado(associadoId, leitor).stream()
                 .filter(a -> escopo.vendedor().isEmpty() || a.contratoId().map(visiveis::contains).orElse(true))
                 .toList();
     }
@@ -111,8 +114,8 @@ public class ConsultaAssociadoService {
                 linha.getModelo(), linha.getTipoVeiculoId(), linha.getTipoVeiculo(), linha.getMensalidade().valor(),
                 linha.getSituacao(), linha.getCodigoSga().orElse(null), dia(linha.getAderidoEm()),
                 linha.getVendidoEm().map(this::dia).orElse(null), linha.getEncerradoEm().map(this::dia).orElse(null),
-                linha.getVendedorId().orElse(null), linha.getVendedorNome().orElse(null), linha.getFila(),
-                linha.getDiasAtraso(), linha.getEtapaPendente().orElse(null),
+                linha.getVendedorId().orElse(null), linha.getVendedorNome().orElse(null), linha.filaEm(hoje()),
+                linha.diasDeAtrasoEm(hoje()), linha.getEtapaPendente().orElse(null),
                 linha.getProximoContatoEm().orElse(null), regua.map(ReguaDoContrato::etapas).orElse(List.of()),
                 regua.map(ReguaDoContrato::versao).orElse(null));
     }
@@ -121,7 +124,12 @@ public class ConsultaAssociadoService {
         return Optional.ofNullable(associado.getMunicipioId()).flatMap(referencias::municipio);
     }
 
-    /** O dia em São Paulo (RG-01). */
+    /** O dia de hoje em Brasília (RG-01). */
+    private LocalDate hoje() {
+        return LocalDate.now(relogio);
+    }
+
+    /** O dia em Brasília (RG-01). */
     private LocalDate dia(OffsetDateTime instante) {
         return instante.atZoneSameInstant(relogio.getZone()).toLocalDate();
     }

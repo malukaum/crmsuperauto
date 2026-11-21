@@ -1,6 +1,9 @@
 package br.com.superauto.crm;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -70,7 +73,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -149,6 +155,9 @@ class SegurancaEndpointsTest {
     @BeforeEach
     void setUp() {
         mvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+        when(consultaTrabalho.contatos(any(), any())).thenReturn(Page.empty());
+        when(consultaTrabalho.aniversarios(anyInt(), any(), any())).thenReturn(Page.empty());
+        when(consultaHistorico.listar(any(), any(), any())).thenReturn(Page.empty());
     }
 
     static Stream<Arguments> matriz() {
@@ -300,7 +309,7 @@ class SegurancaEndpointsTest {
                         new String[] {
                             "POST",
                             "/api/interno/aniversariantes/contratos/1/registro",
-                            "{\"confirmarRepeticao\":false}"
+                            ""
                         },
                         new String[] {"GET", "/api/gestao/regua", ""},
                         new String[] {"POST", "/api/gestao/regua/previa", "{\"prazos\":{\"1\":7}}"},
@@ -383,14 +392,46 @@ class SegurancaEndpointsTest {
     }
 
     @Test
+    @DisplayName("ATD-03 / RG-06: gravação simultânea barrada pelo índice único responde 409 registro-duplicado")
+    void registroDuplicado() throws Exception {
+        var unicidade = new java.sql.SQLException("duplicate key", "23505");
+        Mockito.doThrow(new org.springframework.dao.DataIntegrityViolationException("duplicado", unicidade))
+                .when(registroNaFila).aniversario(eq(1L), any());
+
+        mvc.perform(post("/api/interno/aniversariantes/contratos/1/registro")
+                        .with(tokenCom("atendente", UUID.randomUUID())))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("registro-duplicado"));
+    }
+
+    @Test
     @DisplayName("ATD-05 / RG-03: o histórico recebe o escopo do vendedor; gerencial vê todos")
     void historicoNoEscopoDoVendedor() throws Exception {
         UUID vendedor = UUID.randomUUID();
         mvc.perform(get("/api/interno/atendimentos").with(tokenCom("vendedor", vendedor))).andExpect(status().isOk());
         mvc.perform(get("/api/interno/atendimentos").with(tokenCom("gerencial", UUID.randomUUID())))
                 .andExpect(status().isOk());
-        verify(consultaHistorico).listar(any(), any(), eq(Optional.of(vendedor)));
-        verify(consultaHistorico).listar(any(), any(), eq(Optional.empty()));
+        verify(consultaHistorico).listar(any(), eq(Optional.of(vendedor)), any());
+        verify(consultaHistorico).listar(any(), eq(Optional.empty()), any());
+    }
+
+    @Test
+    @DisplayName("Tabelas paginadas no servidor: ?pagina e ?tamanho viram o Pageable do Spring, com no máximo 100 por página")
+    void paginacaoNoServidor() throws Exception {
+        mvc.perform(get("/api/interno/atendimentos?pagina=2&tamanho=10").with(tokenCom("gerencial", UUID.randomUUID())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page.totalElements").value(0));
+        mvc.perform(get("/api/interno/filas/hoje?tamanho=500").with(tokenCom("gerencial", UUID.randomUUID())))
+                .andExpect(status().isOk());
+
+        var historico = ArgumentCaptor.forClass(Pageable.class);
+        verify(consultaHistorico).listar(any(), any(), historico.capture());
+        assertThat(historico.getValue().getPageNumber()).isEqualTo(2);
+        assertThat(historico.getValue().getPageSize()).isEqualTo(10);
+        var fila = ArgumentCaptor.forClass(Pageable.class);
+        verify(consultaTrabalho).contatos(any(), fila.capture());
+        assertThat(fila.getValue().getPageSize()).isEqualTo(100);
     }
 
     @Test
@@ -414,8 +455,9 @@ class SegurancaEndpointsTest {
         mvc.perform(get("/api/interno/aniversariantes").with(tokenCom("vendedor", vendedor)))
                 .andExpect(status().isOk());
         verify(consultaTrabalho).painel(Optional.of(vendedor));
-        verify(consultaTrabalho).contatos(eq(false), any(), eq(Optional.of(vendedor)));
-        verify(consultaTrabalho).aniversarios(0, Optional.of(vendedor));
+        verify(consultaTrabalho).contatos(
+                argThat(fila -> !fila.atrasados() && fila.vendedor().equals(Optional.of(vendedor))), any());
+        verify(consultaTrabalho).aniversarios(eq(0), eq(Optional.of(vendedor)), any());
     }
 
     private static final String NOVO_CONTRATO = """

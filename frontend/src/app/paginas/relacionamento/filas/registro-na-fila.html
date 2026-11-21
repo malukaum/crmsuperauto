@@ -78,7 +78,7 @@
         [disabled]="gravando() || (!aniversario() && !previsao())"
         (click)="registrar()"
       >
-        {{ repeticao() ? 'Confirmar outro registro' : 'Confirmar registro' }}</button
+        Confirmar registro</button
       ><button mat-button [disabled]="gravando()" (click)="cancelado.emit()">Cancelar</button>
     </div>
   </section>
